@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, ensureAuth } from '../lib/supabase';
 import { db } from '../lib/db';
 import { AppSettings } from '../constants';
 
@@ -33,23 +33,20 @@ export const useSupabaseSync = ({
     setSyncStatus('syncing');
 
     try {
+      const userId = await ensureAuth();
+      if (!userId) throw new Error('Could not establish a Supabase session.');
+
       const allEntries = await db.getAllEntries();
       const device_id = getDeviceId();
-      
+
       if (allEntries.length > 0) {
         const payload = allEntries.map(e => {
-          return { ...e, device_id };
+          return { ...e, user_id: userId, device_id };
         });
-        
+
         const { error } = await supabase
           .from('work_entries')
-          .upsert(payload, { onConflict: 'date' });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('work_entries')
-          .delete()
-          .eq('device_id', device_id);
+          .upsert(payload, { onConflict: 'user_id,date' });
         if (error) throw error;
       }
 

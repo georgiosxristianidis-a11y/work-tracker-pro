@@ -1,0 +1,8 @@
+{
+  "name": "Work Tracker Pro",
+  "description": "Elite Offline-First PWA for high-performance work tracking with AI insights and E2E encryption.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

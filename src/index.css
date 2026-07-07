@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Epilogue", ui-sans-serif, system-ui, sans-serif;
+  
+  --radius-card: 1.5rem;
+  --radius-panel: 14px;
+  --radius-control: 10px;
+  
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 0.75rem;
+}
+
+:root {
+  --bg: #f4f1ea; --bg-1: #eeebe2; --b: rgba(0,0,0,0.06); --t1: #1a1a1a; --t2: #6a6458; --t3: #9a9488; --a: #d4af37; --a-bg: rgba(0,0,0,0.04); --a-b: rgba(0,0,0,0.1);
+  --green: #2a7a4a; --green-bg: rgba(42,122,74,0.07);
+  --danger: #c47a72; --danger-bg: rgba(196,122,114,0.1);
+}
+.dark {
+  --bg: #0a0a0f; --bg-1: #0f0f14; --b: rgba(255,255,255,0.06); --t1: #f0ece0; --t2: #8a8070; --t3: #9ca3af; --a: #d4af37; --a-bg: rgba(212,175,55,0.07); --a-b: rgba(212,175,55,0.18);
+  --danger: #c47a72; --danger-bg: rgba(196,122,114,0.1);
+}
+.indigo {
+  --bg: #0d0f1e; --bg-1: #13162a; --b: rgba(79,109,247,0.1); --t1: #e8eeff; --t2: #7a8ab0; --t3: #9ca3af; --a: #4f8ef7; --a-bg: rgba(79,109,247,0.1); --a-b: rgba(79,109,247,0.25);
+  --danger: #c47a72; --danger-bg: rgba(196,122,114,0.1);
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+#frame { height: 100dvh; max-height: 852px; }
+@media (min-width: 640px) { #frame { height: min(100vh, 852px); } }
+
+/* Google AI Studio / Gemini Premium Gradient Effect */
+@keyframes ai-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gemini-text-gradient {
+  background: linear-gradient(
+    to right,
+    var(--t1) 0%,
+    var(--a) 25%,
+    var(--t2) 50%,
+    var(--a) 75%,
+    var(--t1) 100%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: ai-gradient 6s linear infinite;
+  display: inline-block;
+}
+
+body {
+  background: #111;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+input, textarea {
+  user-select: auto;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+*:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 2px;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* Hide number input spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}

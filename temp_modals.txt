@@ -1,0 +1,268 @@
+        {/* Share Data Choice Modal */}
+        {showTgConfirm && (
+          <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-[var(--bg)] w-full max-w-sm rounded-[24px] border border-[var(--b)] shadow-2xl p-6 space-y-6 animate-in zoom-in-95 duration-200">
+              <div className="flex justify-center">
+                <div className="w-12 h-12 rounded-full bg-[#3390ec]/10 flex items-center justify-center text-[#3390ec]">
+                  <Send size={24} />
+                </div>
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-black text-[var(--t1)]">{t('Share Data')}</h3>
+                <p className="text-sm font-medium text-[var(--t2)]">
+                  {t('Choose the format you want to send:')}
+                </p>
+              </div>
+              
+              <div className="flex flex-col gap-2 pt-2">
+                <button 
+                  onClick={() => {
+                    setShowTgConfirm(false);
+                    setShowTgAnim(true);
+                    haptic(50);
+                    setTimeout(() => shareToTelegram('summary'), 1000);
+                    setTimeout(() => setShowTgAnim(false), 2500);
+                  }}
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                >
+                  <div className="flex items-center gap-3"><AlignLeft size={16} className="text-[#3390ec]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Short Summary (Text)')}</span></div>
+                  <ChevronRight size={16} className="text-[var(--t3)]" />
+                </button>
+
+                <button 
+                  onClick={() => {
+                    setShowTgConfirm(false);
+                    setShowTgAnim(true);
+                    haptic(50);
+                    setTimeout(() => shareToTelegram('txt'), 1000);
+                    setTimeout(() => setShowTgAnim(false), 2500);
+                  }}
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                >
+                  <div className="flex items-center gap-3"><FileText size={16} className="text-[var(--t2)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Detailed Report (TXT)')}</span></div>
+                  <ChevronRight size={16} className="text-[var(--t3)]" />
+                </button>
+
+                <button 
+                  onClick={() => {
+                    setShowTgConfirm(false);
+                    setShowTgAnim(true);
+                    haptic(50);
+                    setTimeout(() => shareToTelegram('pdf'), 1000);
+                    setTimeout(() => setShowTgAnim(false), 2500);
+                  }}
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                >
+                  <div className="flex items-center gap-3"><FileText size={16} className="text-[var(--a)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Visual Report (PDF)')}</span></div>
+                  <ChevronRight size={16} className="text-[var(--t3)]" />
+                </button>
+
+                <button 
+                  onClick={() => {
+                    setShowTgConfirm(false);
+                    setShowTgAnim(true);
+                    haptic(50);
+                    setTimeout(() => shareToTelegram('csv'), 1000);
+                    setTimeout(() => setShowTgAnim(false), 2500);
+                  }}
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                >
+                  <div className="flex items-center gap-3"><Table size={16} className="text-[var(--t2)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Spreadsheet (CSV)')}</span></div>
+                  <ChevronRight size={16} className="text-[var(--t3)]" />
+                </button>
+
+                <button 
+                  onClick={() => {
+                    setShowTgConfirm(false);
+                    setShowTgAnim(true);
+                    haptic(50);
+                    setTimeout(() => shareToTelegram('json'), 1000);
+                    setTimeout(() => setShowTgAnim(false), 2500);
+                  }}
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                >
+                  <div className="flex items-center gap-3"><Database size={16} className="text-[var(--t2)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Full Backup (JSON)')}</span></div>
+                  <ChevronRight size={16} className="text-[var(--t3)]" />
+                </button>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button 
+                  onClick={() => setShowTgConfirm(false)}
+                  className="w-full py-3.5 rounded-panel bg-[var(--bg)] text-[var(--t2)] font-bold text-sm hover:text-[var(--t1)] hover:bg-[var(--b)] border border-[var(--b)] transition-colors active:scale-95"
+                >
+                  {t('Cancel')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Chaos Laboratory Block */}
+        {showChaos && (
+        <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
+          <div className="flex flex-col px-4 py-3.5">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-[12px] bg-[var(--bg)] border border-[var(--b)] flex items-center justify-center text-[var(--danger)] shadow-[0_2px_8px_rgba(255,59,48,0.08)]">
+                <Flame size={18} className="animate-pulse text-[var(--danger)]" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <span className="text-[11px] font-black text-[var(--t1)] block">Chaos Lab</span>
+                <span className="text-[9px] font-bold text-[var(--t3)] uppercase tracking-wider block">Asynchronous Fuzzing & Resilience</span>
+              </div>
+            </div>
+
+            <div className="space-y-3 mt-4">
+              {/* 1. Network Blackhole */}
+              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex flex-col gap-0.5 max-w-[70%]">
+                  <span className="text-xs font-black text-[var(--t1)] text-left">Network Blackhole</span>
+                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Fuzzes fetch with latency, drops & Bad Gateways.</span>
+                </div>
+                <button 
+                  onClick={toggleFetchChaos}
+                  className={`w-10 h-6 p-1 rounded-full border border-[var(--b)] transition-colors relative flex items-center shrink-0 ${chaosFetch ? 'bg-[var(--danger)] border-[var(--danger)]' : 'bg-[var(--bg-1)] text-[var(--t3)]'}`}
+                >
+                  <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} className={`w-4 h-4 rounded-full shadow-sm ${chaosFetch ? 'bg-[var(--bg)] ml-auto' : 'bg-[var(--t3)]/50'}`} />
+                </button>
+              </div>
+
+              {/* 2. DB Corruptor */}
+              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex flex-col gap-0.5 max-w-[70%]">
+                  <span className="text-xs font-black text-[var(--t1)] text-left">DB Corruptor</span>
+                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Direct IndexedDB poisoning with invalid types.</span>
+                </div>
+                <button 
+                  onClick={runDbCorruptor}
+                  className="px-3 py-1.5 rounded-full text-micro font-black bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/20 hover:bg-[var(--b)] hover:text-[var(--danger)] transition-all active:scale-95 shrink-0"
+                >
+                  Corrupt DB
+                </button>
+              </div>
+
+              {/* 3. Gremlin Monkey */}
+              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex flex-col gap-0.5 max-w-[70%]">
+                  <span className="text-xs font-black text-[var(--t1)] text-left">Gremlin Monkey</span>
+                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Fuzz clicks up to 50 interactions per second.</span>
+                </div>
+                <button 
+                  onClick={toggleMonkeyChaos}
+                  className={`w-10 h-6 p-1 rounded-full border border-[var(--b)] transition-colors relative flex items-center shrink-0 ${chaosMonkey ? 'bg-[var(--danger)] border-[var(--danger)] animate-pulse' : 'bg-[var(--bg-1)] text-[var(--t3)]'}`}
+                >
+                  <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} className={`w-4 h-4 rounded-full shadow-sm ${chaosMonkey ? 'bg-[var(--bg)] ml-auto' : 'bg-[var(--t3)]/50'}`} />
+                </button>
+              </div>
+
+              {/* 4. Amnesia Trigger */}
+              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex flex-col gap-0.5 max-w-[70%]">
+                  <span className="text-xs font-black text-[var(--t1)] text-left">RAM Amnesia</span>
+                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Wipes memory store to test transparent recovery.</span>
+                </div>
+                <button 
+                  onClick={runAmnesia}
+                  className="px-3 py-1.5 rounded-full text-micro font-black bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/20 hover:bg-[var(--b)] hover:text-[var(--danger)] transition-all active:scale-95 shrink-0"
+                >
+                  Purge RAM
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Spy Mode / Anti-AI Animation Overlay */}
+        <AnimatePresence>
+          {showSpyAnim && (
+            <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl font-mono">
+              <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.2, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 15 }}
+                  className="flex flex-col items-center gap-6"
+                >
+                  <div className="relative">
+                    <Shield size={100} className="text-[#34c759] opacity-20 animate-pulse" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock size={48} className="text-[#34c759]" />
+                    </div>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <motion.h2 
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="text-2xl font-black text-[#34c759] "
+                    >
+                      Fortress Mode
+                    </motion.h2>
+                    <motion.p
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                      className="text-[#34c759]/70 text-sm font-medium tracking-widest"
+                    >
+                      NETWORK SEVERED. DATA SECURED.
+                    </motion.p>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                      className="flex items-center justify-center gap-2 mt-4 text-xs text-[#34c759]/50"
+                    >
+                      <Terminal size={12} />
+                      <span>ANTI-AI PROTOCOL ENGAGED</span>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
+        {/* Telegram WOW Animation Overlay */}
+        <AnimatePresence>
+          {showTgAnim && (
+            <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center bg-[var(--bg)]/90 backdrop-blur-xl">
+                <motion.div
+                  initial={{ y: 100, opacity: 0, scale: 0.5 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: -100, opacity: 0, scale: 0.5 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  className="flex flex-col items-center gap-6"
+                >
+                  <motion.div 
+                    animate={{ 
+                      y: [-10, 10, -10],
+                      rotate: [-5, 5, -5]
+                    }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl"
+                  >
+                    <Send size={64} className="text-[var(--t1)] ml-2" />
+                  </motion.div>
+                  <div className="text-center space-y-2">
+                    <motion.h2 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-3xl font-black text-white  shadow-black drop-shadow-md"
+                    >
+                      Sending
+                    </motion.h2>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                      className="flex items-center justify-center gap-2 text-white/80 font-bold tracking-widest"
+                    >
+                      <CircleCheck size={18} />
+                      <span>DATA PACKAGED</span>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>

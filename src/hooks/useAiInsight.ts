@@ -12,6 +12,10 @@ export function useAiInsight(
 
   const generateAiInsight = async () => {
     if (isAiLoading) return;
+    if (settings.strictOfflineMode) {
+      addToast('AI Insight disabled by Strict Offline Mode', 'warning');
+      return;
+    }
     setIsAiLoading(true);
     try {
       const allEntries = await db.getAllEntries();

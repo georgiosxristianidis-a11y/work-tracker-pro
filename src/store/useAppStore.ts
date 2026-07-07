@@ -94,21 +94,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       set({ settings: mergedSettings });
       document.documentElement.className = mergedSettings.theme || 'dark';
-
-      // Setup window bindings for chaos laboratory
-      (window as any).__chaos_wipe_zustand = () => {
-        console.warn("[Chaos Engine] State wiped! Forcing memory loss scenario.");
-        set({
-          entries: [],
-          allEntries: [],
-          yearEntries: [],
-          editorDate: null
-        });
-      };
-      (window as any).__chaos_reload_store = async () => {
-        console.log("[Chaos Engine] Refreshing stores from IndexedDB...");
-        await get().loadEntries();
-      };
     } catch (e) {
       console.error(e);
     }
@@ -125,7 +110,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         db.getAllEntries()
       ]);
       
-      // DEFIANT DATABASE SANITIZATION ENGINE (Chaos Engineering Fallback)
+      // Defensive sanitization: rows read from IndexedDB may have missing or
+      // non-numeric fields (e.g. after a partial write); normalize them.
       const sanitize = (list: any[]): Entry[] => {
         return (list || []).filter(e => e && typeof e.date === 'string').map(e => {
           const rawHours = parseFloat(e.hours);
@@ -151,12 +137,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   saveEntry: async (date: string, hours: number) => {
     try {
-      // Automatic memory amnesia restoration trigger
-      if (get().allEntries.length === 0) {
-        console.warn("[Chaos Suspend Recovery] Restoring memory state transparently before transaction.");
-        await get().loadEntries();
-      }
-      
       const entry = { date, hours, month: date.slice(0, 7) };
       await db.saveEntry(entry);
       await get().loadEntries();
@@ -167,12 +147,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   deleteEntry: async (date: string) => {
     try {
-      // Automatic memory amnesia restoration trigger
-      if (get().allEntries.length === 0) {
-        console.warn("[Chaos Suspend Recovery] Restoring memory state transparently before transaction.");
-        await get().loadEntries();
-      }
-      
       const existing = get().allEntries.find(e => e.date === date);
       if (existing) {
         // If we are deleting a single entry, add it to the buffer (but maybe don't overwrite if we are batch deleting, though we don't have batch delete here)

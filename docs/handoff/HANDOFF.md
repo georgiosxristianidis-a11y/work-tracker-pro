@@ -11,7 +11,7 @@
 | **Аудит** | 2026-07-05 (Fable 5) · безопасность 3/10 · код 5/10 · дизайн 6/10 |
 | **Ворота после каждой карты** | `npm run lint && npm run build` (+ указанный в карте verify) |
 
-**Прогресс:** 🟩 P0-0 · 🟩 P0-1 · ⬜ P0-2 · ⬜ P0-3 · ⬜ P1-1 · ⬜ P1-2 · ⬜ P2-1 · ⬜ P2-2
+**Прогресс:** 🟩 P0-0 · 🟩 P0-1 · 🟩 P0-2 · 🟩 P0-3 · ⬜ P1-1 · ⬜ P1-2 · ⬜ P2-1 · ⬜ P2-2
 *(меняй ⬜ → 🟩 при закрытии карты и ставь дату в Журнал внизу)*
 
 **Делегирование:** 🟢 Gemini = механика по жёсткой спеке · 🔵 Sonnet = точные правки/удаления · 🔴 Fable/Opus = безопасность, архитектура, ревью чужих дифов. Автор кода ≠ ревьюер.
@@ -93,3 +93,5 @@
 |---|---|---|---|
 | 2026-07-07 | P0-0 | Fable 5 | git init в папке проекта (репо в C:/Users/Zephyrus — ошибка, проект был вне git), baseline `acfc3e8`, 100 файлов, ветка fixes/p0 |
 | 2026-07-07 | P0-1 | Fable 5 | define удалён, хук → fetch /api/insight, @google/genai удалён (сервер на REST), ключа в dist нет. Попутно: чужая правка сломала синтаксис vite.config.ts — починено. Коммит `f9acf45` |
+| 2026-07-07 | P0-2 | Fable 5 | ensureAuth() (анонимная сессия), upsert по (user_id,date), delete-all при пустой базе удалён, supabase/schema.sql с RLS. ⚠️ Пользователь должен применить schema.sql в Supabase и включить Anonymous sign-ins. Коммит `2a75e86` |
+| 2026-07-07 | P0-3 | Fable 5 | Amnesia-листенер и Fortress-патчи удалены из App.tsx, chaos-биндинги из store, Chaos Lab UI из Settings, public/chaos/ удалён (SW прекэшировал его юзерам: 36→32 файла). strictOfflineMode остался и честно отключает sync+AI. Лейблы переименованы (Paranoid/Fortress → Strict Offline/Offline Mode) |

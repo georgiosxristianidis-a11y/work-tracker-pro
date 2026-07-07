@@ -104,19 +104,6 @@ export default function App() {
       
       // Artificial delay for splash screen
       setTimeout(() => setIsLoading(false), 1200);
-
-      // Amnesia Recovery Engine
-      document.body.addEventListener('click', async (e) => {
-        const store = useAppStore.getState();
-        if (store.allEntries.length === 0 && (window as any).__chaos_wipe_zustand) {
-          // If state is empty but we haven't actually cleared the DB
-          const count = await db.getAllEntries();
-          if (count.length > 0) {
-            console.warn("[Chaos Suspend Recovery] Click detected with empty RAM state. Restoring transparently...");
-            await store.loadEntries();
-          }
-        }
-      }, { capture: true });
     };
     init();
   }, []);
@@ -143,50 +130,6 @@ export default function App() {
   useEffect(() => {
     if (isAuthReady) loadEntries();
   }, [viewDate, isAuthReady, loadEntries]);
-
-  // --- Anti-AI / Strict Offline Fortress Mode ---
-  useEffect(() => {
-    if (settings.strictOfflineMode) {
-      console.warn("[Paranoid Security] Strict Offline Mode activated. Fortifying application. No signals will leave this app.");
-      
-      // Inject strict Content-Security-Policy to block all outbound connections
-      let cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-      if (!cspMeta) {
-        cspMeta = document.createElement('meta');
-        cspMeta.setAttribute('http-equiv', 'Content-Security-Policy');
-        // Allow scripts and styles from self, but STRICTLY block all outbound connections (connect-src 'self')
-        cspMeta.setAttribute('content', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' blob:;");
-        cspMeta.id = "paranoid-csp-fortress";
-        document.head.appendChild(cspMeta);
-      }
-      
-      // Attempt to override global fetch and XHR for double-layer protection (ignoring read-only properties)
-      const originalFetch = window.fetch;
-      const originalXHR = XMLHttpRequest.prototype.open;
-
-      try {
-        window.fetch = async function(...args) {
-          console.error(`[Paranoid Security] Blocked outbound fetch by Fortress Mode:`, args[0]);
-          throw new Error('Paranoid Security: Outbound network request blocked by Strict Offline Fortress Mode.');
-        };
-      } catch (e) {
-        // window.fetch might be read-only in some environments, rely on CSP
-      }
-
-      XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...rest: any[]) {
-        console.error(`[Paranoid Security] Blocked outbound XHR by Fortress Mode:`, url);
-        throw new Error('Paranoid Security: Outbound network request blocked by Strict Offline Fortress Mode.');
-      };
-
-      return () => {
-        const metaToRemove = document.getElementById('paranoid-csp-fortress');
-        if (metaToRemove) metaToRemove.remove();
-        
-        try { window.fetch = originalFetch; } catch(e) {}
-        XMLHttpRequest.prototype.open = originalXHR;
-      };
-    }
-  }, [settings.strictOfflineMode]);
 
   const { calcEarnings, totalEarned, totalHours, goalPct, chartData } = useTrends(
     entries,

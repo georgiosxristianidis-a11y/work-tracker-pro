@@ -11,7 +11,7 @@
 | **Аудит** | P0: 2026-07-05 · ядро/архитектура: 2026-07-10 (Fable 5, пре-деплой) |
 | **Ворота после каждой карты** | `npm run lint && npm run build` (+ указанный в карте verify) → коммит |
 
-**Прогресс:** 🟩 P0-0…P0-3 · 🧑 P0-4 (пользователь) · 🟩 D1 · ⬜ D2 · ⬜ D3 · ⬜ P1-1 · 🚀 ДЕПЛОЙ · ⬜ P1-2 · ⬜ D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3
+**Прогресс:** 🟩 P0-0…P0-3 · 🧑 P0-4 (пользователь) · 🟩 D1 · ⬜ D2 · 🟩 D3 · ⬜ P1-1 · 🚀 ДЕПЛОЙ · ⬜ P1-2 · ⬜ D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3
 
 **🚀 Деплой-гейт:** деплоить можно только после D1 + D3 + P1-1 (код) и P0-4 (руками владельца). D2 — до публичного анонса «синхронизации».
 
@@ -131,6 +131,8 @@
 - [🔴 P0-2 убрал delete-all, но не вписал замену] -> удаления перестали доезжать до облака (расхождение данных) -> [🟢 при вырезании поведения сразу проектировать замену; карта D1]
 - [🔴 Фоновый sync без silent-режима] -> error-тосты каждые 5 мин у юзеров без .env и офлайн -> [🟢 фон молчит, говорит только ручное действие; карта D1]
 - [🔴 Worktree агента создан от baseline-коммита, не от fixes/p0] -> агент видит код без P0-фиксов и чужой HANDOFF -> [🟢 первый шаг новой сессии: git merge fixes/p0 --ff-only в ветку worktree]
+- [🔴 npx playwright test всем набором с дефолтными воркерами] -> ложные newPage-таймауты всех 8 тестов на этой машине -> [🟢 гонять с --workers=2; при падении сверять с baseline через git stash]
+- [🔴 rocket.spec / wand.spec] -> сломаны ещё ДО правок D1/D3 (wand ищет текст «Quick Fill Calendar», которого нет в UI) -> [🟢 тест-дрифт; чинить отдельной картой, не «заодно»]
 ```
 
 ## 🤖 AUTO-LEDGER PROTOCOL
@@ -145,3 +147,4 @@
 | 2026-07-07 | P0-3 | Fable 5 | Amnesia-листенер и Fortress-патчи удалены из App.tsx, chaos-биндинги из store, Chaos Lab UI из Settings, public/chaos/ удалён (SW прекэшировал его юзерам: 36→32 файла). strictOfflineMode остался и честно отключает sync+AI. Лейблы переименованы. Коммит `b659440` |
 | 2026-07-10 | Аудит ядра | Fable 5 | Пре-деплой аудит: 5 критикалов (тост-спам фонового синка, удаления не доезжают до облака, sync без restore, UTC-«сегодня», upsert всей таблицы на каждый автосейв) + 12 рефакторов. Созданы карты D1-D4, P2-3; выставлен деплой-гейт D1+D3+P1-1+P0-4 |
 | 2026-07-11 | D1 | Fable 5 | Sync v2: `syncWithSupabaseAction({silent})` — фон (interval, после сейвов) молчит и не пытается синкать офлайн; interval не создаётся при `!supabase`; тост «Entry saved» убран (индикатор в модалке остался); синк после сейва — debounce 10с; новые `deleteEntryFromCloud(date)`/`clearCloudData()` зовутся из deleteEntry/clearAllData; Undo — тихий ресинк. Ворота ✅; вживую: без .env сейв/автосейв/удаление — 0 error-тостов, ручной Sync — понятный тост. Сценарий с живым Supabase (строка исчезает из таблицы) проверить после P0-4. EditorModal не тронут |
+| 2026-07-11 | D3 | Fable 5 (по решению владельца вместо Sonnet) | Все 7 пунктов: локальное «сегодня» в CalendarScreen; `{hours > 0 &&}` вместо `hours &&`; setMonth без мутации store-даты (4 места CalendarScreen + 2 HomeScreen); мёртвый код из App вычищен (syncQueue, isSyncing, setEntries/setYearEntries, handleEditorSave + проп saveEntry из CalendarScreenProps, импорты Entry/ChevronLeft/Logo/useMemo/DOW_NAMES; useRef и supabase теперь живые после D1 — оставлены); toggleTheme без ручного className/db.setSetting; сплэш без setTimeout(1200); haptic={h} у EditorModal. Ворота ✅; вживую: стрелки Home и Calendar в обе стороны, «сегодня»=11 подсвечен, «0» в клетках нет. Playwright: app/save/animations проходят; rocket+wand падали и на baseline (тест-дрифт, вне карты) |

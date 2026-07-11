@@ -3,12 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useMemo, lazy, Suspense, useCallback } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { supabase } from './lib/supabase';
-import { db, Entry } from './lib/db';
-import { Logo } from './components/Logo';
+import { db } from './lib/db';
 import { HomeScreen } from './components/HomeScreen';
 import { SplashScreen } from './components/SplashScreen';
 import { useSupabaseSync } from './hooks/useSupabaseSync';
@@ -27,7 +25,7 @@ import { Toasts, ToastMessage } from './components/Toasts';
 import { QuickFillModal } from './components/QuickFillModal';
 import { EditorModal } from './components/EditorModal';
 import { BulkAddModal } from './components/BulkAddModal';
-import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, DOW_NAMES, AppSettings } from './constants';
+import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, AppSettings } from './constants';
 
 const AnalyticsScreen = lazy(() => import('./components/AnalyticsScreen').then(m => ({ default: m.AnalyticsScreen })));
 const TotalScreen = lazy(() => import('./components/TotalScreen').then(m => ({ default: m.TotalScreen })));
@@ -54,10 +52,10 @@ const getDeviceId = () => {
 export default function App() {
   const { 
     screen, setScreen, 
-    viewDate, setViewDate, 
-    entries, setEntries, 
+    viewDate, setViewDate,
+    entries,
     allEntries,
-    yearEntries, setYearEntries, 
+    yearEntries,
     settings, setSettings,
     isLoading, setIsLoading,
     editorDate, setEditorDate,
@@ -70,14 +68,12 @@ export default function App() {
 
   const [chartPeriod, setChartPeriod] = useState<6 | 12>(6);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   const { isPowerSaveMode } = usePowerSave(settings);
 
   const { toasts, addToast, removeToast } = useToast();
   const [excludeSundays, setExcludeSundays] = useState(true);
   const [navClicks, setNavClicks] = useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
-  const [syncQueue, setSyncQueue] = useState<any[]>([]);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
 
   const curSym = settings.currency === 'RUB' ? '₽' : '€';
@@ -101,9 +97,7 @@ export default function App() {
       await loadEntries();
       
       setIsAuthReady(true);
-      
-      // Artificial delay for splash screen
-      setTimeout(() => setIsLoading(false), 1200);
+      setIsLoading(false);
     };
     init();
   }, []);
@@ -255,10 +249,6 @@ export default function App() {
     }
   });
 
-  const handleEditorSave = useCallback(() => {
-    if (editorDate) saveEntry(editorDate, editorHours);
-  }, [editorDate, editorHours, saveEntry]);
-
   const handleOpenQuickFill = useCallback(() => {
     haptic(10);
     setIsQuickFillOpen(true);
@@ -267,10 +257,7 @@ export default function App() {
   const toggleTheme = async () => {
     const themes: ('light' | 'dark' | 'indigo')[] = ['light', 'dark', 'indigo'];
     const nextTheme = themes[(themes.indexOf(settings.theme) + 1) % themes.length];
-    const newSettings = { ...settings, theme: nextTheme };
-    setSettings(newSettings);
-    document.documentElement.className = nextTheme;
-    await db.setSetting('settings', newSettings);
+    setSettings({ ...settings, theme: nextTheme });
   };
 
   // --- Renderers ---
@@ -326,7 +313,6 @@ export default function App() {
                     setSettings={setSettings}
                     t={t}
                     defaultEditorHours={getDefaultHours()}
-                    saveEntry={handleEditorSave}
                     deleteEntry={deleteEntry}
                     calcEarnings={calcEarnings}
                     curSym={curSym}
@@ -413,7 +399,7 @@ export default function App() {
           saveEntry={saveEntry}
           deleteEntryTap={deleteEntryTap}
           t={t}
-          haptic={haptic}
+          haptic={h}
         />
         
         <BulkAddModal

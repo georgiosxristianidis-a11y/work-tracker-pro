@@ -139,24 +139,32 @@ export default function App() {
     chartPeriod
   );
 
-  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction } = useSupabaseSync({
+  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, deleteEntryFromCloud, clearCloudData } = useSupabaseSync({
     settings,
     setSettings,
     addToast,
     getDeviceId,
   });
 
+  // Debounced silent sync after local writes: batches rapid edits (editor
+  // autosave fires every 600ms) into one upsert ≥10s after the last change.
+  const bgSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleBackgroundSync = useCallback(() => {
+    if (bgSyncTimer.current) clearTimeout(bgSyncTimer.current);
+    bgSyncTimer.current = setTimeout(() => syncWithSupabaseAction({ silent: true }), 10000);
+  }, [syncWithSupabaseAction]);
+
   // Auto-sync polling interval
   useEffect(() => {
-    if (settings.strictOfflineMode) return;
-    
+    if (settings.strictOfflineMode || !supabase) return;
+
     // 5 mins normally, 30 mins in power save mode
     const intervalMs = isPowerSaveMode ? 30 * 60 * 1000 : 5 * 60 * 1000;
-    
+
     const timer = setInterval(() => {
-      syncWithSupabaseAction();
+      syncWithSupabaseAction({ silent: true });
     }, intervalMs);
-    
+
     return () => clearInterval(timer);
   }, [isPowerSaveMode, settings.strictOfflineMode, syncWithSupabaseAction]);
 
@@ -182,13 +190,8 @@ export default function App() {
   const saveEntry = useCallback(async (date: string, hours: number) => {
     haptic(20);
     await storeSaveEntry(date, hours);
-    addToast(t('Entry saved'), 'success');
-    
-    // Background sync
-    if (navigator.onLine && !settings.strictOfflineMode) {
-      syncWithSupabaseAction();
-    }
-  }, [haptic, storeSaveEntry, addToast, t, settings.strictOfflineMode, syncWithSupabaseAction]);
+    scheduleBackgroundSync();
+  }, [haptic, storeSaveEntry, scheduleBackgroundSync]);
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
     haptic([20, 20]);
@@ -196,29 +199,22 @@ export default function App() {
       await storeSaveEntry(d, hours);
     }
     addToast(t('Entries added'), 'success');
-    if (navigator.onLine && !settings.strictOfflineMode) {
-      syncWithSupabaseAction();
-    }
-  }, [haptic, storeSaveEntry, addToast, t, settings.strictOfflineMode, syncWithSupabaseAction]);
+    scheduleBackgroundSync();
+  }, [haptic, storeSaveEntry, addToast, t, scheduleBackgroundSync]);
 
   const deleteEntry = useCallback(async (date: string) => {
     haptic([30, 50]);
     await storeDeleteEntry(date);
+    deleteEntryFromCloud(date);
     addToast(t('Entry deleted'), 'warning', {
       label: t('Undo'),
       onClick: async () => {
         const store = useAppStore.getState();
         await store.undoDelete();
-        if (navigator.onLine && !settings.strictOfflineMode) {
-          syncWithSupabaseAction();
-        }
+        scheduleBackgroundSync();
       }
     });
-    
-    if (navigator.onLine && !settings.strictOfflineMode) {
-      syncWithSupabaseAction();
-    }
-  }, [haptic, storeDeleteEntry, addToast, t, settings.strictOfflineMode, syncWithSupabaseAction]);
+  }, [haptic, storeDeleteEntry, deleteEntryFromCloud, addToast, t, scheduleBackgroundSync]);
 
   const {
     selectedTemplate,
@@ -240,14 +236,13 @@ export default function App() {
   
   const clearAllData = async () => {
     await storeClearAll();
+    clearCloudData();
     addToast(t('All data deleted'), 'warning', {
       label: t('Undo'),
       onClick: async () => {
         const store = useAppStore.getState();
         await store.undoDelete();
-        if (navigator.onLine && !settings.strictOfflineMode) {
-          syncWithSupabaseAction();
-        }
+        scheduleBackgroundSync();
       }
     });
   };

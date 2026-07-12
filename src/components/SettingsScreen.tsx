@@ -225,7 +225,6 @@ export const SettingsScreen = ({
               </div>
               <div className="flex-1 space-y-1">
                 <span className="text-[11px] font-black text-[var(--t1)] block">{t('Privacy & Security')}</span>
-                <span className="text-[9px] font-bold text-[var(--t3)] uppercase tracking-wider block">{t('E2E Encryption & Blurring')}</span>
               </div>
             </div>
             <div className="flex flex-col gap-2 p-1">

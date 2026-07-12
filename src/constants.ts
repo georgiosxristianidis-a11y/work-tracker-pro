@@ -31,7 +31,9 @@ export interface AppSettings {
   deduction: number;
   privacyMode: boolean;
   strictOfflineMode: boolean;
+  /** @deprecated E2EE was never implemented; kept only so stored settings migrate cleanly. */
   e2eeEnabled: boolean;
+  /** @deprecated E2EE was never implemented; kept only so stored settings migrate cleanly. */
   e2eeKey: string;
   theme: 'light' | 'dark' | 'indigo';
   hapticEnabled: boolean;

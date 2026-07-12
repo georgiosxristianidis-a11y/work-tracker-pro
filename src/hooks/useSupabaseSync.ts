@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, ensureAuth } from '../lib/supabase';
 import { db } from '../lib/db';
 import { AppSettings } from '../constants';
 
@@ -18,38 +18,37 @@ export const useSupabaseSync = ({
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const isSyncingRef = useRef(false);
 
-  const syncWithSupabaseAction = useCallback(async () => {
+  const syncWithSupabaseAction = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent ?? false;
     if (settings.strictOfflineMode) {
-      addToast('Sync disabled by Strict Offline Mode', 'warning');
+      if (!silent) addToast('Sync disabled by Strict Offline Mode', 'warning');
       return;
     }
     if (!supabase) {
-      addToast('Supabase credentials missing in .env', 'error');
+      if (!silent) addToast('Supabase credentials missing in .env', 'error');
       return;
     }
-    
+    if (silent && !navigator.onLine) return;
+
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
     setSyncStatus('syncing');
 
     try {
+      const userId = await ensureAuth();
+      if (!userId) throw new Error('Could not establish a Supabase session.');
+
       const allEntries = await db.getAllEntries();
       const device_id = getDeviceId();
-      
+
       if (allEntries.length > 0) {
         const payload = allEntries.map(e => {
-          return { ...e, device_id };
+          return { ...e, user_id: userId, device_id };
         });
-        
+
         const { error } = await supabase
           .from('work_entries')
-          .upsert(payload, { onConflict: 'date' });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('work_entries')
-          .delete()
-          .eq('device_id', device_id);
+          .upsert(payload, { onConflict: 'user_id,date' });
         if (error) throw error;
       }
 
@@ -89,7 +88,7 @@ export const useSupabaseSync = ({
       }
       
       setSyncErrorMsg(errorMsg);
-      addToast(errorMsg.length > 50 ? errorMsg.substring(0, 50) + '...' : errorMsg, 'error');
+      if (!silent) addToast(errorMsg.length > 50 ? errorMsg.substring(0, 50) + '...' : errorMsg, 'error');
       setTimeout(() => {
         setSyncStatus('idle');
         isSyncingRef.current = false;
@@ -97,10 +96,45 @@ export const useSupabaseSync = ({
     }
   }, [settings.strictOfflineMode, settings.language, addToast, getDeviceId, setSettings]);
 
+  // Silent background mirror of local deletions. Never toasts: a failed
+  // cloud delete is reconciled by the next full sync, not surfaced to the user.
+  const deleteEntryFromCloud = useCallback(async (date: string) => {
+    if (!supabase || settings.strictOfflineMode || !navigator.onLine) return;
+    try {
+      const userId = await ensureAuth();
+      if (!userId) return;
+      const { error } = await supabase
+        .from('work_entries')
+        .delete()
+        .eq('user_id', userId)
+        .eq('date', date);
+      if (error) throw error;
+    } catch (err: any) {
+      console.warn('Cloud delete failed:', err?.message || err);
+    }
+  }, [settings.strictOfflineMode]);
+
+  const clearCloudData = useCallback(async () => {
+    if (!supabase || settings.strictOfflineMode || !navigator.onLine) return;
+    try {
+      const userId = await ensureAuth();
+      if (!userId) return;
+      const { error } = await supabase
+        .from('work_entries')
+        .delete()
+        .eq('user_id', userId);
+      if (error) throw error;
+    } catch (err: any) {
+      console.warn('Cloud clear failed:', err?.message || err);
+    }
+  }, [settings.strictOfflineMode]);
+
   return {
     syncStatus,
     syncErrorMsg,
     lastSynced,
-    syncWithSupabaseAction
+    syncWithSupabaseAction,
+    deleteEntryFromCloud,
+    clearCloudData
   };
 };

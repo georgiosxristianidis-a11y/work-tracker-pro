@@ -3,12 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useMemo, lazy, Suspense, useCallback } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { supabase } from './lib/supabase';
-import { db, Entry } from './lib/db';
-import { Logo } from './components/Logo';
+import { db } from './lib/db';
 import { HomeScreen } from './components/HomeScreen';
 import { SplashScreen } from './components/SplashScreen';
 import { useSupabaseSync } from './hooks/useSupabaseSync';
@@ -27,7 +25,7 @@ import { Toasts, ToastMessage } from './components/Toasts';
 import { QuickFillModal } from './components/QuickFillModal';
 import { EditorModal } from './components/EditorModal';
 import { BulkAddModal } from './components/BulkAddModal';
-import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, DOW_NAMES, AppSettings } from './constants';
+import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, AppSettings } from './constants';
 
 const AnalyticsScreen = lazy(() => import('./components/AnalyticsScreen').then(m => ({ default: m.AnalyticsScreen })));
 const TotalScreen = lazy(() => import('./components/TotalScreen').then(m => ({ default: m.TotalScreen })));
@@ -54,10 +52,10 @@ const getDeviceId = () => {
 export default function App() {
   const { 
     screen, setScreen, 
-    viewDate, setViewDate, 
-    entries, setEntries, 
+    viewDate, setViewDate,
+    entries,
     allEntries,
-    yearEntries, setYearEntries, 
+    yearEntries,
     settings, setSettings,
     isLoading, setIsLoading,
     editorDate, setEditorDate,
@@ -70,14 +68,12 @@ export default function App() {
 
   const [chartPeriod, setChartPeriod] = useState<6 | 12>(6);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   const { isPowerSaveMode } = usePowerSave(settings);
 
   const { toasts, addToast, removeToast } = useToast();
   const [excludeSundays, setExcludeSundays] = useState(true);
   const [navClicks, setNavClicks] = useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
-  const [syncQueue, setSyncQueue] = useState<any[]>([]);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
 
   const curSym = settings.currency === 'RUB' ? '₽' : '€';
@@ -101,22 +97,7 @@ export default function App() {
       await loadEntries();
       
       setIsAuthReady(true);
-      
-      // Artificial delay for splash screen
-      setTimeout(() => setIsLoading(false), 1200);
-
-      // Amnesia Recovery Engine
-      document.body.addEventListener('click', async (e) => {
-        const store = useAppStore.getState();
-        if (store.allEntries.length === 0 && (window as any).__chaos_wipe_zustand) {
-          // If state is empty but we haven't actually cleared the DB
-          const count = await db.getAllEntries();
-          if (count.length > 0) {
-            console.warn("[Chaos Suspend Recovery] Click detected with empty RAM state. Restoring transparently...");
-            await store.loadEntries();
-          }
-        }
-      }, { capture: true });
+      setIsLoading(false);
     };
     init();
   }, []);
@@ -144,50 +125,6 @@ export default function App() {
     if (isAuthReady) loadEntries();
   }, [viewDate, isAuthReady, loadEntries]);
 
-  // --- Anti-AI / Strict Offline Fortress Mode ---
-  useEffect(() => {
-    if (settings.strictOfflineMode) {
-      console.warn("[Paranoid Security] Strict Offline Mode activated. Fortifying application. No signals will leave this app.");
-      
-      // Inject strict Content-Security-Policy to block all outbound connections
-      let cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-      if (!cspMeta) {
-        cspMeta = document.createElement('meta');
-        cspMeta.setAttribute('http-equiv', 'Content-Security-Policy');
-        // Allow scripts and styles from self, but STRICTLY block all outbound connections (connect-src 'self')
-        cspMeta.setAttribute('content', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' blob:;");
-        cspMeta.id = "paranoid-csp-fortress";
-        document.head.appendChild(cspMeta);
-      }
-      
-      // Attempt to override global fetch and XHR for double-layer protection (ignoring read-only properties)
-      const originalFetch = window.fetch;
-      const originalXHR = XMLHttpRequest.prototype.open;
-
-      try {
-        window.fetch = async function(...args) {
-          console.error(`[Paranoid Security] Blocked outbound fetch by Fortress Mode:`, args[0]);
-          throw new Error('Paranoid Security: Outbound network request blocked by Strict Offline Fortress Mode.');
-        };
-      } catch (e) {
-        // window.fetch might be read-only in some environments, rely on CSP
-      }
-
-      XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...rest: any[]) {
-        console.error(`[Paranoid Security] Blocked outbound XHR by Fortress Mode:`, url);
-        throw new Error('Paranoid Security: Outbound network request blocked by Strict Offline Fortress Mode.');
-      };
-
-      return () => {
-        const metaToRemove = document.getElementById('paranoid-csp-fortress');
-        if (metaToRemove) metaToRemove.remove();
-        
-        try { window.fetch = originalFetch; } catch(e) {}
-        XMLHttpRequest.prototype.open = originalXHR;
-      };
-    }
-  }, [settings.strictOfflineMode]);
-
   const { calcEarnings, totalEarned, totalHours, goalPct, chartData } = useTrends(
     entries,
     yearEntries,
@@ -196,24 +133,32 @@ export default function App() {
     chartPeriod
   );
 
-  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction } = useSupabaseSync({
+  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, deleteEntryFromCloud, clearCloudData } = useSupabaseSync({
     settings,
     setSettings,
     addToast,
     getDeviceId,
   });
 
+  // Debounced silent sync after local writes: batches rapid edits (editor
+  // autosave fires every 600ms) into one upsert ≥10s after the last change.
+  const bgSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleBackgroundSync = useCallback(() => {
+    if (bgSyncTimer.current) clearTimeout(bgSyncTimer.current);
+    bgSyncTimer.current = setTimeout(() => syncWithSupabaseAction({ silent: true }), 10000);
+  }, [syncWithSupabaseAction]);
+
   // Auto-sync polling interval
   useEffect(() => {
-    if (settings.strictOfflineMode) return;
-    
+    if (settings.strictOfflineMode || !supabase) return;
+
     // 5 mins normally, 30 mins in power save mode
     const intervalMs = isPowerSaveMode ? 30 * 60 * 1000 : 5 * 60 * 1000;
-    
+
     const timer = setInterval(() => {
-      syncWithSupabaseAction();
+      syncWithSupabaseAction({ silent: true });
     }, intervalMs);
-    
+
     return () => clearInterval(timer);
   }, [isPowerSaveMode, settings.strictOfflineMode, syncWithSupabaseAction]);
 
@@ -239,13 +184,8 @@ export default function App() {
   const saveEntry = useCallback(async (date: string, hours: number) => {
     haptic(20);
     await storeSaveEntry(date, hours);
-    addToast(t('Entry saved'), 'success');
-    
-    // Background sync
-    if (navigator.onLine && !settings.strictOfflineMode) {
-      syncWithSupabaseAction();
-    }
-  }, [haptic, storeSaveEntry, addToast, t, settings.strictOfflineMode, syncWithSupabaseAction]);
+    scheduleBackgroundSync();
+  }, [haptic, storeSaveEntry, scheduleBackgroundSync]);
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
     haptic([20, 20]);
@@ -253,29 +193,22 @@ export default function App() {
       await storeSaveEntry(d, hours);
     }
     addToast(t('Entries added'), 'success');
-    if (navigator.onLine && !settings.strictOfflineMode) {
-      syncWithSupabaseAction();
-    }
-  }, [haptic, storeSaveEntry, addToast, t, settings.strictOfflineMode, syncWithSupabaseAction]);
+    scheduleBackgroundSync();
+  }, [haptic, storeSaveEntry, addToast, t, scheduleBackgroundSync]);
 
   const deleteEntry = useCallback(async (date: string) => {
     haptic([30, 50]);
     await storeDeleteEntry(date);
+    deleteEntryFromCloud(date);
     addToast(t('Entry deleted'), 'warning', {
       label: t('Undo'),
       onClick: async () => {
         const store = useAppStore.getState();
         await store.undoDelete();
-        if (navigator.onLine && !settings.strictOfflineMode) {
-          syncWithSupabaseAction();
-        }
+        scheduleBackgroundSync();
       }
     });
-    
-    if (navigator.onLine && !settings.strictOfflineMode) {
-      syncWithSupabaseAction();
-    }
-  }, [haptic, storeDeleteEntry, addToast, t, settings.strictOfflineMode, syncWithSupabaseAction]);
+  }, [haptic, storeDeleteEntry, deleteEntryFromCloud, addToast, t, scheduleBackgroundSync]);
 
   const {
     selectedTemplate,
@@ -297,14 +230,13 @@ export default function App() {
   
   const clearAllData = async () => {
     await storeClearAll();
+    clearCloudData();
     addToast(t('All data deleted'), 'warning', {
       label: t('Undo'),
       onClick: async () => {
         const store = useAppStore.getState();
         await store.undoDelete();
-        if (navigator.onLine && !settings.strictOfflineMode) {
-          syncWithSupabaseAction();
-        }
+        scheduleBackgroundSync();
       }
     });
   };
@@ -317,10 +249,6 @@ export default function App() {
     }
   });
 
-  const handleEditorSave = useCallback(() => {
-    if (editorDate) saveEntry(editorDate, editorHours);
-  }, [editorDate, editorHours, saveEntry]);
-
   const handleOpenQuickFill = useCallback(() => {
     haptic(10);
     setIsQuickFillOpen(true);
@@ -329,10 +257,7 @@ export default function App() {
   const toggleTheme = async () => {
     const themes: ('light' | 'dark' | 'indigo')[] = ['light', 'dark', 'indigo'];
     const nextTheme = themes[(themes.indexOf(settings.theme) + 1) % themes.length];
-    const newSettings = { ...settings, theme: nextTheme };
-    setSettings(newSettings);
-    document.documentElement.className = nextTheme;
-    await db.setSetting('settings', newSettings);
+    setSettings({ ...settings, theme: nextTheme });
   };
 
   // --- Renderers ---
@@ -388,7 +313,6 @@ export default function App() {
                     setSettings={setSettings}
                     t={t}
                     defaultEditorHours={getDefaultHours()}
-                    saveEntry={handleEditorSave}
                     deleteEntry={deleteEntry}
                     calcEarnings={calcEarnings}
                     curSym={curSym}

@@ -16,7 +16,6 @@ interface CalendarScreenProps {
   setSettings: any;
   t: (key: string) => string;
   defaultEditorHours: number;
-  saveEntry: () => void;
   deleteEntry: (date: string) => void;
   calcEarnings: (hours: number) => number;
   curSym: string;
@@ -49,7 +48,7 @@ const DayCell = React.memo(({
         {day}
       </span>
 
-      {hours && hours > 0 && (
+      {hours > 0 && (
         <div className="absolute bottom-[6px] flex flex-col items-center">
           <div className={`w-3 h-[1.5px] rounded-full ${
             hours === 8 ? 'bg-[var(--t1)]' : 
@@ -65,7 +64,7 @@ const DayCell = React.memo(({
 export const CalendarScreen = ({
   viewDate, setViewDate, entries, settings, setSettings, t,
   defaultEditorHours,
-  saveEntry, deleteEntry, calcEarnings, curSym, clearTap, clearMonthTap, haptic, openQuickFill
+  deleteEntry, calcEarnings, curSym, clearTap, clearMonthTap, haptic, openQuickFill
 }: CalendarScreenProps) => {
   const { setEditorDate, setEditorHours } = useAppStore();
   const [isWandHovered, setIsWandHovered] = useState(false);
@@ -73,7 +72,10 @@ export const CalendarScreen = ({
   const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
   const firstDow = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
   const startOffset = firstDow === 0 ? 6 : firstDow - 1;
-  const today = new Date().toISOString().split('T')[0];
+  // Local-date string: toISOString() would give UTC "today", which is
+  // yesterday during evening hours in UTC+ timezones.
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   
   const currentMonthPrefix = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
   const selectedDaysCount = useMemo(() => entries.filter(e => e.date.startsWith(currentMonthPrefix) && e.hours > 0).length, [entries, currentMonthPrefix]);
@@ -113,10 +115,10 @@ export const CalendarScreen = ({
             )}
           </AnimatePresence>
           <div className="flex gap-1.5">
-            <motion.button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
+            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
               <ChevronLeft size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
             </motion.button>
-            <motion.button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
+            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
               <ChevronRight size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-0.5" />
             </motion.button>
           </div>
@@ -160,10 +162,14 @@ export const CalendarScreen = ({
           onDragEnd={(e, { offset, velocity }) => {
             if (offset.x > 50 || velocity.x > 300) {
               haptic(10);
-              setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)));
+              const d = new Date(viewDate);
+              d.setMonth(d.getMonth() - 1);
+              setViewDate(d);
             } else if (offset.x < -50 || velocity.x < -300) {
               haptic(10);
-              setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)));
+              const d = new Date(viewDate);
+              d.setMonth(d.getMonth() + 1);
+              setViewDate(d);
             }
           }}
         >

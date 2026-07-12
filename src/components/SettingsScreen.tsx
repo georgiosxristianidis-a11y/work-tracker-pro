@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Flame, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table } from 'lucide-react';
+import { Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { db } from '../lib/db';
 import { AppSettings } from '../constants';
@@ -52,69 +52,10 @@ export const SettingsScreen = ({
     }
   }, [settings.goal]);
 
-  // Chaos Lab States
-  const [chaosFetch, setChaosFetch] = React.useState(!!(window as any).__chaos_fetch_active);
-  const [chaosMonkey, setChaosMonkey] = React.useState(!!(window as any).__chaos_monkey_active);
-  const [isCorrupting, setIsCorrupting] = React.useState(false);
   const [devTapCount, setDevTapCount] = React.useState(0);
-  const [showChaos, setShowChaos] = React.useState(false);
   const [showTgConfirm, setShowTgConfirm] = React.useState(false);
   const [showSpyAnim, setShowSpyAnim] = React.useState(false);
   const [showTgAnim, setShowTgAnim] = React.useState(false);
-
-  const toggleFetchChaos = () => {
-    const next = !chaosFetch;
-    (window as any).__chaos_fetch_active = next;
-    setChaosFetch(next);
-    addToast(next ? "Network Blackhole Active (fetch fuzzer)" : "Network Blackhole Deactivated", next ? "warning" : "success");
-    haptic(10);
-  };
-
-  const toggleMonkeyChaos = () => {
-    const next = !chaosMonkey;
-    if (next) {
-      if ((window as any).__chaos_monkey_start) {
-        (window as any).__chaos_monkey_start(50);
-      }
-    } else {
-      if ((window as any).__chaos_monkey_stop) {
-        (window as any).__chaos_monkey_stop();
-      }
-    }
-    setChaosMonkey(next);
-    addToast(next ? "UI Gremlin Monkey Active!" : "UI Gremlin Monkey Stopped", next ? "warning" : "success");
-    haptic(10);
-  };
-
-  const runDbCorruptor = async () => {
-    if (isCorrupting) return;
-    setIsCorrupting(true);
-    haptic([40, 40]);
-    addToast("Executing direct DB corrupt transaction...", "info");
-    try {
-      if ((window as any).__chaos_corrupt_db) {
-        await (window as any).__chaos_corrupt_db();
-        addToast("IndexedDB poisoned! Fallback engine isolated poisoned rows.", "warning");
-      } else {
-        addToast("DB corruptor script not loaded yet.", "error");
-      }
-    } catch(err) {
-      addToast("Failed to corrupt DB", "error");
-    } finally {
-      setIsCorrupting(false);
-    }
-  };
-
-  const runAmnesia = () => {
-    haptic([30, 30]);
-    addToast("Volatile RAM Wiped! Forcing Amnesia scenario...", "warning");
-    if ((window as any).__chaos_trigger_amnesia) {
-      (window as any).__chaos_trigger_amnesia();
-      addToast("Zustand state successfully purged. Touch UI to auto-restore from DB.", "success");
-    } else {
-      addToast("Amnesia script not loaded yet.", "error");
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -123,7 +64,6 @@ export const SettingsScreen = ({
           onClick={() => {
             if (devTapCount >= 6) {
               const nextState = !settings.developerMode;
-              setShowChaos(nextState);
               setSettings(s => ({ ...s, developerMode: nextState }));
               db.setSetting('settings', { ...settings, developerMode: nextState });
               addToast(nextState ? "Developer Mode Unlocked" : "Developer Mode Locked", "success");
@@ -139,80 +79,6 @@ export const SettingsScreen = ({
       </div>
       
       <div className="space-y-4">
-        {/* Chaos Laboratory Block */}
-        {settings.developerMode && (
-        <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
-          <div className="flex flex-col px-4 py-3.5">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-10 h-10 rounded-[12px] bg-[var(--bg)] border border-[var(--b)] flex items-center justify-center text-[var(--danger)] shadow-[0_2px_8px_rgba(255,59,48,0.08)]">
-                <Flame size={18} className="animate-pulse text-[var(--danger)]" />
-              </div>
-              <div className="flex-1 space-y-1">
-                <span className="text-[11px] font-black text-[var(--t1)] block">Chaos Lab</span>
-                <span className="text-[9px] font-bold text-[var(--t3)] uppercase tracking-wider block">Asynchronous Fuzzing & Resilience</span>
-              </div>
-            </div>
-
-            <div className="space-y-3 mt-4">
-              {/* 1. Network Blackhole */}
-              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                <div className="flex flex-col gap-0.5 max-w-[70%]">
-                  <span className="text-xs font-black text-[var(--t1)] text-left">Network Blackhole</span>
-                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Fuzzes fetch with latency, drops & Bad Gateways.</span>
-                </div>
-                <button 
-                  onClick={toggleFetchChaos}
-                  className={`w-10 h-6 p-1 rounded-full border border-[var(--b)] transition-colors relative flex items-center shrink-0 ${chaosFetch ? 'bg-[var(--danger)] border-[var(--danger)]' : 'bg-[var(--bg-1)] text-[var(--t3)]'}`}
-                >
-                  <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} className={`w-4 h-4 rounded-full shadow-sm ${chaosFetch ? 'bg-[var(--bg)] ml-auto' : 'bg-[var(--t3)]/50'}`} />
-                </button>
-              </div>
-
-              {/* 2. DB Corruptor */}
-              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                <div className="flex flex-col gap-0.5 max-w-[70%]">
-                  <span className="text-xs font-black text-[var(--t1)] text-left">DB Corruptor</span>
-                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Direct IndexedDB poisoning with invalid types.</span>
-                </div>
-                <button 
-                  onClick={runDbCorruptor}
-                  className="px-3 py-1.5 rounded-full text-micro font-black bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/20 hover:bg-[var(--b)] hover:text-[var(--danger)] transition-all active:scale-95 shrink-0"
-                >
-                  Corrupt DB
-                </button>
-              </div>
-
-              {/* 3. Gremlin Monkey */}
-              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                <div className="flex flex-col gap-0.5 max-w-[70%]">
-                  <span className="text-xs font-black text-[var(--t1)] text-left">Gremlin Monkey</span>
-                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Fuzz clicks up to 50 interactions per second.</span>
-                </div>
-                <button 
-                  onClick={toggleMonkeyChaos}
-                  className={`w-10 h-6 p-1 rounded-full border border-[var(--b)] transition-colors relative flex items-center shrink-0 ${chaosMonkey ? 'bg-[var(--danger)] border-[var(--danger)] animate-pulse' : 'bg-[var(--bg-1)] text-[var(--t3)]'}`}
-                >
-                  <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} className={`w-4 h-4 rounded-full shadow-sm ${chaosMonkey ? 'bg-[var(--bg)] ml-auto' : 'bg-[var(--t3)]/50'}`} />
-                </button>
-              </div>
-
-              {/* 4. Amnesia Trigger */}
-              <div className="flex items-center justify-between p-3.5 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                <div className="flex flex-col gap-0.5 max-w-[70%]">
-                  <span className="text-xs font-black text-[var(--t1)] text-left">RAM Amnesia</span>
-                  <span className="text-micro font-semibold text-[var(--t3)] leading-relaxed text-left">Wipes memory store to test transparent recovery.</span>
-                </div>
-                <button 
-                  onClick={runAmnesia}
-                  className="px-3 py-1.5 rounded-full text-micro font-black bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/20 hover:bg-[var(--b)] hover:text-[var(--danger)] transition-all active:scale-95 shrink-0"
-                >
-                  Purge RAM
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        )}
         {/* Privacy Block */}
         <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
           <div className="flex flex-col px-4 py-3.5">
@@ -242,8 +108,8 @@ export const SettingsScreen = ({
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--b)]/50">
                 <div className="flex flex-col gap-1 pr-4">
                   <span className="text-xs font-black text-[var(--danger)] uppercase tracking-widest">{t('ANTI - AI')}</span>
-                  <span className="text-[9px] font-bold text-[var(--t1)] uppercase tracking-wider">{t('Paranoid Data Security')}</span>
-                  <span className="text-micro font-medium text-[var(--t3)] leading-snug">{t('Block all network connections & disable cloud services')}</span>
+                  <span className="text-[9px] font-bold text-[var(--t1)] uppercase tracking-wider">{t('Strict Offline Mode')}</span>
+                  <span className="text-micro font-medium text-[var(--t3)] leading-snug">{t('Disable cloud sync & AI requests')}</span>
                 </div>
                 <button 
                   onClick={() => {
@@ -771,7 +637,7 @@ export const SettingsScreen = ({
                       transition={{ delay: 0.2 }}
                       className="text-2xl font-black text-[#34c759] "
                     >
-                      Fortress Mode
+                      Offline Mode
                     </motion.h2>
                     <motion.p
                       initial={{ y: 10, opacity: 0 }}
@@ -779,7 +645,7 @@ export const SettingsScreen = ({
                       transition={{ delay: 0.4 }}
                       className="text-[#34c759]/70 text-sm font-medium tracking-widest"
                     >
-                      NETWORK SEVERED. DATA SECURED.
+                      CLOUD SYNC DISABLED. DATA STAYS ON DEVICE.
                     </motion.p>
                     <motion.div 
                       initial={{ opacity: 0 }}
@@ -788,7 +654,7 @@ export const SettingsScreen = ({
                       className="flex items-center justify-center gap-2 mt-4 text-xs text-[#34c759]/50"
                     >
                       <Terminal size={12} />
-                      <span>ANTI-AI PROTOCOL ENGAGED</span>
+                      <span>LOCAL-ONLY MODE ENGAGED</span>
                     </motion.div>
                   </div>
                 </motion.div>

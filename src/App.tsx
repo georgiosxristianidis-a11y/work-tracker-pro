@@ -133,12 +133,23 @@ export default function App() {
     chartPeriod
   );
 
-  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, deleteEntryFromCloud, clearCloudData } = useSupabaseSync({
+  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, restoreFromCloudAction, deleteEntryFromCloud, clearCloudData } = useSupabaseSync({
     settings,
     setSettings,
     addToast,
     getDeviceId,
   });
+
+  const restoreFromCloud = useCallback(async () => {
+    const restored = await restoreFromCloudAction();
+    if (restored === null) return; // ran into an error or was blocked — already toasted
+    if (restored > 0) {
+      await loadEntries();
+      addToast(`${t('Entries restored')}: ${restored}`, 'success');
+    } else {
+      addToast(t('Nothing to restore'), 'info');
+    }
+  }, [restoreFromCloudAction, loadEntries, addToast, t]);
 
   // Debounced silent sync after local writes: batches rapid edits (editor
   // autosave fires every 600ms) into one upsert ≥10s after the last change.
@@ -353,6 +364,7 @@ export default function App() {
                     syncErrorMsg={syncErrorMsg}
                     lastSynced={lastSynced}
                     syncTapActual={syncTapActual}
+                    restoreFromCloud={restoreFromCloud}
                     deleteAllTap={deleteAllTap}
                     toggleTheme={toggleTheme}
                     exportCSV={exportCSV}

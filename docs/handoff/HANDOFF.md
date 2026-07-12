@@ -11,7 +11,7 @@
 | **Аудит** | P0: 2026-07-05 · ядро/архитектура: 2026-07-10 (Fable 5, пре-деплой) |
 | **Ворота после каждой карты** | `npm run lint && npm run build` (+ указанный в карте verify) → коммит |
 
-**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · ⬜ D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ · ⬜ P1-2 · ⬜ D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3
+**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · 🟩 D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ · ⬜ P1-2 · ⬜ D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3
 
 **🚀 Деплой-гейт:** деплоить можно только после D1 + D3 + P1-1 (код) и P0-4 (руками владельца). D2 — до публичного анонса «синхронизации».
 
@@ -134,6 +134,8 @@
 - [🔴 Карта перечисляет deps (express/dotenv), которых уже нет] -> холостые шаги в спеке -> [🟢 перед картой сверять спеку с фактическим package.json]
 - [🔴 npx playwright test всем набором с дефолтными воркерами] -> ложные newPage-таймауты всех 8 тестов на этой машине -> [🟢 гонять с --workers=2; при падении сверять с baseline через git stash]
 - [🔴 rocket.spec / wand.spec] -> сломаны ещё ДО правок D1/D3 (wand ищет текст «Quick Fill Calendar», которого нет в UI) -> [🟢 тест-дрифт; чинить отдельной картой, не «заодно»]
+- [🔴 «Merge новее по updated_at» в спеке D2] -> локальные Entry без временных меток, а upsert не обновляет updated_at при update -> [🟢 restore = вставка отсутствующих локально дат, при конфликте локальная побеждает; настоящий LWW — вместе с email OTP и триггером на updated_at]
+- [🔴 Живая проверка через Claude Browser-пану] -> в ней не тикает requestAnimationFrame: AnimatePresence mode="wait" не завершает exit, экраны «не переключаются» — ложная тревога о сломанной навигации -> [🟢 вживую проверять через Playwright (реальный Chromium); пана годится только для статики]
 ```
 
 ## 🤖 AUTO-LEDGER PROTOCOL
@@ -151,3 +153,4 @@
 | 2026-07-11 | D3 | Fable 5 (по решению владельца вместо Sonnet) | Все 7 пунктов: локальное «сегодня» в CalendarScreen; `{hours > 0 &&}` вместо `hours &&`; setMonth без мутации store-даты (4 места CalendarScreen + 2 HomeScreen); мёртвый код из App вычищен (syncQueue, isSyncing, setEntries/setYearEntries, handleEditorSave + проп saveEntry из CalendarScreenProps, импорты Entry/ChevronLeft/Logo/useMemo/DOW_NAMES; useRef и supabase теперь живые после D1 — оставлены); toggleTheme без ручного className/db.setSetting; сплэш без setTimeout(1200); haptic={h} у EditorModal. Ворота ✅; вживую: стрелки Home и Calendar в обе стороны, «сегодня»=11 подсвечен, «0» в клетках нет. Playwright: app/save/animations проходят; rocket+wand падали и на baseline (тест-дрифт, вне карты) |
 | 2026-07-12 | P0-4 (частично) | Пользователь + Fable 5 (гид) | Supabase: старая `work_entries` дропнута, schema.sql применён (таблица `(user_id,date)` + 4 RLS-политики), Anonymous sign-ins включён. Vercel: env var НЕ задана — новый проект ещё не деплоился; старый деплой от 2026-04-08 собран до P0-1 → ключ Gemini в публичном бандле, владельцу нужно ОТОЗВАТЬ старый ключ в AI Studio и создать новый. `GEMINI_API_KEY` задать при деплое (после P1-1), затем финальный Verify (2 браузера + AI-инсайт на проде) |
 | 2026-07-12 | P1-1 | Fable 5 (worktree от baseline, по старой версии карты) | E2EE-лейбл удалён из SettingsScreen целиком (новая карта предлагала замену на «Privacy & Offline» — по факту убран, честно в обоих вариантах); e2eeEnabled/e2eeKey → @deprecated; html2canvas убран из manualChunks; haptic={h} у EditorModal (совпало с D3); express/dotenv в deps уже отсутствовали. Подзаголовок возвращён как «Privacy & Offline» (все блоки Settings имеют подзаголовок — UX-консистентность), ключ словаря переименован в RUS/GR. Смержено в main вместе с fixes/p0. lint+build ✅ |
+| 2026-07-12 | D2 (вариант a — выбор владельца) | Fable 5 | `restoreFromCloudAction` в useSupabaseSync: pull всех строк user_id → вставка дат, отсутствующих локально; при конфликте локальная запись побеждает (у Entry нет меток времени — LWW по updated_at невозможен без изменения схемы, отклонение от спеки задокументировано в Ledger). Кнопка «Restore from Cloud» в блоке Cloud Sync (+ RUS/GR ключи: Restore from Cloud / Entries restored / Nothing to restore); тосты результата в App-обёртке, после restore — loadEntries. App.tsx тронут вне вайтлиста карты (проброс пропа — иначе кнопку не подключить). Ворота ✅; Playwright (реальный Chromium): кнопка видна/активна, без .env — понятный error-тост, в Strict Offline — disabled. Сценарий с живым Supabase — после P0-4, как у D1 |

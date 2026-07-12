@@ -17,6 +17,7 @@ interface SettingsScreenProps {
   syncErrorMsg: string;
   lastSynced: string;
   syncTapActual: { trigger: () => void; isConfirming: boolean };
+  restoreFromCloud: () => void;
   deleteAllTap: { trigger: () => void; isConfirming: boolean };
   toggleTheme: () => void;
   exportCSV: () => void;
@@ -32,7 +33,7 @@ interface SettingsScreenProps {
 
 export const SettingsScreen = ({
   settings, setSettings, t, curSym, haptic, syncStatus, syncErrorMsg,
-  lastSynced, syncTapActual, deleteAllTap, toggleTheme,
+  lastSynced, syncTapActual, restoreFromCloud, deleteAllTap, toggleTheme,
   exportCSV, exportTXT, exportPDF, exportICS, shareToTelegram, shareBackup, isExporting, addToast
 }: SettingsScreenProps) => {
   const { isInstallable, promptInstall } = usePWAInstall();
@@ -481,6 +482,14 @@ export const SettingsScreen = ({
               ) : (
                 <><RefreshCw size={14} /> {t('Sync')}</>
               )}
+            </button>
+
+            <button
+              onClick={() => { haptic(10); restoreFromCloud(); }}
+              disabled={syncStatus === 'syncing' || settings.strictOfflineMode}
+              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 bg-[var(--bg)] border border-[var(--b)] text-[var(--t1)] shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
+            >
+              <Download size={14} /> {t('Restore from Cloud')}
             </button>
           </div>
         </div>

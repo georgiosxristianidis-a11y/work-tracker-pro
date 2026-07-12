@@ -11,7 +11,7 @@
 | **Аудит** | P0: 2026-07-05 · ядро/архитектура: 2026-07-10 (Fable 5, пре-деплой) |
 | **Ворота после каждой карты** | `npm run lint && npm run build` (+ указанный в карте verify) → коммит |
 
-**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · 🟩 D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ · 🟩 P1-2 · 🟩 D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3
+**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · 🟩 D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ · 🟩 P1-2 · 🟩 D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3 · **аудит-2:** ⬜ S-1(блокер) · ⬜ S-3 · ⬜ UX-1 · ⬜ FX-1 · ⬜ D5 · ⬜ P2-4
 
 **🚀 Деплой-гейт:** деплоить можно только после D1 + D3 + P1-1 (код) и P0-4 (руками владельца). D2 — до публичного анонса «синхронизации».
 
@@ -114,6 +114,42 @@
 
 ---
 
+## 🔍 КАРТЫ ПО АУДИТУ 2026-07-12 (security + core + customer journey, Fable 5)
+
+## 🔴 S-1 — Защита /api/insight · 🔴 план Fable → 🔵 Opus код (деплой-блокер)
+- **🎯 Цель:** эндпоинт нельзя дёргать с чужого сайта и сжигать квоту Gemini.
+- **🐛 Факты:** нет проверки Origin; `targetLang` и `history` без валидации интерполируются в промпт (prompt injection + cost abuse); размер body не ограничен.
+- **📂 Файлы:** `api/insight.ts`, (опц.) `vercel.json`.
+- **📏 Правила:** `targetLang` — allowlist `['English','Russian','Greek']`; `history` — строка, обрезка ≤4000 симв.; Origin/Referer должен матчить прод-домен, иначе 403 без деталей; заметка владельцу: включить Vercel WAF/ratelimit на `/api/*`.
+- **🔍 Verify:** curl с чужим Origin → 403; body 1MB → 400; легитимный запрос из приложения работает.
+
+## 🟠 S-3 — Security headers при деплое · 🔵 Sonnet/Opus
+- **📂 Файлы:** **новый** `vercel.json`: CSP (`script-src 'self'`; `connect-src 'self' https://*.supabase.co`), `frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`, минимальный Permissions-Policy.
+- **🔍 Verify:** securityheaders.com ≥ A; приложение и sync работают на проде.
+
+## 🟠 UX-1 — Честная модель сохранения редактора · 🔵 Opus
+- **🐛 Факты (journey):** правка часов автосейвится через 600мс, но закрытие модалки раньше таймера молча теряет правку (cleanup clearTimeout в EditorModal.tsx:60); свежеоткрытый день показывает «10h / €150» как будто записано, хотя закрытие без изменений ничего не создаёт.
+- **📏 Правка:** при закрытии — flush отложенного автосейва (если были изменения); незаписанный дефолт визуально отличать от сохранённой записи.
+- **📂 Файлы:** `src/components/EditorModal.tsx` (+ `App.tsx` только если нужен проброс).
+
+## 🔵 FX-1 — Вибрация уважает настройку во всех экшенах App · 🔵 Sonnet (10 мин)
+- **🐛 Факт:** `App.tsx` saveEntry/saveMultipleEntries/deleteEntry/handleOpenQuickFill зовут глобальный `haptic()` (enabled=true) вместо обёртки `h` — `hapticEnabled` игнорируется. Та же болезнь, что чинили в P1-1 для EditorModal.
+- **📏 Правка:** заменить вызовы на `h`, поправить deps. Только это.
+
+## 🔵 D5 — Дельта-синк вместо полного upsert · 🔴 Fable
+- **🐛 Факт:** каждый фоновый синк шлёт ВСЮ таблицу (`getAllEntries` → upsert) — O(N) сети каждые 5 мин и после каждого сейва.
+- **📏 Правка:** копить Set изменённых дат с последнего успешного синка (персистить), слать только их; после успеха — очищать. Ручной Sync может остаться полным (кнопка = «выровнять всё»).
+- **📂 Файлы:** `src/hooks/useSupabaseSync.ts`, `src/store/useAppStore.ts`.
+
+## 🟢 P2-4 — Perf/типы-гигиена по аудиту · 🟢 Gemini по списку
+- AI-кэш: ключ = вся history-строка → `${lastDate}-${count}-${lang}` (useAiInsight.ts:29).
+- `navClicks` из App → внутрь Navigation (сейчас каждый тап по навигации ререндерит всё дерево).
+- `restoreFromCloudAction`: по-строчные `db.saveEntry` → `saveMany` (после P2-3).
+- Self-host шрифта Epilogue, убрать preconnect/CDN Google Fonts (privacy-позиционирование + офлайн + LCP).
+- **новый** `src/vite-env.d.ts` (`/// <reference types="vite/client">` + typed env) → убрать `(import.meta as any)` в supabase.ts; `as any` у theme/language/currency в SettingsScreen (массивы `as const`); `usePowerSave` getBattery через типизированный интерфейс.
+
+---
+
 ## 🟩 Закрытые карты (сжато — детали в Журнале и git log)
 - **P0-0** `acfc3e8` — проект взят под git (раньше был ВНЕ контроля версий), ветка `fixes/p0`.
 - **P0-1** `f9acf45` — ключ Gemini только в `api/insight.ts` (Vercel, `process.env`); клиент → `fetch('/api/insight')`; `@google/genai` удалён.
@@ -135,6 +171,8 @@
 - [🔴 npx playwright test всем набором с дефолтными воркерами] -> ложные newPage-таймауты всех 8 тестов на этой машине -> [🟢 гонять с --workers=2; при падении сверять с baseline через git stash]
 - [🔴 rocket.spec / wand.spec] -> сломаны ещё ДО правок D1/D3 (wand ищет текст «Quick Fill Calendar», которого нет в UI) -> [🟢 тест-дрифт; чинить отдельной картой, не «заодно»]
 - [🔴 «Merge новее по updated_at» в спеке D2] -> локальные Entry без временных меток, а upsert не обновляет updated_at при update -> [🟢 restore = вставка отсутствующих локально дат, при конфликте локальная побеждает; настоящий LWW — вместе с email OTP и триггером на updated_at]
+- [🔴 Автоправка оставила литеральный «\n» в JSX SettingsScreen] -> мусорный текст виден пользователю над блоком Cloud Sync -> [🟢 после массовых правок агентов — скриншот-прогон Playwright, не только tsc]
+- [🔴 localStorage.clear() в ErrorBoundary] -> сносил supabase-сессию: анонимный uid = единственный ключ к облачному бэкапу, данные осиротели бы навсегда -> [🟢 при «reset» сохранять sb-* ключи; уборка хранилища — только селективная]
 - [🔴 Hardcoded MONTH_NAMES в useTrends] -> график всегда по-английски, независимо от языка -> [🟢 выбор словаря месяцев по settings.language внутри хука + settings.language в deps useMemo]
 - [🔴 В проекте не было @types/react] -> tsc молча считал весь JSX any; strict был физически невозможен -> [🟢 @types/react + @types/react-dom в devDeps; при «странно тихом» tsc первым делом проверять типы зависимостей]
 - [🔴 Живая проверка через Claude Browser-пану] -> в ней не тикает requestAnimationFrame: AnimatePresence mode="wait" не завершает exit, экраны «не переключаются» — ложная тревога о сломанной навигации -> [🟢 вживую проверять через Playwright (реальный Chromium); пана годится только для статики]
@@ -158,3 +196,4 @@
 | 2026-07-12 | D2 (вариант a — выбор владельца) | Fable 5 | `restoreFromCloudAction` в useSupabaseSync: pull всех строк user_id → вставка дат, отсутствующих локально; при конфликте локальная запись побеждает (у Entry нет меток времени — LWW по updated_at невозможен без изменения схемы, отклонение от спеки задокументировано в Ledger). Кнопка «Restore from Cloud» в блоке Cloud Sync (+ RUS/GR ключи: Restore from Cloud / Entries restored / Nothing to restore); тосты результата в App-обёртке, после restore — loadEntries. App.tsx тронут вне вайтлиста карты (проброс пропа — иначе кнопку не подключить). Ворота ✅; Playwright (реальный Chromium): кнопка видна/активна, без .env — понятный error-тост, в Strict Offline — disabled. Сценарий с живым Supabase — после P0-4, как у D1 |
 | 2026-07-12 | P1-2 | Fable 5 | `"strict": true` в tsconfig. Ключевое: в проекте отсутствовали @types/react/@types/react-dom — добавлены в devDeps (без них strict невозможен, весь JSX был any). Починено типами (0 × `as any`): CalendarScreenProps settings/setSettings → AppSettings; AnalyticsScreen aiLangOverride → `AppSettings['language'] \| null`; SettingsScreen lastSynced → `string \| null`; useTrends months — явный тип; useAppStore merge настроек через типизированный helper (`keyof AppSettings`); recharts Tooltip formatter → `Number(value ?? 0)`; perf-reporter `Suite \| undefined`. Удалён мёртвый проп exportLogoPNG из SettingsScreenProps (нигде не передавался и не использовался). Ворота ✅ |
 | 2026-07-12 | D4 | Fable 5 | useTrends: месяцы графика по settings.language (словарь выбирается внутри хука — settings уже параметр, сигнатуру не менял; language добавлен в deps useMemo). useTranslation RUS/GR: 'Strict Offline Mode', 'Disable cloud sync & AI requests' + 'Blocked by Paranoia Mode' (тоже висел без перевода в оверлее Cloud Sync); ключи D2/P1-1 были добавлены своими картами. Ворота ✅; Playwright: ENG 'Jul' / RUS 'Июл'+переведённый тумблер / GR 'Ιού' — все три языка живьём |
+| 2026-07-12 | Аудит-2 (security+core+journey) | Fable 5 | Security: /api/insight открыт (origin/лимиты/инъекция в промпт) → карта S-1 (деплой-блокер); нет security headers → S-3; XSS-векторов нет (innerHTML/eval — 0), RLS корректен, .env-гигиена ок. Core: write-амплификация сейвов (→P2-3), полный upsert на каждый синк (→D5), AI-кэш по history-строке, navClicks ререндерит всё дерево (→P2-4), haptic в App-экшенах игнорирует настройку (→FX-1). Journey (Playwright, 11 скриншотов, mobile): закрытие редактора <600мс после правки молча теряет её + дефолт «10h/€150» выглядит записанным (→UX-1). Починено сразу: литеральный «\n» в Settings UI; ErrorBoundary больше не сносит supabase-сессию при Reset (sb-* ключи сохраняются). Ворота ✅ |

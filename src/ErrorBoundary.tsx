@@ -49,7 +49,11 @@ export class ErrorBoundary extends React.Component<Props, State> {
               <button 
                 onClick={async () => {
                   if (confirm('This will wipe all local data. Are you sure?')) {
+                    // Keep the Supabase session keys: the anonymous uid is the only
+                    // link to the user's cloud backup — wiping it orphans those rows.
+                    const preserved = Object.entries(localStorage).filter(([k]) => k.startsWith('sb-'));
                     localStorage.clear();
+                    preserved.forEach(([k, v]) => localStorage.setItem(k, v));
                     const req = indexedDB.deleteDatabase('WorkTrackerProDB');
                     req.onsuccess = () => window.location.reload();
                     req.onerror = () => window.location.reload();

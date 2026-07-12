@@ -422,7 +422,7 @@ export const SettingsScreen = ({
             </div>
           </div>
         </div>
-\n        {/* Cloud Sync Block */}
+        {/* Cloud Sync Block */}
         <div className={`rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2 ${settings.strictOfflineMode ? 'opacity-50 grayscale' : ''}`}>
           <div className="flex flex-col px-4 py-3.5 mb-2 relative">
             {settings.strictOfflineMode && (

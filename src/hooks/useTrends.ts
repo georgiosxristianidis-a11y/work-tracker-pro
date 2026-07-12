@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { Entry } from '../lib/db';
-import { AppSettings, MONTH_NAMES } from '../constants';
+import { AppSettings, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../constants';
 
 export function useTrends(
   entries: Entry[],
@@ -29,6 +29,9 @@ export function useTrends(
     : 0;
 
   const chartData = useMemo(() => {
+    const monthNames = settings.language === 'RUS' ? MONTH_NAMES_RUS
+      : settings.language === 'GR' ? MONTH_NAMES_GR
+      : MONTH_NAMES;
     const months: {
       month: string; fullMonth: string; earnings: number;
       hours: number; daysWorked: number; velocity: number; goal: number;
@@ -38,7 +41,7 @@ export function useTrends(
       const d = new Date(viewDate.getFullYear(), viewDate.getMonth() - i, 1);
       const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       months.push({
-        month: MONTH_NAMES[d.getMonth()].slice(0, 3),
+        month: monthNames[d.getMonth()].slice(0, 3),
         fullMonth: mStr,
         earnings: 0,
         hours: 0,
@@ -62,7 +65,7 @@ export function useTrends(
     });
     
     return months;
-  }, [yearEntries, viewDate, settings.goal, calcEarnings, chartPeriod]);
+  }, [yearEntries, viewDate, settings.goal, settings.language, calcEarnings, chartPeriod]);
 
   return {
     calcEarnings,

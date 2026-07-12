@@ -29,7 +29,10 @@ export function useTrends(
     : 0;
 
   const chartData = useMemo(() => {
-    const months = [];
+    const months: {
+      month: string; fullMonth: string; earnings: number;
+      hours: number; daysWorked: number; velocity: number; goal: number;
+    }[] = [];
     const count = chartPeriod - 1;
     for (let i = count; i >= 0; i--) {
       const d = new Date(viewDate.getFullYear(), viewDate.getMonth() - i, 1);

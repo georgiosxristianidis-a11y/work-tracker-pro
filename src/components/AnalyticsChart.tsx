@@ -99,7 +99,7 @@ export default function AnalyticsChart({ chartData, curSym, goal, t, chartType =
                   cursor={{ stroke: 'var(--t3)', strokeWidth: 1, strokeDasharray: '4 4' }}
                   contentStyle={{ backgroundColor: 'var(--bg)', borderColor: 'var(--b)', borderRadius: '1rem', fontSize: '12px', fontWeight: 'bold', color: 'var(--t1)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: 'var(--a)' }}
-                  formatter={(value: number) => chartMetric === 'earnings' ? [`${curSym}${formatMoney(value)}`, t('Earned')] : chartMetric === 'velocity' ? [`${value}h/d`, t('Velocity')] : [`${value}h`, t('Hours')]}
+                  formatter={(value) => { const v = Number(value ?? 0); return chartMetric === 'earnings' ? [`${curSym}${formatMoney(v)}`, t('Earned')] : chartMetric === 'velocity' ? [`${v}h/d`, t('Velocity')] : [`${v}h`, t('Hours')]; }}
                 />
                 {chartMetric === 'earnings' && <ReferenceLine y={goal || 0} stroke="var(--a)" strokeDasharray="3 3" opacity={0.5} />}
                 <Area 
@@ -122,7 +122,7 @@ export default function AnalyticsChart({ chartData, curSym, goal, t, chartType =
                   cursor={{ fill: 'var(--b)' }}
                   contentStyle={{ backgroundColor: 'var(--bg)', borderColor: 'var(--b)', borderRadius: '1rem', fontSize: '12px', fontWeight: 'bold', color: 'var(--t1)' }}
                   itemStyle={{ color: 'var(--a)' }}
-                  formatter={(value: number) => chartMetric === 'earnings' ? [`${curSym}${formatMoney(value)}`, t('Earned')] : chartMetric === 'velocity' ? [`${value}h/d`, t('Velocity')] : [`${value}h`, t('Hours')]}
+                  formatter={(value) => { const v = Number(value ?? 0); return chartMetric === 'earnings' ? [`${curSym}${formatMoney(v)}`, t('Earned')] : chartMetric === 'velocity' ? [`${v}h/d`, t('Velocity')] : [`${v}h`, t('Hours')]; }}
                 />
                 {chartMetric === 'earnings' && <ReferenceLine y={goal || 0} stroke="var(--a)" strokeDasharray="3 3" opacity={0.5} />}
                 <Bar dataKey={chartMetric} radius={[4, 4, 0, 0]}>

@@ -9,8 +9,8 @@ const AnalyticsChart = React.lazy(() => import('./AnalyticsChart'));
 
 interface AnalyticsScreenProps {
   t: (key: string) => string;
-  aiLangOverride: string | null;
-  setAiLangOverride: React.Dispatch<React.SetStateAction<string | null>>;
+  aiLangOverride: AppSettings['language'] | null;
+  setAiLangOverride: React.Dispatch<React.SetStateAction<AppSettings['language'] | null>>;
   settings: AppSettings;
   haptic: (pattern?: number | number[]) => void;
   generateAiInsight: () => void;
@@ -57,7 +57,7 @@ export const AnalyticsScreen = ({
               haptic(10);
               const langs: ('ENG' | 'RUS' | 'GR')[] = ['ENG', 'RUS', 'GR'];
               const current = aiLangOverride || settings.language;
-              const nextLang = langs[(langs.indexOf(current as 'ENG'|'RUS'|'GR') + 1) % langs.length];
+              const nextLang = langs[(langs.indexOf(current) + 1) % langs.length];
               setAiLangOverride(nextLang);
             }}
             className="h-9 px-3 flex items-center justify-center rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] transition-colors text-xs font-black tracking-widest"

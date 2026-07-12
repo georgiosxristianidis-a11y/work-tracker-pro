@@ -86,11 +86,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       const savedSettings = await db.getSetting('settings', DEFAULT_SETTINGS);
       const mergedSettings = { ...DEFAULT_SETTINGS };
       if (savedSettings) {
-        Object.keys(savedSettings).forEach(key => {
+        const copyIfDefined = <K extends keyof AppSettings>(key: K) => {
           if (savedSettings[key] !== undefined) {
-            (mergedSettings as any)[key] = savedSettings[key];
+            mergedSettings[key] = savedSettings[key];
           }
-        });
+        };
+        (Object.keys(savedSettings) as (keyof AppSettings)[]).forEach(copyIfDefined);
       }
       set({ settings: mergedSettings });
       document.documentElement.className = mergedSettings.theme || 'dark';

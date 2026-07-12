@@ -15,7 +15,7 @@ interface SettingsScreenProps {
   haptic: (pattern?: number | number[], enabled?: boolean) => void;
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
   syncErrorMsg: string;
-  lastSynced: string;
+  lastSynced: string | null;
   syncTapActual: { trigger: () => void; isConfirming: boolean };
   restoreFromCloud: () => void;
   deleteAllTap: { trigger: () => void; isConfirming: boolean };
@@ -26,7 +26,6 @@ interface SettingsScreenProps {
   exportICS: () => void;
   shareToTelegram: (format?: 'summary' | 'txt' | 'csv' | 'json' | 'pdf') => void;
   shareBackup: () => void;
-  exportLogoPNG: () => void;
   isExporting: boolean;
   addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void;
 }

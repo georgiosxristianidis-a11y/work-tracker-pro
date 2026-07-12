@@ -9,7 +9,7 @@ class PerfReporter implements Reporter {
 
   onTestEnd(test: TestCase, result: TestResult) {
     // Find the nearest named suite for this test
-    let currentSuite = test.parent;
+    let currentSuite: Suite | undefined = test.parent;
     while (currentSuite && currentSuite.title === '') {
       currentSuite = currentSuite.parent;
     }

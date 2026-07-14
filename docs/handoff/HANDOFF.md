@@ -6,12 +6,13 @@
 | | |
 |---|---|
 | **Проект** | Work Tracker Pro · PWA учёта рабочих часов |
-| **Код** | `C:/Users/Zephyrus/Downloads/qBit/work-tracker-pro` · git: ветка `fixes/p0` (база `main`), дерево чистое |
+| **Код** | `C:/Users/Zephyrus/Downloads/qBit/work-tracker-pro` · GitHub: `georgiosxristianidis-a11y/work-tracker-pro` (public, default branch `main`) |
+| **Прод** | https://work-tracker-pro-kohl.vercel.app (Vercel, auto-deploy из `main`; `GEMINI_API_KEY` НЕ задан — намеренно, до S-1) |
 | **Стек** | React 19 · Vite 6 · Tailwind v4 · Zustand · IndexedDB · Supabase (RLS+anon auth) · Gemini через `/api/insight` |
 | **Аудит** | P0: 2026-07-05 · ядро/архитектура: 2026-07-10 (Fable 5, пре-деплой) |
 | **Ворота после каждой карты** | `npm run lint && npm run build` (+ указанный в карте verify) → коммит |
 
-**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · 🟩 D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ · 🟩 P1-2 · 🟩 D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3 · **аудит-2:** ⬜ S-1(блокер) · ⬜ S-3 · ⬜ UX-1 · ⬜ FX-1 · ⬜ D5 · ⬜ P2-4
+**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · 🟩 D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ (2026-07-13, live) · 🟩 P1-2 · 🟩 D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3 · **аудит-2:** ⬜ S-1(блокер) · ⬜ S-3 · ⬜ UX-1 · ⬜ FX-1 · ⬜ D5 · ⬜ P2-4
 
 **🚀 Деплой-гейт:** деплоить можно только после D1 + D3 + P1-1 (код) и P0-4 (руками владельца). D2 — до публичного анонса «синхронизации».
 
@@ -158,6 +159,7 @@
 
 ## 🔴 MISTAKE LEDGER (живой лог — пополнять по Auto-Ledger)
 ```
+- [🔴 motion.circle/motion.line в Navigation.tsx без initial] -> в production-сборке (не в dev-сервере!) framer-motion иногда не мог прочитать стартовое cx/cy/y2 из ещё не отрисованного DOM -> "undefined" в SVG-атрибуты, 20 console-error за 3с простоя, нестабильный hit-test нав-бара -> [🟢 initial={false} на все motion.circle/motion.line с animate по raw SVG-атрибутам; баг был НЕВИДИМ на dev-сервере и intermittent даже на prod-сборке (0/20 ошибок между прогонами) — только 5x повторный прогон против production build поймал race]
 - [🔴 API-ключ через vite define] -> ключ в клиентском бандле -> [🟢 serverless /api/insight]
 - [🔴 upsert onConflict:'date' без auth] -> юзеры перетирают друг друга -> [🟢 RLS + (user_id,date)]
 - [🔴 Chaos/dev-код в проде] -> SW прекэшировал chaos-скрипты юзерам (36→32 файла) -> [🟢 удалён; dev-тулзы только за import.meta.env.DEV]
@@ -197,3 +199,4 @@
 | 2026-07-12 | P1-2 | Fable 5 | `"strict": true` в tsconfig. Ключевое: в проекте отсутствовали @types/react/@types/react-dom — добавлены в devDeps (без них strict невозможен, весь JSX был any). Починено типами (0 × `as any`): CalendarScreenProps settings/setSettings → AppSettings; AnalyticsScreen aiLangOverride → `AppSettings['language'] \| null`; SettingsScreen lastSynced → `string \| null`; useTrends months — явный тип; useAppStore merge настроек через типизированный helper (`keyof AppSettings`); recharts Tooltip formatter → `Number(value ?? 0)`; perf-reporter `Suite \| undefined`. Удалён мёртвый проп exportLogoPNG из SettingsScreenProps (нигде не передавался и не использовался). Ворота ✅ |
 | 2026-07-12 | D4 | Fable 5 | useTrends: месяцы графика по settings.language (словарь выбирается внутри хука — settings уже параметр, сигнатуру не менял; language добавлен в deps useMemo). useTranslation RUS/GR: 'Strict Offline Mode', 'Disable cloud sync & AI requests' + 'Blocked by Paranoia Mode' (тоже висел без перевода в оверлее Cloud Sync); ключи D2/P1-1 были добавлены своими картами. Ворота ✅; Playwright: ENG 'Jul' / RUS 'Июл'+переведённый тумблер / GR 'Ιού' — все три языка живьём |
 | 2026-07-12 | Аудит-2 (security+core+journey) | Fable 5 | Security: /api/insight открыт (origin/лимиты/инъекция в промпт) → карта S-1 (деплой-блокер); нет security headers → S-3; XSS-векторов нет (innerHTML/eval — 0), RLS корректен, .env-гигиена ок. Core: write-амплификация сейвов (→P2-3), полный upsert на каждый синк (→D5), AI-кэш по history-строке, navClicks ререндерит всё дерево (→P2-4), haptic в App-экшенах игнорирует настройку (→FX-1). Journey (Playwright, 11 скриншотов, mobile): закрытие редактора <600мс после правки молча теряет её + дефолт «10h/€150» выглядит записанным (→UX-1). Починено сразу: литеральный «\n» в Settings UI; ErrorBoundary больше не сносит supabase-сессию при Reset (sb-* ключи сохраняются). Ворота ✅ |
+| 2026-07-13 | Деплой | Пользователь + Fable 5 | GitHub-репо `georgiosxristianidis-a11y/work-tracker-pro` (public) создан из `main` (история проверена — секретов нет, только .env.example); default branch → main. Vercel подключён владельцем через дашборд, env `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` заданы, `GEMINI_API_KEY` намеренно пропущен (после S-1). Прод: https://work-tracker-pro-kohl.vercel.app — живой. Smoke-verify (Playwright): манифест PWA ок, ключа Gemini в бандле нет, /api/insight отвечает 500 «API key not configured» (ожидаемо), навигация по 4 экранам работает. Найден и починен реальный prod-баг: `motion.circle`/`motion.line` в Navigation.tsx без `initial` — race condition в production-сборке (НЕ воспроизводится на dev-сервере), intermittent (0–20 console errors между прогонами) → `initial={false}` на все 4 анимируемых SVG-элемента; 5/5 повторных прогонов против локальной prod-сборки — чисто. Ворота ✅; коммит и redeploy — следующим шагом |

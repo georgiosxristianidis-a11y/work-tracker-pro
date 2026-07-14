@@ -33,7 +33,7 @@ export function Navigation({ t, navClicks, setNavClicks }: NavigationProps) {
               <motion.path d="M16 2v4" animate={{ y: navClicks.calendar % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 300 }} />
               <motion.path d="M8 2v4" animate={{ y: navClicks.calendar % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 300 }} />
               <path d="M3 10h18" />
-              <motion.circle cx={7} cy={14} r={1.5} fill="currentColor" stroke="none" animate={{ cx: 7 + ((navClicks.calendar) % 3) * 5, cy: 14 + Math.floor((navClicks.calendar % 6) / 3) * 4 }} transition={{ type: "spring", stiffness: 200, damping: 15 }} />
+              <motion.circle cx={7} cy={14} r={1.5} fill="currentColor" stroke="none" initial={false} animate={{ cx: 7 + ((navClicks.calendar) % 3) * 5, cy: 14 + Math.floor((navClicks.calendar % 6) / 3) * 4 }} transition={{ type: "spring", stiffness: 200, damping: 15 }} />
             </motion.svg>
           )
         },
@@ -42,9 +42,9 @@ export function Navigation({ t, navClicks, setNavClicks }: NavigationProps) {
           label: t('Chart'),
           icon: (
             <motion.svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-              <motion.line x1={6} y1={20} x2={6} y2={14} animate={{ y2: navClicks.chart % 2 !== 0 ? 8 : 14 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0 }} />
-              <motion.line x1={12} y1={20} x2={12} y2={6} animate={{ y2: navClicks.chart % 2 !== 0 ? 14 : 6 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.05 }} />
-              <motion.line x1={18} y1={20} x2={18} y2={12} animate={{ y2: navClicks.chart % 2 !== 0 ? 6 : 12 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.1 }} />
+              <motion.line x1={6} y1={20} x2={6} y2={14} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 8 : 14 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0 }} />
+              <motion.line x1={12} y1={20} x2={12} y2={6} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 14 : 6 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.05 }} />
+              <motion.line x1={18} y1={20} x2={18} y2={12} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 6 : 12 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.1 }} />
             </motion.svg>
           )
         },

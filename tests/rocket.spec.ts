@@ -11,8 +11,8 @@ test.describe('Rocket Zero State Test', () => {
     const rocketZero = page.locator('div[title="Start Work"]');
     await expect(rocketZero).toBeVisible();
 
-    // The grid should be invisible (opacity-0) when there are no hours
-    const statsGrid = page.locator('.grid.grid-cols-2.gap-4').first();
+    // The stats row should be invisible (opacity-0) when there are no hours
+    const statsGrid = page.getByTestId('monthly-stats');
     await expect(statsGrid).toHaveClass(/opacity-0/);
     
     // Interact with rocket to go to calendar

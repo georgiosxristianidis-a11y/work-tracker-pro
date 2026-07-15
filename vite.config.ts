@@ -41,10 +41,13 @@ export default defineConfig(({mode}) => {
           display: 'standalone',
           orientation: 'portrait',
           icons: [
-            { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
+            { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
+            { src: '/pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
           ]
         }
       })
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -57,7 +60,7 @@ export default defineConfig(({mode}) => {
             'vendor-react': ['react', 'react-dom'],
             'vendor-motion': ['motion'],
             'vendor-charts': ['recharts'],
-            'vendor-pdf': ['jspdf', 'jspdf-autotable', 'html2canvas']
+            'vendor-pdf': ['jspdf', 'jspdf-autotable']
           }
         }
       }

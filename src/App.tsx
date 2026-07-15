@@ -475,7 +475,7 @@ export default function App() {
           saveEntry={saveEntry}
           deleteEntryTap={deleteEntryTap}
           t={t}
-          haptic={haptic}
+          haptic={h}
         />
         
         <BulkAddModal

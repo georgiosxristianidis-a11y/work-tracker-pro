@@ -78,7 +78,7 @@ export default function App() {
 
   const curSym = settings.currency === 'RUB' ? '₽' : '€';
   
-  const h = (pattern: number | number[] = 30) => haptic(pattern, settings.hapticEnabled);
+  const h = useCallback((pattern: number | number[] = 30) => haptic(pattern, settings.hapticEnabled), [settings.hapticEnabled]);
 
   const t = useTranslation(settings.language);
 
@@ -193,22 +193,22 @@ export default function App() {
 
   // --- Actions ---
   const saveEntry = useCallback(async (date: string, hours: number) => {
-    haptic(20);
+    h(20);
     await storeSaveEntry(date, hours);
     scheduleBackgroundSync();
-  }, [haptic, storeSaveEntry, scheduleBackgroundSync]);
+  }, [h, storeSaveEntry, scheduleBackgroundSync]);
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
-    haptic([20, 20]);
+    h([20, 20]);
     for (const d of dates) {
       await storeSaveEntry(d, hours);
     }
     addToast(t('Entries added'), 'success');
     scheduleBackgroundSync();
-  }, [haptic, storeSaveEntry, addToast, t, scheduleBackgroundSync]);
+  }, [h, storeSaveEntry, addToast, t, scheduleBackgroundSync]);
 
   const deleteEntry = useCallback(async (date: string) => {
-    haptic([30, 50]);
+    h([30, 50]);
     await storeDeleteEntry(date);
     deleteEntryFromCloud(date);
     addToast(t('Entry deleted'), 'warning', {
@@ -219,7 +219,7 @@ export default function App() {
         scheduleBackgroundSync();
       }
     });
-  }, [haptic, storeDeleteEntry, deleteEntryFromCloud, addToast, t, scheduleBackgroundSync]);
+  }, [h, storeDeleteEntry, deleteEntryFromCloud, addToast, t, scheduleBackgroundSync]);
 
   const {
     selectedTemplate,
@@ -261,9 +261,9 @@ export default function App() {
   });
 
   const handleOpenQuickFill = useCallback(() => {
-    haptic(10);
+    h(10);
     setIsQuickFillOpen(true);
-  }, [haptic, setIsQuickFillOpen]);
+  }, [h, setIsQuickFillOpen]);
 
   const toggleTheme = async () => {
     const themes: ('light' | 'dark' | 'indigo')[] = ['light', 'dark', 'indigo'];

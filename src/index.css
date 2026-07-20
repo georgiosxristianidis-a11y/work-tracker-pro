@@ -1,7 +1,11 @@
 @import "tailwindcss";
+/* Self-hosted Epilogue (variable, Latin) — served from own origin so the CSP
+   can keep font-src 'self' and the app works offline. Replaces the former
+   Google Fonts CDN link in index.html. */
+@import "@fontsource-variable/epilogue/wght.css";
 
 @theme {
-  --font-sans: "Epilogue", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Epilogue Variable", ui-sans-serif, system-ui, sans-serif;
   
   --radius-card: 1.5rem;
   --radius-panel: 14px;

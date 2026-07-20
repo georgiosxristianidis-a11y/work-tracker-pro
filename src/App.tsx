@@ -274,7 +274,7 @@ export default function App() {
   // --- Renderers ---
   return (
     <MotionConfig reducedMotion={isPowerSaveMode ? 'always' : 'user'}>
-      <div className="flex items-center justify-center min-h-screen bg-[#111] font-['Epilogue']">
+      <div className="flex items-center justify-center min-h-screen bg-[#111] font-['Epilogue_Variable']">
         <AnimatePresence>
           {isLoading && <SplashScreen />}
         </AnimatePresence>

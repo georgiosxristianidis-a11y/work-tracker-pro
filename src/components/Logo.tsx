@@ -21,7 +21,7 @@ export const Logo = ({ className = "w-6 h-6" }: { className?: string }) => (
     <rect width="100" height="100" rx="18" fill="#15171e" />
     <rect x="5" y="5" width="90" height="90" rx="18" stroke="#f4f4f5" strokeWidth="10" mask="url(#logo-mask)" />
     
-    <text x="50" y="53" fontFamily="Epilogue, sans-serif" fontSize="50" fontWeight="900" textAnchor="middle" dominantBaseline="middle" fill="#f4f4f5">27</text>
+    <text x="50" y="53" fontFamily="'Epilogue Variable', sans-serif" fontSize="50" fontWeight="900" textAnchor="middle" dominantBaseline="middle" fill="#f4f4f5">27</text>
     
     <g clipPath="url(#logo-clip)">
       <rect x="5" y="90" width="90" height="10" fill="#d4af37"/>

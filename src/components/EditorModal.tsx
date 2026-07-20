@@ -26,39 +26,59 @@ export const EditorModal = ({
   t,
   haptic
 }: EditorModalProps) => {
-  const { editorDate, setEditorDate, editorHours, setEditorHours } = useAppStore();
+  const { editorDate, setEditorDate, editorHours, setEditorHours, allEntries } = useAppStore();
   const [showSaveAnim, setShowSaveAnim] = useState(false);
   const [showDeleteAnim, setShowDeleteAnim] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showAutoSaved, setShowAutoSaved] = useState(false);
   const isFirstRender = useRef(true);
+  // Holds the latest hours change that has not yet been persisted, so closing
+  // the modal before the 600ms autosave timer fires can flush it instead of
+  // losing the edit.
+  const pendingSaveRef = useRef<{ date: string; hours: number } | null>(null);
+
+  // A day with no stored entry is an unsaved default, not a recorded value.
+  const isExistingEntry = editorDate ? allEntries.some(e => e.date === editorDate) : false;
 
   useEffect(() => {
     if (!editorDate) {
       isFirstRender.current = true;
+      pendingSaveRef.current = null;
       return;
     }
-    
+
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    
+
     setIsAutoSaving(true);
     setShowAutoSaved(false);
-    
+    pendingSaveRef.current = { date: editorDate, hours: editorHours };
+
     const timeout = setTimeout(async () => {
       await saveEntry(editorDate, editorHours);
+      pendingSaveRef.current = null;
       setIsAutoSaving(false);
       setShowAutoSaved(true);
-      
+
       setTimeout(() => {
         setShowAutoSaved(false);
       }, 2000);
     }, 600);
-    
+
     return () => clearTimeout(timeout);
   }, [editorHours, editorDate, saveEntry]);
+
+  // Persist any pending (debounced) edit before dismissing the modal, then close.
+  const closeEditor = () => {
+    const pending = pendingSaveRef.current;
+    if (pending) {
+      pendingSaveRef.current = null;
+      void saveEntry(pending.date, pending.hours);
+    }
+    setEditorDate(null);
+  };
 
   return (
     <>
@@ -69,7 +89,7 @@ export const EditorModal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/70 z-[100] flex items-end"
-            onClick={() => setEditorDate(null)}
+            onClick={closeEditor}
           >
             <motion.div 
               initial={{ y: '100%' }}
@@ -81,7 +101,7 @@ export const EditorModal = ({
               dragElastic={{ top: 0, bottom: 0.8 }}
               onDragEnd={(e: any, { offset, velocity }: any) => {
                 if (offset.y > 50 || velocity.y > 200) {
-                  setEditorDate(null);
+                  closeEditor();
                 }
               }}
               className="w-full bg-[var(--bg)] rounded-t-[2.5rem] p-8 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8 shadow-[0_-20px_40px_rgba(0,0,0,0.1)]"
@@ -96,7 +116,9 @@ export const EditorModal = ({
                       return `${d} - ${m} - ${y}`;
                     })()}
                   </h2>
-                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--t3)]">Log Work Hours</p>
+                  <p className={`text-xs font-bold uppercase tracking-widest ${isExistingEntry ? 'text-[var(--t3)]' : 'text-[var(--danger)]'}`}>
+                    {isExistingEntry ? 'Log Work Hours' : 'Not Saved Yet'}
+                  </p>
                 </div>
                 
                 <div className="h-8 flex items-center justify-center">

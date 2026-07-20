@@ -124,9 +124,28 @@
 - **📏 Правила:** `targetLang` — allowlist `['English','Russian','Greek']`; `history` — строка, обрезка ≤4000 симв.; Origin/Referer должен матчить прод-домен, иначе 403 без деталей; заметка владельцу: включить Vercel WAF/ratelimit на `/api/*`.
 - **🔍 Verify:** curl с чужим Origin → 403; body 1MB → 400; легитимный запрос из приложения работает.
 
-## 🟠 S-3 — Security headers при деплое · 🔵 Sonnet/Opus
-- **📂 Файлы:** **новый** `vercel.json`: CSP (`script-src 'self'`; `connect-src 'self' https://*.supabase.co`), `frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`, минимальный Permissions-Policy.
-- **🔍 Verify:** securityheaders.com ≥ A; приложение и sync работают на проде.
+## 🟠 S-3 — Security headers через `vercel.json` · 🔵 Opus (карта подготовлена 2026-07-20, сверена с кодом)
+- **🎯 Цель:** прод отдаёт строгие security-заголовки (в первую очередь CSP), НЕ ломая шрифт, синк, PDF/CSV/JSON-экспорт и анимации.
+- **🐛 Факты (сверено с кодом 2026-07-20):**
+  - `vercel.json` в репо НЕТ — создаётся с нуля (единственный источник заголовков; VitePWA-манифест не трогать).
+  - Наивный CSP из прежней версии карты (`script-src 'self'; connect-src 'self' https://*.supabase.co`) **сломал бы живой прод** по трём осям:
+    1. Шрифт **Epilogue грузится с Google Fonts CDN** — `index.html`: `preconnect`/`preload` на `fonts.googleapis.com` (CSS) + `fonts.gstatic.com` (woff2). `style-src 'self'`/`font-src 'self'` убьют шрифт.
+    2. На `<link rel=preload>` шрифта висит инлайн-обработчик `onload="this.onload=null;this.rel='stylesheet'"` → строгий `script-src 'self'` его заблокирует, swap preload→stylesheet не произойдёт (в dist подтверждено: инлайн-`<script>`/`<style>` блоков 0, но инлайн-`onload` есть).
+    3. **framer-motion** (`motion/react`, широко: App, AnalyticsChart/Screen, EditorModal и др.) пишет инлайн `style=""` в рантайме → обязателен `style-src 'unsafe-inline'`, иначе анимации/раскладка ломаются.
+  - Синк: Supabase REST+Auth на `https://*.supabase.co`; realtime/wss НЕ используется (0 `.subscribe`/channel) → `connect-src 'self' https://*.supabase.co` достаточно. AI-инсайт — свой origin (`/api/insight`, покрыт `'self'`). Env: `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`.
+  - Экспорт (`src/hooks/useDataExport.ts`): скачивание через `Blob`+`URL.createObjectURL` (`blob:`) → нужен `img-src 'self' data: blob:`.
+  - `https://t.me/share/url` в src — навигационная ссылка шаринга (не fetch), connect-src не трогает; строгую навигацию не ставить так, чтобы блокнуть open в новой вкладке. `manifest.webmanifest` → `manifest-src 'self'`.
+- **🔀 Развилка (решение владельца ДО сессии) — рекомендация Вариант A:**
+  - **Вариант A (рекомендую):** сперва самхост Epilogue (это же половина карты P2-4): `public/fonts/*.woff2` + `@font-face` в `src/index.css`, убрать 3 внешних `<link>` и инлайн `onload` из `index.html`. Тогда CSP чистый и строгий:
+    ```
+    default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+    ```
+    (`style-src 'unsafe-inline'` остаётся из-за motion; `script-src` строгий — БЕЗ `'unsafe-inline'`.) Плюсы: privacy (нет утечки IP на Google), офлайн, LCP, самый строгий CSP, соответствует DNA (self-hosted шрифты).
+  - **Вариант B:** оставить Google Fonts CDN → CSP слабее: `script-src 'self' 'unsafe-inline'` (ради `onload`), `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`, `font-src 'self' https://fonts.gstatic.com`. `'unsafe-inline'` в script-src обесценивает половину защиты — НЕ рекомендую.
+- **📂 Файлы:** **новый** `vercel.json` (`headers` → CSP + сопутствующие). При Варианте A ещё: `public/fonts/*.woff2` (новые), `src/index.css` (`@font-face`), `index.html` (убрать preconnect/preload/noscript Google Fonts + инлайн `onload`).
+- **📏 Правила:** заголовки — HTTP-заголовками через `vercel.json`, НЕ `<meta>`. Помимо CSP добавить: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, минимальный `Permissions-Policy` (напр. `camera=(), microphone=(), geolocation=()`), `X-Frame-Options: DENY` (дубль frame-ancestors для старых браузеров). HSTS Vercel ставит сам — не дублировать. Скоуп строго по варианту, рефакторинга вокруг нет.
+- **✅ Done:** securityheaders.com ≥ A; на живом проде: Epilogue рендерится, Supabase-синк (запись/удаление/restore) работает, экспорт скачивается, навигация/анимации целы, DevTools Console — 0 CSP-violation.
+- **🔍 Verify:** ворота (`npm run lint && npm run build`) + `npx playwright test --workers=2` (шрифт/навигация/сейв не сломаны) + `curl -I` прод-URL (заголовки на месте) + Console 0 CSP-ошибок. Заметка владельцу из S-1 в силе: включить Vercel WAF/rate-limit на `/api/*`.
 
 ## 🟠 UX-1 — Честная модель сохранения редактора · 🔵 Opus
 - **🐛 Факты (journey):** правка часов автосейвится через 600мс, но закрытие модалки раньше таймера молча теряет правку (cleanup clearTimeout в EditorModal.tsx:60); свежеоткрытый день показывает «10h / €150» как будто записано, хотя закрытие без изменений ничего не создаёт.
@@ -146,7 +165,7 @@
 - AI-кэш: ключ = вся history-строка → `${lastDate}-${count}-${lang}` (useAiInsight.ts:29).
 - `navClicks` из App → внутрь Navigation (сейчас каждый тап по навигации ререндерит всё дерево).
 - `restoreFromCloudAction`: по-строчные `db.saveEntry` → `saveMany` (после P2-3).
-- Self-host шрифта Epilogue, убрать preconnect/CDN Google Fonts (privacy-позиционирование + офлайн + LCP).
+- Self-host шрифта Epilogue, убрать preconnect/CDN Google Fonts (privacy-позиционирование + офлайн + LCP). ⚠️ Если S-3 пойдёт по Варианту A — этот пункт закрывается там; не делать дважды.
 - **новый** `src/vite-env.d.ts` (`/// <reference types="vite/client">` + typed env) → убрать `(import.meta as any)` в supabase.ts; `as any` у theme/language/currency в SettingsScreen (массивы `as const`); `usePowerSave` getBattery через типизированный интерфейс.
 
 ---

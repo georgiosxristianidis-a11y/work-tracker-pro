@@ -32,17 +32,41 @@ export const useSupabaseSync = ({
 
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
-    setSyncStatus('syncing');
 
     try {
+      const allEntries = await db.getAllEntries();
+
+      // Delta sync (card D5): background (silent) syncs upload only the rows that
+      // changed since the last successful sync; the manual Sync stays a full
+      // upsert to realign everything ("sync all"). Deletions are mirrored
+      // separately (deleteEntryFromCloud / clearCloudData) — here we only diff
+      // upserts. The snapshot is date -> hours as last pushed to the cloud.
+      const prevSnapshot = await db.getSetting<Record<string, number>>('syncSnapshot', {});
+      const nextSnapshot: Record<string, number> = {};
+      for (const e of allEntries) nextSnapshot[e.date] = e.hours;
+
+      const toUpload = silent
+        ? allEntries.filter(e => prevSnapshot[e.date] !== e.hours)
+        : allEntries;
+
+      if (silent && toUpload.length === 0) {
+        // No upserts to push. Persist the snapshot anyway so dates deleted since
+        // the last sync drop out of it (a later re-add of the same date/hours is
+        // then detected as a change); skip the network round-trip — the point of D5.
+        await db.setSetting('syncSnapshot', nextSnapshot);
+        isSyncingRef.current = false;
+        return;
+      }
+
+      setSyncStatus('syncing');
+
       const userId = await ensureAuth();
       if (!userId) throw new Error('Could not establish a Supabase session.');
 
-      const allEntries = await db.getAllEntries();
       const device_id = getDeviceId();
 
-      if (allEntries.length > 0) {
-        const payload = allEntries.map(e => {
+      if (toUpload.length > 0) {
+        const payload = toUpload.map(e => {
           return { ...e, user_id: userId, device_id };
         });
 
@@ -51,6 +75,10 @@ export const useSupabaseSync = ({
           .upsert(payload, { onConflict: 'user_id,date' });
         if (error) throw error;
       }
+
+      // Record what the cloud now reflects so the next background sync only sends
+      // further changes.
+      await db.setSetting('syncSnapshot', nextSnapshot);
 
       setSyncStatus('success');
       setSyncErrorMsg('');

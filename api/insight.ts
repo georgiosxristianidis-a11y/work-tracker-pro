@@ -13,10 +13,20 @@ function isAllowedOrigin(req: Request): boolean {
   // (browsers always send Origin on cross-origin POST; the app is a browser client).
   const source = req.headers.get('origin') || req.headers.get('referer');
   if (!source) return false;
-  if (source.startsWith(PROD_ORIGIN)) return true;
-  // Non-production deployments (vercel dev / preview): allow localhost and preview URLs
-  if (process.env.VERCEL_ENV !== 'production') {
-    return /^https?:\/\/localhost(:\d+)?\//.test(source + '/') || source.includes('.vercel.app');
+  try {
+    const url = new URL(source);
+    if (url.origin === PROD_ORIGIN) return true;
+    // Non-production deployments (vercel dev / preview): allow localhost and preview URLs
+    if (process.env.VERCEL_ENV !== 'production') {
+      const host = url.hostname;
+      return (
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host.endsWith('.vercel.app')
+      );
+    }
+  } catch {
+    return false;
   }
   return false;
 }

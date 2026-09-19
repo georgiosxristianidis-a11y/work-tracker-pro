@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
-import { db } from '../lib/db';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
@@ -65,7 +64,6 @@ export const SettingsScreen = ({
             if (devTapCount >= 6) {
               const nextState = !settings.developerMode;
               setSettings(s => ({ ...s, developerMode: nextState }));
-              db.setSetting('settings', { ...settings, developerMode: nextState });
               addToast(nextState ? "Developer Mode Unlocked" : "Developer Mode Locked", "success");
               setDevTapCount(0);
             } else {
@@ -206,7 +204,7 @@ export const SettingsScreen = ({
                 </div>
               </div>
 
-              <motion.button onClick={async () => { await db.setSetting('settings', settings); addToast(t('Save'), 'success'); haptic(10); }} className="w-full h-14 rounded-panel bg-[var(--t1)] text-[var(--bg)] font-black text-xs mt-6 mb-2 transition-all shadow-md active:scale-95 flex items-center justify-center leading-none">
+              <motion.button onClick={() => { setSettings({ ...settings }); addToast(t('Save'), 'success'); haptic(10); }} className="w-full h-14 rounded-panel bg-[var(--t1)] text-[var(--bg)] font-black text-xs mt-6 mb-2 transition-all shadow-md active:scale-95 flex items-center justify-center leading-none">
                 {t('Save')}
               </motion.button>
             </div>
@@ -236,8 +234,6 @@ export const SettingsScreen = ({
                       onClick={() => {
                         const newSettings = { ...settings, theme: th as any };
                         setSettings(newSettings);
-                        document.documentElement.className = th;
-                        db.setSetting('settings', newSettings);
                         haptic(10);
                       }}
                       className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.theme === th ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}

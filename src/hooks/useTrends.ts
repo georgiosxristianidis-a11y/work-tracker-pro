@@ -4,7 +4,7 @@ import { AppSettings, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../co
 
 export function useTrends(
   entries: Entry[],
-  yearEntries: Entry[],
+  historyEntries: Entry[],
   settings: AppSettings,
   viewDate: Date,
   chartPeriod: number
@@ -51,7 +51,7 @@ export function useTrends(
       });
     }
     
-    yearEntries.forEach(e => {
+    historyEntries.forEach(e => {
       const m = months.find(m => m.fullMonth === e.date.slice(0, 7));
       if (m) {
         m.earnings += calcEarnings(e.hours) || 0;
@@ -65,7 +65,7 @@ export function useTrends(
     });
     
     return months;
-  }, [yearEntries, viewDate, settings.goal, settings.language, calcEarnings, chartPeriod]);
+  }, [historyEntries, viewDate, settings.goal, settings.language, calcEarnings, chartPeriod]);
 
   return {
     calcEarnings,

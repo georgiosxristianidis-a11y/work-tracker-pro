@@ -89,11 +89,7 @@ export const useSupabaseSync = ({
         minute: '2-digit' 
       });
       setLastSynced(now);
-      setSettings(s => {
-        const newSettings = { ...s, lastSync: now };
-        db.setSetting('settings', newSettings);
-        return newSettings;
-      });
+      setSettings(s => ({ ...s, lastSync: now }));
       
       // Removed addToast here to prevent duplicate success toasts when saving
       

@@ -121,12 +121,19 @@ export default function App() {
   };
 
   useEffect(() => {
+    const theme = settings.theme || 'dark';
+    if (document.documentElement.className !== theme) {
+      document.documentElement.className = theme;
+    }
+  }, [settings.theme]);
+
+  useEffect(() => {
     if (isAuthReady) loadEntries();
   }, [viewDate, isAuthReady, loadEntries]);
 
   const { calcEarnings, totalEarned, totalHours, goalPct, chartData } = useTrends(
     entries,
-    yearEntries,
+    allEntries,
     settings,
     viewDate,
     chartPeriod

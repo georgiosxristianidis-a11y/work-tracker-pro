@@ -73,7 +73,6 @@ export default function App() {
 
   const { toasts, addToast, removeToast } = useToast();
   const [excludeSundays, setExcludeSundays] = useState(true);
-  const [navClicks, setNavClicks] = useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
   const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
 
   const curSym = settings.currency === 'RUB' ? '₽' : '€';
@@ -383,7 +382,7 @@ export default function App() {
           </AnimatePresence>
         </div>
 
-        <Navigation t={t} navClicks={navClicks} setNavClicks={setNavClicks} />
+        <Navigation t={t} />
 
         {/* Quick Fill Sheet */}
         <QuickFillModal

@@ -4,12 +4,12 @@ import { useAppStore } from '../store/useAppStore';
 
 interface NavigationProps {
   t: (key: string) => string;
-  navClicks: { home: number; calendar: number; chart: number; total: number; settings: number };
-  setNavClicks: React.Dispatch<React.SetStateAction<any>>;
 }
 
-export function Navigation({ t, navClicks, setNavClicks }: NavigationProps) {
+export function Navigation({ t }: NavigationProps) {
   const { screen, setScreen } = useAppStore();
+  const [navClicks, setNavClicks] = React.useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
+
 
   return (
     <nav className="absolute bottom-0 left-0 right-0 h-[calc(80px+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-[var(--bg)] sm:rounded-b-[41px] flex items-center px-2 z-[50] border-t border-[var(--b)] shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">

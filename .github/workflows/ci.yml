@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-autobump-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -20,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
@@ -47,7 +51,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Configure Git
@@ -57,6 +61,7 @@ jobs:
 
       - name: Bump patch version
         run: |
+          git pull origin main --rebase
           npm version patch --no-git-tag-version
           NEW_VERSION=$(node -p "require('./package.json').version")
           git add package.json package-lock.json

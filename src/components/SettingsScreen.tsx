@@ -228,11 +228,11 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Theme')}</span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                  {['light', 'dark', 'indigo'].map(th => (
+                  {(['light', 'dark', 'indigo'] as const).map(th => (
                     <button 
                       key={th}
                       onClick={() => {
-                        const newSettings = { ...settings, theme: th as any };
+                        const newSettings = { ...settings, theme: th };
                         setSettings(newSettings);
                         haptic(10);
                       }}
@@ -247,10 +247,10 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Language')}</span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                  {['ENG', 'RUS', 'GR'].map(lang => (
+                  {(['ENG', 'RUS', 'GR'] as const).map(lang => (
                     <button 
                       key={lang}
-                      onClick={() => { setSettings(s => ({ ...s, language: lang as any })); haptic(10); }}
+                      onClick={() => { setSettings(s => ({ ...s, language: lang })); haptic(10); }}
                       className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.language === lang ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
                     >
                       {lang}
@@ -262,10 +262,10 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Currency')}</span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                  {['EUR', 'RUB'].map(cur => (
+                  {(['EUR', 'RUB'] as const).map(cur => (
                     <button 
                       key={cur}
-                      onClick={() => { setSettings(s => ({ ...s, currency: cur as any })); haptic(10); }}
+                      onClick={() => { setSettings(s => ({ ...s, currency: cur })); haptic(10); }}
                       className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.currency === cur ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
                     >
                       {cur}

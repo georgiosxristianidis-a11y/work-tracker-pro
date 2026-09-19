@@ -18,9 +18,9 @@ test.describe('Save Button Test', () => {
 
     // Hover over it
     await saveBtn.hover();
-    await page.waitForTimeout(500);
 
     // Save
     await saveBtn.click();
+    await expect(saveBtn).not.toBeVisible();
   });
 });

@@ -14,9 +14,6 @@ test.describe('Animated Wand & Quick Fill', () => {
 
     // Hover over Quick Fill to trigger animation
     await quickFillBtn.hover();
-    
-    // Wait for the hover animation to start (visual testing)
-    await page.waitForTimeout(500);
 
     // Click to open modal
     await quickFillBtn.click();

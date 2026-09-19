@@ -17,17 +17,10 @@ test.describe('Animations Test', () => {
 
     // Hover over the button
     await quickFillBtn.hover();
-    
-    // Wait for animation
-    await page.waitForTimeout(300);
-
-    // We can't strictly assert SVG transform values easily without complex evaluation,
-    // but we can ensure no errors are thrown and the element remains visible.
     await expect(wandSvg).toBeVisible();
     
     // Tap
     await quickFillBtn.dispatchEvent('pointerdown');
-    await page.waitForTimeout(300);
     await expect(wandSvg).toBeVisible();
     await quickFillBtn.dispatchEvent('pointerup');
   });
@@ -47,12 +40,10 @@ test.describe('Animations Test', () => {
 
     // Hover
     await deleteBtn.hover();
-    await page.waitForTimeout(300);
     await expect(trashSvg).toBeVisible();
     
     // Click (triggers confirm state)
     await deleteBtn.click();
-    await page.waitForTimeout(300);
     
     // Check if the text changed to "Tap to Confirm Wipe"
     await expect(page.locator('button:has-text("Tap to Confirm Wipe")')).toBeVisible();

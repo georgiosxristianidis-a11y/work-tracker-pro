@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
@@ -79,7 +80,11 @@ function checkDiff() {
 
 function main() {
   // 1. TypeScript Check
-  const tscRes = runCommand('npm run lint');
+  const tscPath = path.join(projectRoot, 'node_modules/typescript/lib/tsc.js');
+  const tscCmd = fs.existsSync(tscPath)
+    ? `node "${tscPath}" --noEmit`
+    : 'npx tsc --noEmit';
+  const tscRes = runCommand(tscCmd);
   if (!tscRes.success) {
     console.error('[GATE] FAIL: TypeScript check failed (exit 1)');
     console.error(filterNoise(tscRes.output));
@@ -87,7 +92,11 @@ function main() {
   }
 
   // 2. Vite Build Check
-  const buildRes = runCommand('npm run build');
+  const vitePath = path.join(projectRoot, 'node_modules/vite/bin/vite.js');
+  const viteCmd = fs.existsSync(vitePath)
+    ? `node "${vitePath}" build`
+    : 'npx vite build';
+  const buildRes = runCommand(viteCmd);
   if (!buildRes.success) {
     console.error('[GATE] FAIL: Build failed (exit 1)');
     console.error(filterNoise(buildRes.output));

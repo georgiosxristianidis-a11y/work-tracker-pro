@@ -721,7 +721,7 @@ export const SettingsScreen = ({
         )}
         {/* Footer Area */}
         <div className="flex flex-col items-center justify-center pt-6 pb-8 gap-4">
-          <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--t3)] opacity-40">Version V1.024</div>
+          <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--t3)] opacity-40">v{__APP_VERSION__}</div>
         </div>
       </div>
     </div>

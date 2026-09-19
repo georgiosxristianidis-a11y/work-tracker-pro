@@ -1,0 +1,20 @@
+---
+description: Rules for State Management, IndexedDB, and Custom Hooks
+globs: ["src/store/**/*.ts", "src/hooks/**/*.ts", "src/lib/**/*.ts"]
+---
+
+# State & Data Layer Architecture Rules
+
+When modifying stores, custom hooks, or persistence utilities:
+
+1. **Separation of Concerns (Logic vs. DOM)**:
+   - Logic modules and hooks must remain completely free of DOM/window manipulation.
+   - Do not manipulate `document.body` or classes directly inside stores or data hooks.
+
+2. **Offline-First & Idempotence**:
+   - All persistence must be resilient to offline operation (IndexedDB first, Supabase background sync secondary).
+   - Sync snapshots: use bounded diff snapshots rather than full table upserts on every write.
+
+3. **Strict Typings**:
+   - Return typed payloads and errors.
+   - No `any` in state shapes or hook return values.

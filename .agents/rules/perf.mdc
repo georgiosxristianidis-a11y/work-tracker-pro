@@ -1,0 +1,17 @@
+---
+description: Rules for Performance, Memoization, and Caching
+globs: ["src/**/*.tsx", "src/**/*.ts"]
+---
+
+# Performance & Token Hygiene Rules
+
+1. **Stable Callbacks & Computations**:
+   - Wrap dynamic calculations across arrays with `useMemo`.
+   - Wrap event handlers passed to child memoized components with `useCallback`.
+
+2. **Compact Cache Keys**:
+   - Never use unbounded multi-kilobyte strings (like raw serialized JSON or full history text) as cache keys in memory.
+   - Use bounded hashes or composite keys: `${firstDate}_${lastDate}_${count}_${targetLang}`.
+
+3. **AST Examination First**:
+   - Before reading any file > 150 lines, run `npm run ast outline <file>` to inspect interface boundaries.

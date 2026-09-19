@@ -25,8 +25,33 @@ function runCommand(cmd, options = {}) {
   }
 }
 
-function filterNoise(rawText, maxLines = 12) {
+function filterNoise(rawText, maxLines = 14) {
   if (!rawText) return 'Unknown error (empty output)';
+  
+  // Cursor-style LSP diagnostic parsing: file(line,col): error TSXXXX: message
+  const tsErrorRegex = /^([^\s(]+)\((\d+),(\d+)\):\s*error\s*(TS\d+):\s*(.+)$/gm;
+  const diagnostics = [];
+  let match;
+  while ((match = tsErrorRegex.exec(rawText)) !== null) {
+    const [, relFile, lineStr, colStr, code, msg] = match;
+    const lineNum = parseInt(lineStr, 10);
+    let codeSnippet = '';
+    try {
+      const fullPath = path.resolve(projectRoot, relFile);
+      if (fs.existsSync(fullPath)) {
+        const fileLines = fs.readFileSync(fullPath, 'utf8').split('\n');
+        if (fileLines[lineNum - 1]) {
+          codeSnippet = `\n    > ${lineNum} | ${fileLines[lineNum - 1].trim()}`;
+        }
+      }
+    } catch (_) {}
+    diagnostics.push(`[LSP DIAGNOSTIC] ${relFile}:${lineNum}:${colStr} [${code}]\n    ${msg}${codeSnippet}`);
+  }
+
+  if (diagnostics.length > 0) {
+    return diagnostics.slice(0, 4).join('\n\n');
+  }
+
   const lines = rawText.split('\n')
     .map(l => l.trimEnd())
     .filter(l => l.length > 0 && !l.includes('node_modules') && !l.startsWith('npm warn'));

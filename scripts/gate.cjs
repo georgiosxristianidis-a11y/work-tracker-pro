@@ -1,10 +1,15 @@
+const path = require('path');
 const { execSync } = require('child_process');
+
+const projectRoot = path.resolve(__dirname, '..');
 
 function runCommand(cmd, options = {}) {
   try {
     const output = execSync(cmd, {
+      cwd: projectRoot,
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
+      shell: true,
       ...options
     });
     return { success: true, code: 0, output };
@@ -29,7 +34,7 @@ function filterNoise(rawText, maxLines = 12) {
 
 function checkDiff() {
   try {
-    const statusOut = execSync('git status --porcelain', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    const statusOut = execSync('git status --porcelain', { cwd: projectRoot, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
     if (!statusOut) {
       return { ok: true, filesCount: 0, lineDiff: 0, message: 'clean' };
     }
@@ -38,7 +43,7 @@ function checkDiff() {
 
     let lineDiff = 0;
     try {
-      const numstatOut = execSync('git diff --numstat HEAD', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+      const numstatOut = execSync('git diff --numstat HEAD', { cwd: projectRoot, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
       if (numstatOut) {
         numstatOut.split('\n').forEach(line => {
           const parts = line.split('\t');
@@ -74,7 +79,7 @@ function checkDiff() {
 
 function main() {
   // 1. TypeScript Check
-  const tscRes = runCommand('npx tsc --noEmit');
+  const tscRes = runCommand('npm run lint');
   if (!tscRes.success) {
     console.error('[GATE] FAIL: TypeScript check failed (exit 1)');
     console.error(filterNoise(tscRes.output));
@@ -82,7 +87,7 @@ function main() {
   }
 
   // 2. Vite Build Check
-  const buildRes = runCommand('npx vite build');
+  const buildRes = runCommand('npm run build');
   if (!buildRes.success) {
     console.error('[GATE] FAIL: Build failed (exit 1)');
     console.error(filterNoise(buildRes.output));

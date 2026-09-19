@@ -12,7 +12,9 @@
     "lighthouse": "lhci autorun",
     "bump": "npm version patch --no-git-tag-version",
     "gate": "node scripts/gate.cjs",
-    "handoff": "node scripts/handoff.cjs"
+    "handoff": "node scripts/handoff.cjs",
+    "isolate": "node scripts/isolate.cjs",
+    "ast": "node scripts/ast.cjs"
   },
   "dependencies": {
     "@fontsource-variable/epilogue": "^5.3.0",

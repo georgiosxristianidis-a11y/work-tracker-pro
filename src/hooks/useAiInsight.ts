@@ -25,8 +25,10 @@ export function useAiInsight(
       const currentLang = aiLangOverride || settings.language;
       const targetLang = langMap[currentLang] || 'English';
 
-      // Advanced caching based on history hash and language
-      const cacheKey = `${history}-${targetLang}`;
+      // Compact cache key based on bounds, entry count and target language
+      const firstDate = allEntries.length > 0 ? allEntries[0].date : 'none';
+      const lastDate = allEntries.length > 0 ? allEntries[allEntries.length - 1].date : 'none';
+      const cacheKey = `${firstDate}_${lastDate}_${allEntries.length}_${targetLang}`;
       if (cachedInsights[cacheKey]) {
         setAiInsight(cachedInsights[cacheKey]);
         setIsAiLoading(false);

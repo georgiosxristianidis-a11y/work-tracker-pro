@@ -174,10 +174,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   undoDelete: async () => {
     try {
       const buffer = get().undoBuffer;
-      if (buffer.length === 0) return;
-      for (const entry of buffer) {
-        await db.saveEntry(entry);
-      }
+      await db.saveMany(buffer);
       set({ undoBuffer: [] });
       await get().loadEntries();
     } catch (e) {

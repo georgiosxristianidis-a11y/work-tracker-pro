@@ -12,7 +12,7 @@
 | **Аудит** | P0: 2026-07-05 · ядро/архитектура: 2026-07-10 (Fable 5, пре-деплой) |
 | **Ворота после каждой карты** | `npm run lint && npm run build` (+ указанный в карте verify) → коммит |
 
-**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · 🟩 D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ (2026-07-13, live) · 🟩 P1-2 · 🟩 D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3 · **аудит-2:** 🟩 S-1 · 🟩 S-3 · 🟩 UX-1 · 🟩 FX-1 · 🟩 D5 · 🟨 P2-4 (шрифт-пункт закрыт в S-3)
+**Прогресс:** 🟩 P0-0…P0-3 · 🟨 P0-4 (Supabase ✅ · Vercel env — при деплое) · 🟩 D1 · 🟩 D2 · 🟩 D3 · 🟩 P1-1 · 🚀 ДЕПЛОЙ (2026-07-13, live) · 🟩 P1-2 · 🟩 D4 · ⬜ P2-1 · ⬜ P2-2 · ⬜ P2-3 · **аудит-2:** 🟩 S-1 · 🟩 S-3 · 🟩 UX-1 · 🟩 FX-1 · 🟩 D5 · 🟨 P2-4 (шрифт-пункт закрыт в S-3) · 🟩 P2-5 · 🟩 P2-DEPS · ⬜ P2-6 · ⬜ P2-7 · ⬜ P2-8
 
 **🚀 Деплой-гейт:** деплоить можно только после D1 + D3 + P1-1 (код) и P0-4 (руками владельца). D2 — до публичного анонса «синхронизации».
 
@@ -170,6 +170,59 @@
 
 ---
 
+## 🟢 P2-5 — Версия приложения + автобамп · 🟢 Gemini (после карты CI)
+- **🎯 Цель:** у сборки появляется опознаваемая версия, и она растёт сама, без ручных правок.
+- **🐛 Факты (сверено с кодом 2026-08-23):** `package.json` — `"name": "react-example"`, `"version": "0.0.0"` (дефолты шаблона, никогда не менялись). Версия НЕ выводится нигде: grep по `src/`, `index.html`, `vite.config.ts` — 0 вхождений `APP_VERSION`/`__APP_VERSION__`/чтения `package.json`. То есть автобамп сейчас некуда «приземлить» — сначала нужен потребитель версии, иначе бампится число, которого никто не видит.
+- **⚠️ Зависимость:** CI в репо нет (`.github/workflows` отсутствует). Автобамп без CI = либо husky/git-hook (новая зависимость, легко обходится `--no-verify`), либо ручной `npm version`. **Порядок: сперва карта CI (гейт `lint && build && playwright` на PR), автобамп — шагом в том же workflow.**
+- **📋 Список (строго по пунктам):**
+  1. `package.json` — `"name": "work-tracker-pro"`, `"version": "0.1.0"` (текущий прод = первый релиз, семантика с нуля).
+  2. `vite.config.ts` — `define: { __APP_VERSION__: JSON.stringify(pkg.version) }` (импорт `package.json` через `createRequire`/`with { type: 'json' }`, не fs-чтение).
+  3. `src/vite-env.d.ts` — `declare const __APP_VERSION__: string`.
+  4. `src/components/SettingsScreen.tsx` — версия строкой в подвале блока About/последнего блока, `--text-3`, без нового ключа словаря (`v{__APP_VERSION__}` — цифры не переводятся).
+  5. Автобамп в CI: шаг на пуш в `main` — `npm version patch --no-git-tag-version`, коммит `chore(release): vX.Y.Z [skip ci]` + тег. Обязательно `[skip ci]`, иначе workflow зациклится сам на себя.
+- **📏 Правила:** minor/major — только руками владельцем; авто — исключительно patch. Не подключать semantic-release/changesets (лишний вес под одиночный PWA). Не трогать версию PWA-манифеста/SW — VitePWA ревалидирует по хешам, версия к нему отношения не имеет.
+- **✅ Done:** `npm run build` → в бандле видна строка версии; в Settings отображается `v0.1.0`; мердж в `main` даёт коммит-бамп ровно один раз.
+- **🔍 Verify:** ворота (`npm run lint && npm run build`) + `npx playwright test --workers=2` (8/8) + один тестовый PR: после мержа версия выросла на 1 patch, второго прогона workflow нет.
+
+## 🟨 P2-DEPS — Очистка фантомной зависимости · 🟢 Antigravity
+- **🎯 Цель:** Устранить фантомную зависимость `"athlete-pro": "file:..."` из манифеста.
+- **🐛 Факты:** При инспекции package.json выявлена случайно попавшая строка, ссылающаяся на внешний проект.
+- **📂 Файлы:** `package.json`.
+- **📏 Правила:** Никаких других пакетов или версий не менять.
+- **✅ Done:** `grep "athlete-pro" package.json` возвращает 0.
+- **🔍 Verify:** `npm run lint && npm run build && npm run test:e2e`.
+
+## 🟨 P2-6 — Ускорение и стабилизация E2E-сьюта · 🔵 Antigravity
+- **🎯 Цель:** Исключить жесткие задержки (`waitForTimeout`), снизить время выполнения тестов на 25–30%, исключить флаки.
+- **🐛 Факты:**
+  - `tests/animations.spec.ts` содержит 4 вызова `page.waitForTimeout(300)` (сьют идет 7.86s).
+  - `tests/wand.spec.ts` содержит 1 вызов `page.waitForTimeout(500)` (сьют идет 3.66s).
+  - `tests/save.spec.ts` содержит 1 вызов `page.waitForTimeout(500)` (сьют идет 4.36s).
+  - Холостой простой тестов суммарно превышает 2.2 секунды чистого ожидания.
+- **📂 Файлы:** `tests/animations.spec.ts`, `tests/wand.spec.ts`, `tests/save.spec.ts`.
+- **📏 Правила:** Заменить тайм-ауты на web-first assertions Playwright (`toBeVisible()`, проверка стабильности классов/состояний). Не снижать строгость проверок.
+- **✅ Done:** `grep -r "waitForTimeout" tests/` возвращает 0. Все 8 тестов проходят успешно.
+- **🔍 Verify:** `npm run test:e2e` (время выполнения `Animations Test` < 4.5s).
+
+## 🟨 P2-7 — Предзагрузка шрифта и оптимизация PWA кэша · 🟢 Antigravity
+- **🎯 Цель:** Устранить водопад загрузки шрифтов (FOUT) и убрать устаревшие правила кэширования Google Fonts.
+- **🐛 Факты:**
+  - Шрифт `@fontsource-variable/epilogue` подключается через `@import` в CSS, из-за чего браузер запрашивает `.woff2` файл только после полного парсинга CSS.
+  - В `vite.config.ts` сохранилось правило Workbox `urlPattern: /^https:\/\/fonts\.gstatic\.com/`, оставшееся от эпохи внешнего CDN (шрифт давно локализован в S-3).
+- **📂 Файлы:** `index.html`, `vite.config.ts`.
+- **📏 Правила:** Сохранять строгий CSP (`font-src 'self'`). Предзагрузка через link preload или плагин Vite.
+- **✅ Done:** В `index.html` или бандле настроен preload основного латинского `.woff2`. В `vite.config.ts` удалено мертвое правило `fonts.gstatic.com`.
+- **🔍 Verify:** `npm run lint && npm run build && npm run test:e2e`.
+
+## 🟨 P2-8 — Очистка чанков сборщика (Empty Chunk Fix) · 🟢 Antigravity
+- **🎯 Цель:** Устранить предупреждение Rollup о пустом чанке `vendor-react` и валидировать конфигурацию сплиттинга.
+- **🐛 Факты:**
+  - При `vite build` генерируется предупреждение: `Generated an empty chunk: "vendor-react"`. В Vite 6 и React 19 модули `react` и `react-dom` разрешаются в основной entry-чанк.
+- **📂 Файлы:** `vite.config.ts`.
+- **📏 Правила:** Не ломать существующие изолированные чанки `vendor-charts` и `vendor-pdf`.
+- **✅ Done:** `vite build` отрабатывает без предупреждений о пустых чанках.
+- **🔍 Verify:** `npm run lint && npm run build && npm run test:e2e`.
+
 ## 🟩 Закрытые карты (сжато — детали в Журнале и git log)
 - **P0-0** `acfc3e8` — проект взят под git (раньше был ВНЕ контроля версий), ветка `fixes/p0`.
 - **P0-1** `f9acf45` — ключ Gemini только в `api/insight.ts` (Vercel, `process.env`); клиент → `fetch('/api/insight')`; `@google/genai` удалён.
@@ -237,3 +290,6 @@
 | 2026-07-20 | UX-1 | Opus 4.8 | EditorModal: честная модель сохранения. (1) Data-loss: закрытие модалки (тап по фону + свайп вниз) до 600мс-автосейва теряло правку → `pendingSaveRef` + `closeEditor()` flush'ит отложенный сейв перед закрытием; ref сбрасывается на open/close (нет ложного пересейва закрытого дня). (2) Незаписанный дефолт: подзаголовок «Not Saved Yet» (--danger) для дат без записи в `allEntries`, флип на «Log Work Hours» после автосейва. Только `EditorModal.tsx` (allEntries уже в сторе → App не тронут; проброс не нужен). Ворота ✅ (lint+build); Playwright (реальный Chromium): правка+быстрое закрытие <600мс — значение сохраняется, «Not Saved Yet» на свежем дне — PASS. save+app специи 4/4 (регрессии нет). Урок в Ledger: `mouse.click(10,10)` промахивается мимо центрированного #frame |
 | 2026-07-21 | D5 | Opus 4.8 (Lead) | Дельта-синк вместо полного upsert. Фоновый (silent) синк льёт только строки, отличающиеся от персистентного снапшота `date→hours` (db KV, ключ `syncSnapshot`); ручной Sync остаётся полным upsert'ом («выровнять всё»). Пустая дельта → сеть не дёргается (ранний выход до ensureAuth; снапшот всё равно персистится, чтобы ловить delete+re-add). Владелец выбрал Вариант A (снапшот-диф) вместо «Set грязных дат»: покрывает и QuickFill, который пишет мимо store прямыми db.saveEntry/deleteEntry — тронут ТОЛЬКО `useSupabaseSync.ts` (строго вайтлист карты). Ворота ✅ (lint+build, exit 0, PWA 42 entries). NB: node_modules worktree был пуст → перед воротами `npm install`. Сценарий с живым Supabase (2 браузера, дельта в сети) — как у D1/D2, после P0-4 |
 | 2026-07-15 | S-1 | Fable 5 | api/insight.ts: Origin/Referer-гейт (прод-домен; localhost/preview только при VERCEL_ENV≠production) → 403 без деталей; targetLang — allowlist EN/RU/GR → 400; history — только непустая строка, обрезка 4000 симв.; лимит тела 10KB (content-length + фактическая длина) → 400. Клиент шлёт ровно эти значения (useAiInsight langMap), UX не тронут. Verify: handler прогнан напрямую в Node с мок-Request (esbuild-транспиляция), 9/9 сценариев PASS. Владельцу: включить Vercel WAF/rate-limit на /api/* + задать GEMINI_API_KEY (хвост P0-4) — AI-инсайты можно включать |
+| 2026-08-23 | Гигиена репо + e2e-гейт (вне карт) | Opus 5 | Разбор веток после паузы: 10 `claude/*`-веток оказались пустыми заглушками от baseline `acfc3e8` (0 уникальных коммитов) — под снос; `fixes/p0` целиком в main (`556743b` — предок main). Уникальное нашлось в двух: `unruffled-wilson` (удаление мёртвого `temp_modals.txt`, 268 строк) — черри-пикнут в main `8eab55a`, ветка удалена; `design-system-audit-0a2ac4` (2 коммита: токенизация цветов/радиусов, `scripts/lint-ds.mjs`, `tests/theme-visual.spec.ts` + baseline 3 тем) — **НЕ УДАЛЯТЬ**, это готовый визуальный гейт под карту P2-1. Починен протухший `wand.spec.ts`: ассерт искал `text=Quick Fill Calendar` — строки нет нигде в `src/`, заголовок модалки `<h2>{t('Quick Fill')}</h2>` → локатор привязан к `h2` (кнопка с тем же лейблом его не удовлетворяет), коммит `5be92d0`. **Сьют впервые зелёный целиком: 8/8.** Ворота ✅ (lint+build), прод отвечает 200, CSP/nosniff/Referrer-Policy/X-Frame-Options из S-3 живы на проде. NB: `node_modules` во всех worktree протухли (не было `@fontsource-variable/epilogue` из S-3) → build падал ДО правок; `npm install` обязателен перед воротами в любом старом worktree. Заведена карта P2-5 (версия + автобамп) — реализацию отложили: версия сейчас `0.0.0`/`react-example` и нигде не отображается, а CI в репо нет |
+| 2026-09-19 | P2-5 | Antigravity (Gemini Flash High) | Версия приложения + автобамп: package.json ("work-tracker-pro", v0.1.0, script "bump"), vite.config.ts (define __APP_VERSION__ через createRequire), src/vite-env.d.ts (__APP_VERSION__ typings), SettingsScreen.tsx (динамический v{__APP_VERSION__}), .github/workflows/ci.yml (CI gate + push to main autobump patch [skip ci]). app.spec.ts обновлен под semver regex. Ворота ✅ (lint+build); Playwright: 8/8 зелёный |
+| 2026-09-19 | P2-DEPS | Antigravity (Gemini Flash High) | Очистка package.json: удалена фантомная зависимость athlete-pro. Ворота ✅ (lint+build+e2e 8/8 PASS) |

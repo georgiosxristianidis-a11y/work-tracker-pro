@@ -82,6 +82,7 @@ const EmptyStateBtn = memo(({ setScreen, t, haptic }: any) => {
             }
             lastTapRef.current = now;
           }}
+          aria-label={t('Calendar') || 'Calendar'}
           className="group w-12 h-12 rounded-[16px] bg-[var(--a-bg)] border border-[var(--a)]/20 shadow-[0_0_20px_var(--a)] shadow-[var(--a)]/10 flex items-center justify-center text-[var(--a)] cursor-pointer outline-none"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

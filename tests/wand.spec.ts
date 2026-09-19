@@ -22,6 +22,6 @@ test.describe('Animated Wand & Quick Fill', () => {
     await quickFillBtn.click();
     
     // Verify modal appeared
-    await expect(page.locator('text=Quick Fill Calendar')).toBeVisible();
+    await expect(page.locator('h2:has-text("Quick Fill")')).toBeVisible();
   });
 });

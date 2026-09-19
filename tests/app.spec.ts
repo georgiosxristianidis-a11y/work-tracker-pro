@@ -34,7 +34,7 @@ test.describe('Work Tracker Pro Navigation', () => {
     await expect(page.locator('span:has-text("Settings"), h1:has-text("Settings")').first()).toBeVisible();
     
     // Confirm Version exists
-    await expect(page.locator('text=Version V1.024')).toBeVisible();
+    await expect(page.locator('text=/v\\d+\\.\\d+\\.\\d+/')).toBeVisible();
   });
 
 });

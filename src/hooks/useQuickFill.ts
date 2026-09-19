@@ -31,13 +31,15 @@ export function useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, 
     const cycleLength = workDays + offDays;
     
     let workDayCounter = 0;
+    const toSave: { date: string; hours: number; month: string }[] = [];
+    const toDelete: string[] = [];
     
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       const dow = new Date(year, month, i).getDay(); // 0 is Sunday
       
       if (excludeSundays && dow === 0) {
-        await db.deleteEntry(dateStr);
+        toDelete.push(dateStr);
         continue;
       }
       
@@ -51,11 +53,14 @@ export function useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, 
       }
       
       if (isWorkDay) {
-        await db.saveEntry({ date: dateStr, hours, month: dateStr.slice(0, 7) });
+        toSave.push({ date: dateStr, hours, month: dateStr.slice(0, 7) });
       } else {
-        await db.deleteEntry(dateStr);
+        toDelete.push(dateStr);
       }
     }
+
+    if (toSave.length > 0) await db.saveMany(toSave);
+    if (toDelete.length > 0) await db.deleteMany(toDelete);
     
     await loadEntries();
     
@@ -64,13 +69,11 @@ export function useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, 
       label: undoLabel,
       onClick: async () => {
         const store = useAppStore.getState();
-        // Since we overwrote entries, we need to clear current month first?
-        // Let's just restore the buffer over whatever is there (which might not clear new ones).
-        // Best approach is: delete everything for this month, then put back the buffer.
+        const datesToDelete: string[] = [];
         for (let i = 1; i <= daysInMonth; i++) {
-          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-          await db.deleteEntry(dateStr);
+          datesToDelete.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`);
         }
+        await db.deleteMany(datesToDelete);
         await store.undoDelete();
       }
     });
@@ -103,10 +106,11 @@ export function useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, 
     }
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const datesToDelete: string[] = [];
     for (let i = 1; i <= daysInMonth; i++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-      await db.deleteEntry(dateStr);
+      datesToDelete.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`);
     }
+    await db.deleteMany(datesToDelete);
     await loadEntries();
     addToast('Month cleared', 'warning', {
       label: undoLabel,

@@ -2,11 +2,40 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { createRequire } from 'module';
-import {defineConfig} from 'vite';
+import {defineConfig, Plugin} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
+
+function preloadEpilogueFont(): Plugin {
+  return {
+    name: 'preload-epilogue-font',
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, ctx) {
+        if (!ctx.bundle) return;
+        const fontFile = Object.keys(ctx.bundle).find(
+          (file) => file.includes('epilogue-latin-wght-normal') && file.endsWith('.woff2')
+        );
+        if (!fontFile) return;
+        return [
+          {
+            tag: 'link',
+            attrs: {
+              rel: 'preload',
+              href: `/${fontFile}`,
+              as: 'font',
+              type: 'font/woff2',
+              crossorigin: '',
+            },
+            injectTo: 'head-prepend',
+          },
+        ];
+      },
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
@@ -16,28 +45,11 @@ export default defineConfig(() => {
     plugins: [
       react(), 
       tailwindcss(),
+      preloadEpilogueFont(),
       VitePWA({
         registerType: 'autoUpdate',
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-          runtimeCaching: [
-            {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-              handler: 'CacheFirst',
-              options: { 
-                cacheName: 'google-fonts-stylesheets',
-                expiration: { maxEntries: 10, maxAgeSeconds: 365 * 24 * 60 * 60 }
-              }
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.gstatic\.com/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts-webfonts',
-                expiration: { maxEntries: 10, maxAgeSeconds: 365 * 24 * 60 * 60 }
-              }
-            }
-          ]
         },
         manifest: {
           name: 'Work Tracker Pro',

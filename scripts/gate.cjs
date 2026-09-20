@@ -106,9 +106,10 @@ function checkDiff() {
 function main() {
   // 1. TypeScript Check
   const tscPath = path.join(projectRoot, 'node_modules/typescript/lib/tsc.js');
+  const tsconfigPath = path.join(projectRoot, 'tsconfig.json');
   const tscCmd = fs.existsSync(tscPath)
-    ? `node "${tscPath}" --noEmit`
-    : 'npx tsc --noEmit';
+    ? `node "${tscPath}" -p "${tsconfigPath}" --noEmit`
+    : `npx tsc -p "${tsconfigPath}" --noEmit`;
   const tscRes = runCommand(tscCmd);
   if (!tscRes.success) {
     console.error('[GATE] FAIL: TypeScript check failed (exit 1)');
@@ -119,8 +120,8 @@ function main() {
   // 2. Vite Build Check
   const vitePath = path.join(projectRoot, 'node_modules/vite/bin/vite.js');
   const viteCmd = fs.existsSync(vitePath)
-    ? `node "${vitePath}" build`
-    : 'npx vite build';
+    ? `node "${vitePath}" build "${projectRoot}"`
+    : `npx vite build "${projectRoot}"`;
   const buildRes = runCommand(viteCmd);
   if (!buildRes.success) {
     console.error('[GATE] FAIL: Build failed (exit 1)');

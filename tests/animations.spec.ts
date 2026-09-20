@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Animations Test', () => {
   test('Magic wand animation responds to hover and tap', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     
     // Switch to Calendar tab
     await page.locator('nav button').nth(1).click();
@@ -26,7 +26,7 @@ test.describe('Animations Test', () => {
   });
 
   test('Trash can animation responds to interactions', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     
     // Switch to Settings tab
     await page.locator('nav button').nth(3).click();

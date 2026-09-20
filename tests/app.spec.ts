@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Work Tracker Pro Navigation', () => {
 
   test('Should load and display the home screen correctly', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     
     // Check if the home screen logo and title are visible
     await expect(page.locator('text=Work Tracker Pro').first()).toBeVisible();
@@ -13,7 +13,7 @@ test.describe('Work Tracker Pro Navigation', () => {
   });
 
   test('Should switch to the Analytics chart view', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     
     // Find the analytics icon from bottom navigation
     const chartButton = page.locator('nav button').nth(2);
@@ -24,7 +24,7 @@ test.describe('Work Tracker Pro Navigation', () => {
   });
 
   test('Should switch to the Settings view', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     
     // Find the settings icon from bottom navigation
     const settingsButton = page.locator('nav button').nth(3);

@@ -1,16 +1,14 @@
 # TASK HANDOFF: main
-- **Timestamp**: 2026-09-20T14:56:00.000Z
+- **Timestamp**: 2026-09-20T17:58:23.397Z
 - **Branch**: main
+- **Last Commit**: e3afa68 feat(celebration): event-driven milestone particle celebration and VFX task router
 - **Gate Status**: PASS (TypeScript + Build OK)
-- **Active Feature**: Milestone Particle Celebration (Goal / Personal Best / 75% / 50%)
 
-## Current State
-- Core WebGL morphing & event-driven milestone triggers implemented and verified.
-- Task Router created with 5 atomic VFX cards at `docs/ROUTER.md`.
+## Changed Files (git status -s)
+```
+(clean working tree)
+```
 
-## Next Action Queue (docs/ROUTER.md)
-- [ ] **FX-2**: GLSL Curl Noise & вихревая турбулентность (органика движения)
-- [ ] **FX-3**: Аддитивное свечение (Additive Blending / Glow для Goal Reached)
-- [ ] **FX-4**: Кинетическая дисперсия с физикой импульса/разлёта
-- [ ] **FX-5**: Тактильная синхронизация (Haptic Feedback в момент сборки)
-- [ ] **FX-6**: Web Audio Micro-Chime синтез (хрустальный перезвон, 0 KB)
+## Next Action
+- [ ] Verify next atomic goal
+- [ ] Run `npm run gate` before commit

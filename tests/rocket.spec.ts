@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Rocket Zero State Test', () => {
   test('Should display rocket when total hours and earnings are zero', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     
     // Check that we see the rocket placeholder text (or title)
     // The rocket has a title "Start Work" when it is acting for "hours" zero state

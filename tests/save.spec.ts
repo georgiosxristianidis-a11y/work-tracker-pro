@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Save Button Test', () => {
   test('Should show Editor Modal and use new checkmark save', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     
     // Switch to calendar
     const calendarButton = page.locator('nav button').nth(1);

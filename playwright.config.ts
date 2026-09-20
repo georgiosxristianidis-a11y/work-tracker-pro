@@ -11,7 +11,7 @@ export default defineConfig({
     ['./tests/perf-reporter.ts']
   ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:4000',
     trace: 'on-first-retry',
   },
   projects: [
@@ -21,8 +21,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --port 3000 --host 0.0.0.0',
-    url: 'http://localhost:3000',
+    command: 'npm run preview -- --port 4000 --host 0.0.0.0',
+    url: 'http://localhost:4000',
     reuseExistingServer: false,
   },
 });

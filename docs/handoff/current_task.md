@@ -1,16 +1,12 @@
 # TASK HANDOFF: main
-- **Timestamp**: 2026-09-19T21:15:57.208Z
+- **Timestamp**: 2026-09-20T09:41:01.400Z
 - **Branch**: main
-- **Last Commit**: 1d80041 feat(types): eliminate as any in SettingsScreen and strictly type usePowerSave (P2-4b)
+- **Last Commit**: ee3b2e8 chore(release): v0.1.6 [skip ci]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M AGENTS.md
- M scripts/ast.cjs
- M scripts/gate.cjs
-?? .agents/rules/
-?? docs/adr/0003-cursor-architecture-patterns.md
+M docs/handoff/current_task.md
 ```
 
 ## Next Action

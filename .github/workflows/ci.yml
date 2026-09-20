@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   gate:
-    name: Lint & Build
+    name: Lint, Build & E2E Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -35,6 +35,12 @@ jobs:
 
       - name: Run Build
         run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E Tests
+        run: npm run test:e2e
 
   autobump:
     name: Auto-bump patch version

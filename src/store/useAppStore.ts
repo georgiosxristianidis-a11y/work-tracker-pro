@@ -72,12 +72,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Persist gracefully, not blocking
     db.setSetting('settings', newSettings).catch(console.error);
     
-    // Apply theme
-    const nextTheme = newSettings.theme || 'dark';
-    if (document.documentElement.className !== nextTheme) {
-      document.documentElement.className = nextTheme;
-    }
-    
     return { settings: newSettings };
   }),
 
@@ -94,7 +88,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         (Object.keys(savedSettings) as (keyof AppSettings)[]).forEach(copyIfDefined);
       }
       set({ settings: mergedSettings });
-      document.documentElement.className = mergedSettings.theme || 'dark';
     } catch (e) {
       console.error(e);
     }

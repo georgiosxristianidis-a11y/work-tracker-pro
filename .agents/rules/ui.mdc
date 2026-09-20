@@ -1,0 +1,21 @@
+---
+description: Rules for React UI Components and Framer Motion animations
+globs: ["src/components/**/*.tsx", "src/components/*.tsx"]
+---
+
+# UI & Animation Architecture Rules
+
+When modifying or creating components in `src/components/`:
+
+1. **Design Tokens Only**:
+   - Use CSS variables: `var(--bg)`, `var(--bg-1)`, `var(--t1)`, `var(--t2)`, `var(--t3)`, `var(--a)`, `var(--b)`.
+   - Never hardcode arbitrary hex colors or rgb values.
+   - Use standardized radii: `rounded-panel` (16px), `rounded-control` (10px).
+
+2. **Framer Motion Safety**:
+   - Always set `initial={false}` on animated SVG elements (`motion.circle`, `motion.line`, `motion.path`) to prevent production-only hydration/read races.
+   - Use standard springs: `{ type: "spring", stiffness: 300, damping: 20 }`.
+
+3. **Strict Props & Typing**:
+   - Every component must declare an explicit `interface ComponentNameProps`.
+   - Never use `any` for props, callbacks, or theme options (use `as const` for option arrays).

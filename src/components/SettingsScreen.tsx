@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
-import { db } from '../lib/db';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
@@ -65,7 +64,6 @@ export const SettingsScreen = ({
             if (devTapCount >= 6) {
               const nextState = !settings.developerMode;
               setSettings(s => ({ ...s, developerMode: nextState }));
-              db.setSetting('settings', { ...settings, developerMode: nextState });
               addToast(nextState ? "Developer Mode Unlocked" : "Developer Mode Locked", "success");
               setDevTapCount(0);
             } else {
@@ -206,7 +204,7 @@ export const SettingsScreen = ({
                 </div>
               </div>
 
-              <motion.button onClick={async () => { await db.setSetting('settings', settings); addToast(t('Save'), 'success'); haptic(10); }} className="w-full h-14 rounded-panel bg-[var(--t1)] text-[var(--bg)] font-black text-xs mt-6 mb-2 transition-all shadow-md active:scale-95 flex items-center justify-center leading-none">
+              <motion.button onClick={() => { setSettings({ ...settings }); addToast(t('Save'), 'success'); haptic(10); }} className="w-full h-14 rounded-panel bg-[var(--t1)] text-[var(--bg)] font-black text-xs mt-6 mb-2 transition-all shadow-md active:scale-95 flex items-center justify-center leading-none">
                 {t('Save')}
               </motion.button>
             </div>
@@ -230,14 +228,12 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Theme')}</span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                  {['light', 'dark', 'indigo'].map(th => (
+                  {(['light', 'dark', 'indigo'] as const).map(th => (
                     <button 
                       key={th}
                       onClick={() => {
-                        const newSettings = { ...settings, theme: th as any };
+                        const newSettings = { ...settings, theme: th };
                         setSettings(newSettings);
-                        document.documentElement.className = th;
-                        db.setSetting('settings', newSettings);
                         haptic(10);
                       }}
                       className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.theme === th ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
@@ -251,10 +247,10 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Language')}</span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                  {['ENG', 'RUS', 'GR'].map(lang => (
+                  {(['ENG', 'RUS', 'GR'] as const).map(lang => (
                     <button 
                       key={lang}
-                      onClick={() => { setSettings(s => ({ ...s, language: lang as any })); haptic(10); }}
+                      onClick={() => { setSettings(s => ({ ...s, language: lang })); haptic(10); }}
                       className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.language === lang ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
                     >
                       {lang}
@@ -266,10 +262,10 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Currency')}</span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
-                  {['EUR', 'RUB'].map(cur => (
+                  {(['EUR', 'RUB'] as const).map(cur => (
                     <button 
                       key={cur}
-                      onClick={() => { setSettings(s => ({ ...s, currency: cur as any })); haptic(10); }}
+                      onClick={() => { setSettings(s => ({ ...s, currency: cur })); haptic(10); }}
                       className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.currency === cur ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
                     >
                       {cur}

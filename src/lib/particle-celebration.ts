@@ -17,7 +17,8 @@ function sampleGlyphPoints(
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = `bold ${size * 0.7}px sans-serif`;
+  const fontSize = char.length > 2 ? Math.floor(size * 0.38) : char.length > 1 ? Math.floor(size * 0.52) : Math.floor(size * 0.7);
+  ctx.font = `bold ${fontSize}px sans-serif`;
   ctx.fillText(char, size / 2, size / 2);
 
   const { data } = ctx.getImageData(0, 0, size, size);
@@ -36,6 +37,15 @@ function sampleGlyphPoints(
   // Randomly sample `count` points from the pool
   const result = new Float32Array(count * 2);
   const poolLen = coords.length / 2;
+  if (poolLen === 0) {
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      result[i * 2] = Math.cos(angle) * 0.5;
+      result[i * 2 + 1] = Math.sin(angle) * 0.5;
+    }
+    return result;
+  }
+
   for (let i = 0; i < count; i++) {
     const idx = Math.floor(Math.random() * poolLen);
     result[i * 2] = coords[idx * 2];
@@ -130,6 +140,12 @@ export interface CelebrationHandle {
   start: () => void;
   dispose: () => void;
 }
+
+export const CELEBRATION_PRESETS = {
+  goalReached:  { count: 1200, duration: 1500 },
+  personalBest: { count: 1200, duration: 1500 },
+  milestone:    { count: 400,  duration: 800  },
+} as const;
 
 export function createCelebration(
   canvas: HTMLCanvasElement,

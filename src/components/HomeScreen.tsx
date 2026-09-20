@@ -8,6 +8,7 @@ import { DashboardWidgets } from './DashboardWidgets';
 import { AnimatedZero } from './AnimatedZero';
 import { AnimatedClock } from './AnimatedClock';
 import { SuccessSparkles } from './SuccessSparkles';
+import { useCelebration } from '../hooks/useCelebration';
 
 interface HomeScreenProps {
   viewDate: Date;
@@ -64,22 +65,22 @@ export const HomeScreen = ({
   const earningsTrend = calculateTrend(currentMonthData.earnings, prevMonthData.earnings);
   const hoursTrend = calculateTrend(currentMonthData.hours, prevMonthData.hours);
 
-  const [showSuccess, setShowSuccess] = React.useState(false);
-  const prevTotalHoursRef = React.useRef(totalHours);
-
-  React.useEffect(() => {
-    if (totalHours > prevTotalHoursRef.current) {
-      setShowSuccess(true);
-      const timer = setTimeout(() => setShowSuccess(false), 2000);
-      prevTotalHoursRef.current = totalHours;
-      return () => clearTimeout(timer);
-    }
-    prevTotalHoursRef.current = totalHours;
-  }, [totalHours]);
+  const celebration = useCelebration({
+    viewDate,
+    totalEarned,
+    goal: settings.goal,
+    curSym,
+    calcEarnings,
+  });
 
   return (
     <div className="space-y-4 pt-1 relative">
-      <SuccessSparkles active={showSuccess} />
+      <SuccessSparkles
+        active={celebration.active}
+        glyph={celebration.glyph}
+        count={celebration.count}
+        duration={celebration.duration}
+      />
       
       <div className="flex justify-between items-center">
         <div className="flex flex-col min-w-0">

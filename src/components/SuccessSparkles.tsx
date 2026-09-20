@@ -7,7 +7,19 @@ import type { CelebrationHandle } from '../lib/particle-celebration';
  * Particles assemble from chaos into ✓, then disperse.
  * Respects `prefers-reduced-motion`. Fully disposes WebGL after animation.
  */
-export const SuccessSparkles = ({ active }: { active: boolean }) => {
+interface SuccessSparklesProps {
+  active: boolean;
+  glyph?: string;
+  count?: number;
+  duration?: number;
+}
+
+export const SuccessSparkles = ({
+  active,
+  glyph = '✓',
+  count = 1200,
+  duration = 1500,
+}: SuccessSparklesProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const handleRef = useRef<CelebrationHandle | null>(null);
 
@@ -32,10 +44,10 @@ export const SuccessSparkles = ({ active }: { active: boolean }) => {
     canvas.height = rect.height * dpr;
 
     const celebration = createCelebration(canvas, {
-      glyph: '✓',
+      glyph,
       color,
-      count: 1200,
-      duration: 1500,
+      count,
+      duration,
     });
 
     if (celebration) {

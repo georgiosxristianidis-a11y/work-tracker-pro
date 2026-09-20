@@ -1,45 +1,60 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Star } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { createCelebration, hexToGL } from '../lib/particle-celebration';
+import type { CelebrationHandle } from '../lib/particle-celebration';
 
+/**
+ * GPU-accelerated particle morph celebration.
+ * Particles assemble from chaos into ✓, then disperse.
+ * Respects `prefers-reduced-motion`. Fully disposes WebGL after animation.
+ */
 export const SuccessSparkles = ({ active }: { active: boolean }) => {
-  const [sparkles, setSparkles] = useState<{ id: number, x: number, y: number, scale: number }[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const handleRef = useRef<CelebrationHandle | null>(null);
 
   useEffect(() => {
-    if (active) {
-      const newSparkles = Array.from({ length: 6 }).map((_, i) => ({
-        id: Date.now() + i,
-        x: (Math.random() - 0.5) * 100,
-        y: (Math.random() - 0.5) * 100,
-        scale: Math.random() * 0.5 + 0.5
-      }));
-      setSparkles(newSparkles);
-      const timer = setTimeout(() => setSparkles([]), 1500);
-      return () => clearTimeout(timer);
+    if (!active) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Respect reduced motion preference
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) return;
+
+    // Read accent color from current theme
+    const accent = getComputedStyle(canvas).getPropertyValue('--a').trim();
+    const color = hexToGL(accent || '#d4af37');
+
+    // Size canvas for device pixel ratio
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    const celebration = createCelebration(canvas, {
+      glyph: '✓',
+      color,
+      count: 1200,
+      duration: 1500,
+    });
+
+    if (celebration) {
+      handleRef.current = celebration;
+      celebration.start();
     }
+
+    return () => {
+      handleRef.current?.dispose();
+      handleRef.current = null;
+    };
   }, [active]);
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-50">
-      <AnimatePresence>
-        {sparkles.map((s) => (
-          <motion.div
-            key={s.id}
-            initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
-            animate={{ 
-              opacity: [0, 1, 0], 
-              scale: [0, s.scale, 0],
-              x: s.x,
-              y: s.y
-            }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="absolute text-[var(--a)]"
-          >
-            <Star size={16} fill="currentColor" />
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-50"
+      style={{ width: '100%', height: '100%' }}
+      aria-hidden="true"
+    />
   );
 };

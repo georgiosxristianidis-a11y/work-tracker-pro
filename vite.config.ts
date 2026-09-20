@@ -50,6 +50,20 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+          globIgnores: ['**/vendor-pdf*.js', '**/vendor-charts*.js', '**/html2canvas*.js'],
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }) => /vendor-(pdf|charts)|html2canvas/.test(url.pathname),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'heavy-chunks-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+              },
+            },
+          ],
         },
         manifest: {
           name: 'Work Tracker Pro',

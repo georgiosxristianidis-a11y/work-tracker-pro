@@ -2,9 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+const projectRoot = path.resolve(__dirname, '..');
+
 function getExec(cmd) {
   try {
-    return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    return execSync(cmd, { cwd: projectRoot, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
   } catch (err) {
     return '';
   }
@@ -18,7 +20,10 @@ function generateHandoff() {
   // Run gate quickly to assess status
   let gateStatus = 'NOT_RUN';
   try {
-    execSync('node scripts/gate.cjs --bypass-diff-limit', { stdio: ['pipe', 'pipe', 'pipe'] });
+    execSync(`node "${path.join(projectRoot, 'scripts/gate.cjs')}" --bypass-diff-limit`, {
+      cwd: projectRoot,
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
     gateStatus = 'PASS (TypeScript + Build OK)';
   } catch (e) {
     gateStatus = 'FAIL (Needs Attention)';

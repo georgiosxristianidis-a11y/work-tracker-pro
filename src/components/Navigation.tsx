@@ -64,7 +64,7 @@ export function Navigation({ t }: NavigationProps) {
           aria-label={item.label}
           onClick={() => {
             setScreen(item.id);
-            setNavClicks((c: any) => ({ ...c, [item.id]: c[item.id as keyof typeof c] + 1 }));
+            setNavClicks(c => ({ ...c, [item.id]: (c[item.id as keyof typeof c] ?? 0) + 1 }));
           }}
           className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 relative"
         >

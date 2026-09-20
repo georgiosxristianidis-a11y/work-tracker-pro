@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { supabase, ensureAuth } from '../lib/supabase';
-import { db } from '../lib/db';
+import { db, Entry } from '../lib/db';
 import { AppSettings } from '../constants';
 
 interface UseSupabaseSyncProps {
@@ -150,12 +150,15 @@ export const useSupabaseSync = ({
 
       const localEntries = await db.getAllEntries();
       const localDates = new Set(localEntries.map(e => e.date));
-      let restored = 0;
+      const toRestore: Entry[] = [];
       for (const row of data ?? []) {
         if (localDates.has(row.date)) continue;
-        await db.saveEntry({ date: row.date, hours: Number(row.hours), month: row.month });
-        restored++;
+        toRestore.push({ date: row.date, hours: Number(row.hours), month: row.month });
       }
+      if (toRestore.length > 0) {
+        await db.saveMany(toRestore);
+      }
+      const restored = toRestore.length;
 
       setSyncStatus('success');
       setSyncErrorMsg('');

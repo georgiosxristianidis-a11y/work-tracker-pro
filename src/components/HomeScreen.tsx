@@ -9,6 +9,7 @@ import { AnimatedZero } from './AnimatedZero';
 import { AnimatedClock } from './AnimatedClock';
 import { SuccessSparkles } from './SuccessSparkles';
 import { useCelebration } from '../hooks/useCelebration';
+import { RollingNumber } from './RollingNumber';
 
 interface HomeScreenProps {
   viewDate: Date;
@@ -113,15 +114,10 @@ export const HomeScreen = ({
                 <span className="text-[12px] text-[var(--t3)] opacity-60 mb-1">{t('Earnings')}</span>
                 <div className="flex items-baseline gap-2.5 h-[36px] justify-start whitespace-nowrap overflow-visible">
                   <span className="text-lg text-[var(--t3)] font-light">{curSym}</span>
-                  <motion.span
-                    key={totalEarned}
-                    initial={{ scale: 1.15, color: 'var(--a)' }}
-                    animate={{ scale: 1, color: 'var(--t1)' }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className="text-2xl font-black text-[var(--t1)] origin-left inline-block"
-                  >
-                    {formatMoney(totalEarned)}
-                  </motion.span>
+                  <RollingNumber
+                    value={formatMoney(totalEarned)}
+                    className="text-2xl font-black text-[var(--t1)]"
+                  />
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
                   <div className={`text-[12px] font-bold flex items-center gap-1 ${earningsTrend > 0 ? 'text-[var(--a)]' : earningsTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
@@ -134,15 +130,10 @@ export const HomeScreen = ({
               <div className="flex flex-col items-start text-left flex-1 min-w-0">
                 <span className="text-[12px] text-[var(--t3)] opacity-60 mb-1">{t('Hours')}</span>
                 <div className="flex items-baseline gap-2.5 h-[36px] justify-start whitespace-nowrap overflow-visible">
-                  <motion.span
-                    key={totalHours}
-                    initial={{ scale: 1.15, color: 'var(--a)' }}
-                    animate={{ scale: 1, color: 'var(--t1)' }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className="text-2xl font-black text-[var(--t1)] origin-left inline-block"
-                  >
-                    {totalHours}
-                  </motion.span>
+                  <RollingNumber
+                    value={totalHours}
+                    className="text-2xl font-black text-[var(--t1)]"
+                  />
                   <span className="text-sm font-bold text-[var(--t3)] opacity-40">h</span>
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">

@@ -64,12 +64,27 @@ uniform float uProgress;
 uniform float uPointSize;
 varying float vAlpha;
 
+// Divergence-free 2D curl noise field for organic fluid swirling
+vec2 curlNoise(vec2 p) {
+  return vec2(
+    sin(p.y * 4.5 + 1.2) + 0.5 * sin(p.y * 9.0 + 2.3),
+    -cos(p.x * 4.5 + 2.1) - 0.5 * cos(p.x * 9.0 + 3.7)
+  );
+}
+
 void main() {
   float t = clamp((uProgress - aDelay) / (1.0 - aDelay), 0.0, 1.0);
   t = 1.0 - pow(1.0 - t, 3.0);
+
   vec2 pos = mix(aRandom, aTarget, t);
+
+  // Swirl envelope: peaks during mid-flight, dampens to absolute 0 before glyph lock
+  float curlStrength = sin(t * 3.14159) * (1.0 - smoothstep(0.35, 0.82, t)) * 0.32;
+  vec2 swirl = curlNoise(pos * 2.2 + aDelay * 12.0) * curlStrength;
+  vec2 finalPos = pos + swirl;
+
   vAlpha = smoothstep(0.0, 0.2, uProgress) * (1.0 - smoothstep(0.75, 1.0, uProgress));
-  gl_Position = vec4(pos * 0.7, 0.0, 1.0);
+  gl_Position = vec4(finalPos * 0.7, 0.0, 1.0);
   gl_PointSize = uPointSize;
 }
 `;

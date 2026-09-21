@@ -1,12 +1,14 @@
-# TASK HANDOFF: main
-- **Timestamp**: 2026-09-20T17:58:23.397Z
-- **Branch**: main
-- **Last Commit**: e3afa68 feat(celebration): event-driven milestone particle celebration and VFX task router
+# TASK HANDOFF: feat/fx-2-curl-noise
+- **Timestamp**: 2026-09-21T18:29:24.230Z
+- **Branch**: feat/fx-2-curl-noise
+- **Last Commit**: 550a380 chore(dev): move dev server and e2e test port from 3000 to 4000 to avoid athlete-pro conflict
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-(clean working tree)
+M docs/ROUTER.md
+ M docs/handoff/current_task.md
+ M src/lib/particle-celebration.ts
 ```
 
 ## Next Action

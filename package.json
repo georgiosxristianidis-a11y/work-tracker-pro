@@ -1,7 +1,7 @@
 {
   "name": "work-tracker-pro",
   "private": true,
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "scripts": {
     "dev": "vite --port=4000 --host=0.0.0.0",

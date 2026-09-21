@@ -56,6 +56,49 @@ export const SettingsScreen = ({
   const [showSpyAnim, setShowSpyAnim] = React.useState(false);
   const [showTgAnim, setShowTgAnim] = React.useState(false);
 
+  const versionTapRef = React.useRef({ count: 0, lastTap: 0 });
+  const [isUpdatingSW, setIsUpdatingSW] = React.useState(false);
+
+  const handleVersionTap = async () => {
+    if (isUpdatingSW) return;
+    const now = Date.now();
+    versionTapRef.current.count = now - versionTapRef.current.lastTap > 1500 ? 1 : versionTapRef.current.count + 1;
+    versionTapRef.current.lastTap = now;
+    if (versionTapRef.current.count < 5) return haptic?.(10);
+
+    versionTapRef.current.count = 0;
+    haptic?.([25, 50, 25]);
+    setIsUpdatingSW(true);
+    addToast(t('Checking for updates...'), 'info');
+
+    const activate = (sw: ServiceWorker) => {
+      addToast(t('Updating application...'), 'success');
+      sw.postMessage({ type: 'SKIP_WAITING' });
+      setTimeout(() => window.location.reload(), 600);
+    };
+
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration();
+      if (!reg) throw new Error('no_sw');
+      if (reg.waiting) return activate(reg.waiting);
+      await reg.update();
+      const next = await navigator.serviceWorker.getRegistration();
+      if (next?.waiting) return activate(next.waiting);
+      if (next?.installing) {
+        addToast(t('Updating application...'), 'info');
+        next.installing.addEventListener('statechange', (e) => {
+          if ((e.target as ServiceWorker).state === 'installed') activate(e.target as ServiceWorker);
+        });
+        return;
+      }
+      addToast(t('Latest version installed'), 'success');
+    } catch {
+      addToast(t('Latest version installed'), 'info');
+    } finally {
+      setIsUpdatingSW(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="px-1 mt-6 flex items-center justify-between">
@@ -717,7 +760,15 @@ export const SettingsScreen = ({
         )}
         {/* Footer Area */}
         <div className="flex flex-col items-center justify-center pt-6 pb-8 gap-4">
-          <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--t3)] opacity-40">v{__APP_VERSION__}</div>
+          <button
+            type="button"
+            onClick={handleVersionTap}
+            disabled={isUpdatingSW}
+            className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--t3)] opacity-40 hover:opacity-80 active:scale-95 transition-all select-none cursor-pointer focus:outline-none"
+            aria-label={t('Checking for updates...')}
+          >
+            v{__APP_VERSION__}
+          </button>
         </div>
       </div>
     </div>

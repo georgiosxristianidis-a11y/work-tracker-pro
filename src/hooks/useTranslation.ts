@@ -113,6 +113,9 @@ const dictRUS: Record<string, string> = {
   'Delete entry': 'Удалить запись',
   'Previous Month': 'Предыдущий месяц',
   'Next Month': 'Следующий месяц',
+  'Checking for updates...': 'Проверка обновлений...',
+  'Updating application...': 'Обновление приложения...',
+  'Latest version installed': 'Установлена последняя версия',
   'Slide': 'Слайд',
   'Show Earnings': 'Показать доходы',
   'Hide Earnings': 'Скрыть доходы',
@@ -199,6 +202,9 @@ const dictGR: Record<string, string> = {
   "Let's go!": 'Πάμε!',
   'Start Work': 'Έναρξη Εργασίας',
   'Undo': 'Αναίρεση',
+  'Checking for updates...': 'Έλεγχος για ενημερώσεις...',
+  'Updating application...': 'Ενημέρωση εφαρμογής...',
+  'Latest version installed': 'Έχετε την πιο πρόσφατη έκδοση',
 };
 
 export function useTranslation(language: string) {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase, ensureAuth } from '../lib/supabase';
 import { db, Entry } from '../lib/db';
 import { AppSettings } from '../constants';
@@ -17,6 +17,20 @@ export const useSupabaseSync = ({
   const [syncErrorMsg, setSyncErrorMsg] = useState<string>('');
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const isSyncingRef = useRef(false);
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The status timer only drives the UI badge; the sync lock is released in `finally`.
+  const cancelStatusReset = useCallback(() => {
+    if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+    statusTimerRef.current = null;
+  }, []);
+
+  const resetStatusLater = useCallback((ms: number) => {
+    cancelStatusReset();
+    statusTimerRef.current = setTimeout(() => setSyncStatus('idle'), ms);
+  }, [cancelStatusReset]);
+
+  useEffect(() => cancelStatusReset, [cancelStatusReset]);
 
   const syncWithSupabaseAction = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -32,6 +46,7 @@ export const useSupabaseSync = ({
 
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
+    cancelStatusReset();
 
     try {
       const allEntries = await db.getAllEntries();
@@ -54,7 +69,6 @@ export const useSupabaseSync = ({
         // the last sync drop out of it (a later re-add of the same date/hours is
         // then detected as a change); skip the network round-trip — the point of D5.
         await db.setSetting('syncSnapshot', nextSnapshot);
-        isSyncingRef.current = false;
         return;
       }
 
@@ -92,11 +106,8 @@ export const useSupabaseSync = ({
       setSettings(s => ({ ...s, lastSync: now }));
       
       // Removed addToast here to prevent duplicate success toasts when saving
-      
-      setTimeout(() => {
-        setSyncStatus('idle');
-        isSyncingRef.current = false;
-      }, 2000);
+
+      resetStatusLater(2000);
 
     } catch (err: any) {
       const errStr = err ? JSON.stringify(err) : 'Unknown error';
@@ -113,12 +124,11 @@ export const useSupabaseSync = ({
       
       setSyncErrorMsg(errorMsg);
       if (!silent) addToast(errorMsg.length > 50 ? errorMsg.substring(0, 50) + '...' : errorMsg, 'error');
-      setTimeout(() => {
-        setSyncStatus('idle');
-        isSyncingRef.current = false;
-      }, 5000);
+      resetStatusLater(5000);
+    } finally {
+      isSyncingRef.current = false;
     }
-  }, [settings.strictOfflineMode, settings.language, addToast, getDeviceId, setSettings]);
+  }, [settings.strictOfflineMode, settings.language, addToast, getDeviceId, setSettings, cancelStatusReset, resetStatusLater]);
 
   // Manual restore: pulls every cloud row for this user and inserts the
   // dates that are missing locally. On conflict the local entry always wins —
@@ -136,6 +146,7 @@ export const useSupabaseSync = ({
     }
     if (isSyncingRef.current) return null;
     isSyncingRef.current = true;
+    cancelStatusReset();
     setSyncStatus('syncing');
 
     try {
@@ -162,10 +173,7 @@ export const useSupabaseSync = ({
 
       setSyncStatus('success');
       setSyncErrorMsg('');
-      setTimeout(() => {
-        setSyncStatus('idle');
-        isSyncingRef.current = false;
-      }, 2000);
+      resetStatusLater(2000);
       return restored;
 
     } catch (err: any) {
@@ -183,13 +191,12 @@ export const useSupabaseSync = ({
 
       setSyncErrorMsg(errorMsg);
       addToast(errorMsg.length > 50 ? errorMsg.substring(0, 50) + '...' : errorMsg, 'error');
-      setTimeout(() => {
-        setSyncStatus('idle');
-        isSyncingRef.current = false;
-      }, 5000);
+      resetStatusLater(5000);
       return null;
+    } finally {
+      isSyncingRef.current = false;
     }
-  }, [settings.strictOfflineMode, addToast]);
+  }, [settings.strictOfflineMode, addToast, cancelStatusReset, resetStatusLater]);
 
   // Silent background mirror of local deletions. Never toasts: a failed
   // cloud delete is reconciled by the next full sync, not surfaced to the user.

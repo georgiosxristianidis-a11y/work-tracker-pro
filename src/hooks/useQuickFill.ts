@@ -23,10 +23,8 @@ export function useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, 
     
     // Save existing entries to undo buffer
     const existingEntries = await db.getEntriesByMonth(monthStr);
-    if (existingEntries.length > 0) {
-      useAppStore.getState().setUndoBuffer(existingEntries);
-    }
-    
+    useAppStore.getState().setUndoBuffer(existingEntries);
+
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const cycleLength = workDays + offDays;
     
@@ -101,9 +99,7 @@ export function useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, 
     const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
     
     const existingEntries = await db.getEntriesByMonth(monthStr);
-    if (existingEntries.length > 0) {
-      useAppStore.getState().setUndoBuffer(existingEntries);
-    }
+    useAppStore.getState().setUndoBuffer(existingEntries);
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const datesToDelete: string[] = [];

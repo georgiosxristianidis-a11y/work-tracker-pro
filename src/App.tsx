@@ -84,19 +84,25 @@ export default function App() {
   // --- Initialization ---
   useEffect(() => {
     const init = async () => {
-      await db.init();
-      
-      // Migrate from old version
-      const migratedCount = await migrateFromLocalStorage();
-      if (migratedCount > 0) {
-        addToast(`Migrated ${migratedCount} entries`, 'success');
-      }
+      try {
+        await db.init();
 
-      await loadSettings();
-      await loadEntries();
-      
-      setIsAuthReady(true);
-      setIsLoading(false);
+        // Migrate from old version
+        const migratedCount = await migrateFromLocalStorage();
+        if (migratedCount > 0) {
+          addToast(`Migrated ${migratedCount} entries`, 'success');
+        }
+
+        await loadSettings();
+        await loadEntries();
+
+        setIsAuthReady(true);
+      } catch (err) {
+        console.error('Init failed:', err);
+        addToast('Local storage is unavailable. Data will not be saved.', 'error');
+      } finally {
+        setIsLoading(false);
+      }
     };
     init();
   }, []);

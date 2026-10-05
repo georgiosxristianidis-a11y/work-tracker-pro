@@ -112,7 +112,7 @@ export const HomeScreen = ({
             <div data-testid="monthly-stats" className={`flex gap-4 sm:gap-10 w-full max-w-[300px] justify-between transition-all duration-500 ${totalHours === 0 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}>
               <div className="flex flex-col items-start text-left flex-1 min-w-0">
                 <span className="text-[12px] text-[var(--t3)] opacity-60 mb-1">{t('Earnings')}</span>
-                <div className="flex items-baseline gap-2.5 h-[36px] justify-start whitespace-nowrap overflow-visible">
+                <div className={`flex items-baseline gap-2.5 h-[36px] justify-start whitespace-nowrap overflow-visible transition-all duration-500 ${settings.privacyMode ? 'blur-xl opacity-20' : ''}`}>
                   <span className="text-lg text-[var(--t3)] font-light">{curSym}</span>
                   <RollingNumber
                     value={formatMoney(totalEarned)}

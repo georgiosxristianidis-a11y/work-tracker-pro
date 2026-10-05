@@ -178,7 +178,7 @@ export function DashboardWidgets({
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                      <span className="text-[var(--t3)]">{t('Goal:')} {curSym}{settings.goal}</span>
+                      <span className={`text-[var(--t3)] transition-all duration-500 ${settings.privacyMode ? 'blur-md' : ''}`}>{t('Goal:')} {curSym}{settings.goal}</span>
                       <span className="text-[var(--a)]">{goalPct}%</span>
                     </div>
                     <div className="h-1.5 bg-[var(--b)] rounded-full overflow-hidden">

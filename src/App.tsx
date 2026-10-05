@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { supabase } from './lib/supabase';
-import { db } from './lib/db';
+import { db, Entry } from './lib/db';
 import { HomeScreen } from './components/HomeScreen';
 import { SplashScreen } from './components/SplashScreen';
 import { useSupabaseSync } from './hooks/useSupabaseSync';
@@ -62,6 +62,7 @@ export default function App() {
     editorHours, setEditorHours,
     loadSettings, loadEntries,
     saveEntry: storeSaveEntry,
+    saveMany: storeSaveMany,
     deleteEntry: storeDeleteEntry,
     clearAllData: storeClearAll
   } = useAppStore();
@@ -111,17 +112,16 @@ export default function App() {
     const done = await db.getSetting('ls_migrated', false);
     if (done) return 0;
 
-    let count = 0;
+    const toMigrate: Entry[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && /^\d{4}-\d{2}-\d{2}$/.test(key)) {
         const hours = parseFloat(localStorage.getItem(key) || '0');
-        if (hours > 0) {
-          await storeSaveEntry(key, hours);
-          count++;
-        }
+        if (hours > 0) toMigrate.push({ date: key, hours, month: key.slice(0, 7) });
       }
     }
+    const count = toMigrate.length;
+    await storeSaveMany(toMigrate);
     await db.setSetting('ls_migrated', true);
     return count;
   };
@@ -212,12 +212,10 @@ export default function App() {
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
     h([20, 20]);
-    for (const d of dates) {
-      await storeSaveEntry(d, hours);
-    }
+    await storeSaveMany(dates.map(date => ({ date, hours, month: date.slice(0, 7) })));
     addToast(t('Entries added'), 'success');
     scheduleBackgroundSync();
-  }, [h, storeSaveEntry, addToast, t, scheduleBackgroundSync]);
+  }, [h, storeSaveMany, addToast, t, scheduleBackgroundSync]);
 
   const deleteEntry = useCallback(async (date: string) => {
     h([30, 50]);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -190,6 +190,13 @@ export const SettingsScreen = ({
                 <span className="text-[11px] font-black text-[var(--t1)] block">{t('Salary & Goal')}</span>
                 <span className="text-[9px] font-bold text-[var(--t3)] uppercase tracking-wider block">{t('Manage your target revenue')}</span>
               </div>
+              <button
+                onClick={() => { haptic(10); setSettings(s => ({ ...s, privacyMode: !s.privacyMode })); }}
+                className="flex items-center justify-center w-11 h-11 shrink-0 rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] transition-all duration-300 active:scale-95 outline-none shadow-sm"
+                aria-label={settings.privacyMode ? t('Show Earnings') : t('Hide Earnings')}
+              >
+                {settings.privacyMode ? <EyeOff size={20} strokeWidth={2} /> : <Eye size={20} strokeWidth={2} />}
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -199,7 +206,7 @@ export const SettingsScreen = ({
                   <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, rate: Math.max(0, s.rate - 1) })); }} className="w-12 h-full rounded-control bg-[var(--bg-1)] flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
                     <Minus size={16} strokeWidth={2.5} />
                   </motion.button>
-                  <div className="flex items-center flex-1 justify-center text-[var(--t1)] px-2">
+                  <div className={`flex items-center flex-1 justify-center text-[var(--t1)] px-2 transition-all duration-300 ${settings.privacyMode ? 'blur-md' : ''}`}>
                     <span className="text-sm font-black opacity-40 mr-1">{curSym}</span>
                     <input 
                       type="number" 
@@ -226,7 +233,7 @@ export const SettingsScreen = ({
                   <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, goal: Math.max(0, s.goal - 50) })); }} className="w-12 h-full rounded-control bg-[var(--bg-1)] flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
                     <Minus size={16} strokeWidth={2.5} />
                   </motion.button>
-                  <div className="flex items-center flex-1 justify-center text-[var(--t1)] px-2">
+                  <div className={`flex items-center flex-1 justify-center text-[var(--t1)] px-2 transition-all duration-300 ${settings.privacyMode ? 'blur-md' : ''}`}>
                     <span className="text-sm font-black opacity-40 mr-1">{curSym}</span>
                     <input 
                       type="number" 

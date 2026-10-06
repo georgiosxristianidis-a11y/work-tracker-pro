@@ -36,6 +36,7 @@ interface AppState {
   loadSettings: () => Promise<void>;
   loadEntries: (date?: Date) => Promise<void>;
   saveEntry: (date: string, hours: number) => Promise<void>;
+  saveMany: (entries: Entry[]) => Promise<void>;
   deleteEntry: (date: string) => Promise<void>;
   clearAllData: () => Promise<void>;
   undoDelete: () => Promise<void>;
@@ -133,6 +134,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const entry = { date, hours, month: date.slice(0, 7) };
       await db.saveEntry(entry);
+      await get().loadEntries();
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  saveMany: async (entries: Entry[]) => {
+    if (entries.length === 0) return;
+    try {
+      await db.saveMany(entries);
       await get().loadEntries();
     } catch (e) {
       console.error(e);

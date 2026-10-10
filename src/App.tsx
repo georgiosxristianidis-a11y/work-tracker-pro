@@ -221,9 +221,11 @@ export default function App() {
 
   const deleteEntry = useCallback(async (date: string) => {
     h([30, 50]);
+    const existing = useAppStore.getState().allEntries.find(e => e.date === date);
     await storeDeleteEntry(date);
     deleteEntryFromCloud(date);
-    addToast(t('Entry deleted'), 'warning', {
+    const msg = existing ? `${t('Entry deleted')} (${existing.hours}h)` : t('Entry deleted');
+    addToast(msg, 'warning', {
       label: t('Undo'),
       onClick: async () => {
         const store = useAppStore.getState();

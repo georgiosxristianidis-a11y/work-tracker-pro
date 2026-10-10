@@ -48,7 +48,8 @@ const DayCell = React.memo(({
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    // Only use hold-timer on touch devices; on desktop/mouse use native right-click to prevent mouseup bleed-through
+    if (e.pointerType !== 'touch') return;
     isLongPressTriggeredRef.current = false;
     startPosRef.current = { x: e.clientX, y: e.clientY };
 
@@ -99,9 +100,10 @@ const DayCell = React.memo(({
       onPointerCancel={clearTimer}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      style={{ WebkitTouchCallout: 'none' }}
       aria-label={`${day}, ${hours > 0 ? `${hours} hours` : isToday ? 'today' : 'empty'}`}
       className={`
-        relative aspect-square rounded-2xl border flex flex-col items-center justify-center gap-0.5 transition-all select-none active:scale-90
+        relative aspect-square rounded-2xl border flex flex-col items-center justify-center gap-0.5 transition-all select-none touch-manipulation active:scale-90
         ${hours > 0 
           ? 'bg-[var(--a-bg)] border-[var(--a-b)] text-[var(--t1)]' 
           : isToday 
@@ -285,7 +287,7 @@ export const CalendarScreen = ({
               <div className="relative z-10 w-1.5 h-1.5 rounded-full bg-[var(--t3)] opacity-50" />
             </div>
             <span className="text-micro font-medium text-[var(--t3)] opacity-50 uppercase tracking-widest translate-y-[1px]">
-              {settings.language === 'RUS' ? 'Тап — смена • Зажатие — детали' : settings.language === 'GR' ? 'Πατήστε για καταγραφή • Κρατήστε για επεξεργασία' : 'Tap to log • Hold to edit'}
+              {settings.language === 'RUS' ? 'Тап — смена • Зажатие / ПКМ — детали' : settings.language === 'GR' ? 'Πατήστε για καταγραφή • Κρατήστε / δεξί κλικ για επεξεργασία' : 'Tap to log • Hold / Right-click to edit'}
             </span>
           </div>
         </motion.div>

@@ -118,3 +118,33 @@
   - Обязательный `audioCtx.close()` после затухания нот.
 - **✅ Done:** При триггере Goal Reached звучит кристальный мажорный перезвон; 0 внешних mp3-файлов; нет утечек аудио-контекстов.
 - **🔍 Verify:** `npm run gate` + вызов на мобильном браузере.
+
+---
+
+## 📋 Очередь задач: Post-Calendar Polish & Core Alignment
+
+### 🔵 ANA-1 — Analytics & Charts Elite Redesign · 🔵 20 мин
+- **🎯 Цель:** Модернизировать Recharts и графики до стандартов Apple Health / Fitness: плавные сплайны, градиентный акцент `var(--a)`, стабильные тултипы без сдвига верстки на тачах, карточки проекций и `tabular-nums`.
+- **📂 Файлы:** `src/components/AnalyticsScreen.tsx`, `src/components/AnalyticsChart.tsx`
+- **✅ DoD:** `npm run gate` (exit 0) + Lighthouse Performance >= 95 + мобильный вьюпорт (390x844).
+
+---
+
+### 🔵 HOME-1 — Home Dashboard Elite Rhythm & Metrics Sync · 🔵 15 мин
+- **🎯 Цель:** Синхронизировать радиусы карточек и вертикальный ритм (`space-y-7`) с новым экраном Календаря; поднять видимость ключевой метрики «Отработано дней»; строгий `tabular-nums` на одометрах и счетчиках.
+- **📂 Файлы:** `src/components/HomeScreen.tsx`, `src/components/MetricCard.tsx`
+- **✅ DoD:** `npm run gate` (exit 0) + отсутствие сдвигов разметки.
+
+---
+
+### 🔵 THEME-1 — Dark & Indigo Palette Deep Polish (WCAG AA) · 🔵 15 мин
+- **🎯 Цель:** Полный аудит контрастности WCAG AA в темах Dark (`.dark`) и Indigo (`.indigo`): калибровка янтарных баров переработок (`#f59e0b` / `var(--a)`), кнопок пресетов шторки и дней сб/вс.
+- **📂 Файлы:** `src/index.css`, `src/components/CalendarScreen.tsx`, `src/components/HomeScreen.tsx`
+- **✅ DoD:** WCAG AA во всех темах + `npm run gate` (exit 0) + Lighthouse Accessibility >= 98.
+
+---
+
+### 🔵 FILL-1 — Smart Fill to Today Preset (1–Сегодня) · 🔵 15 мин
+- **🎯 Цель:** Добавить в Smart Fill пресет «Заполнить до сегодня (1–N)»: пропуск выходных, отсутствие записей в будущих днях месяца, моментальный расчет и 1-тап отмена через Undo-тост.
+- **📂 Файлы:** `src/hooks/useQuickFill.ts`, `src/components/QuickFillModal.tsx`, `src/components/CalendarScreen.tsx`
+- **✅ DoD:** `npm run gate` (exit 0) + корректное заполнение только прошедших рабочих дней месяца.

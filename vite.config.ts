@@ -86,12 +86,32 @@ export default defineConfig(() => {
       },
     },
     build: {
+      modulePreload: {
+        polyfill: false,
+        resolveDependencies(_filename, deps) {
+          return deps.filter(
+            (dep) =>
+              !dep.includes('vendor-pdf') &&
+              !dep.includes('vendor-charts') &&
+              !dep.includes('html2canvas')
+          );
+        },
+      },
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-motion': ['motion'],
-            'vendor-charts': ['recharts'],
-            'vendor-pdf': ['jspdf', 'jspdf-autotable']
+          manualChunks(id) {
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/zustand') || id.includes('preload-helper')) {
+              return 'vendor-react';
+            }
+            if (id.includes('node_modules/motion')) {
+              return 'vendor-motion';
+            }
+            if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-') || id.includes('node_modules/victory')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('node_modules/jspdf') || id.includes('node_modules/jspdf-autotable') || id.includes('node_modules/html2canvas') || id.includes('node_modules/canvg')) {
+              return 'vendor-pdf';
+            }
           }
         }
       }

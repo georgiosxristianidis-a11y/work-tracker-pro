@@ -10,7 +10,6 @@ import { db, Entry } from './lib/db';
 import { HomeScreen } from './components/HomeScreen';
 import { SplashScreen } from './components/SplashScreen';
 import { useSupabaseSync } from './hooks/useSupabaseSync';
-import { useDataExport } from './hooks/useDataExport';
 import { useAiInsight } from './hooks/useAiInsight';
 import { useTrends } from './hooks/useTrends';
 import { useQuickFill } from './hooks/useQuickFill';
@@ -184,15 +183,6 @@ export default function App() {
 
     return () => clearInterval(timer);
   }, [isPowerSaveMode, settings.strictOfflineMode, syncWithSupabaseAction]);
-
-  const { exportCSV, exportTXT, exportPDF, exportICS, shareToTelegram, shareBackup, isExporting } = useDataExport({
-    settings,
-    curSym,
-    viewDate,
-    calcEarnings,
-    addToast,
-    haptic: h
-  });
 
   const { aiInsight, setAiInsight, isAiLoading, generateAiInsight, aiLangOverride, setAiLangOverride } = useAiInsight(settings, addToast);
 
@@ -380,13 +370,8 @@ export default function App() {
                     restoreFromCloud={restoreFromCloud}
                     deleteAllTap={deleteAllTap}
                     toggleTheme={toggleTheme}
-                    exportCSV={exportCSV}
-                    exportTXT={exportTXT}
-                    exportPDF={exportPDF}
-                    exportICS={exportICS}
-                    shareToTelegram={shareToTelegram}
-                    shareBackup={shareBackup}
-                    isExporting={isExporting}
+                    viewDate={viewDate}
+                    calcEarnings={calcEarnings}
                     addToast={addToast}
                   />
                 )}

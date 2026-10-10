@@ -10,6 +10,7 @@ import { AnimatedClock } from './AnimatedClock';
 import { SuccessSparkles } from './SuccessSparkles';
 import { useCelebration } from '../hooks/useCelebration';
 import { RollingNumber } from './RollingNumber';
+import { ShowcaseHeroCard } from './ShowcaseHeroCard';
 
 interface HomeScreenProps {
   viewDate: Date;
@@ -74,6 +75,13 @@ export const HomeScreen = ({
     calcEarnings,
   });
 
+  const currentMonthPrefix = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
+  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+  const selectedDaysCount = React.useMemo(
+    () => entries.filter(e => e.date.startsWith(currentMonthPrefix) && e.hours > 0).length,
+    [entries, currentMonthPrefix]
+  );
+
   return (
     <div className="space-y-4 pt-1 relative">
       <SuccessSparkles
@@ -85,21 +93,49 @@ export const HomeScreen = ({
       
       <div className="flex justify-between items-center">
         <div className="flex flex-col min-w-0">
-          <span className="text-xs font-bold text-[var(--t3)] uppercase tracking-widest leading-none mb-1 ml-7">
+          <span className="text-xs font-bold text-[var(--t3)] uppercase tracking-widest leading-none mb-1 ml-1">
             {viewDate.getFullYear()}
           </span>
           <h1 className="text-4xl font-black tracking-tighter text-[var(--t1)] truncate pr-2">
             {getMonthName(viewDate)}
           </h1>
         </div>
-        <div className="flex gap-1.5">
-          <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
-            <ChevronLeft size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
+        <div className="flex items-center gap-2">
+          {/* Days KPI Badge (Core metric: count of worked days in month) */}
+          <motion.button 
+            type="button"
+            onClick={() => { if (haptic) haptic(10); setScreen('calendar'); }}
+            className="py-1 px-3 rounded-panel border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-[3.25rem] min-h-[2.75rem] hover:border-[var(--a)]/40 hover:bg-[var(--b)] active:scale-95 transition-all group"
+            aria-label={t('Days')}
+          >
+            <span className="text-micro font-bold uppercase tracking-widest text-[var(--t3)] opacity-60 leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
+              {t('Days')}
+            </span>
+            <span className="text-base font-black text-[var(--t1)] leading-none tabular-nums">
+              {selectedDaysCount}
+            </span>
           </motion.button>
-          <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
-            <ChevronRight size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-          </motion.button>
+
+          <div className="flex gap-1.5">
+            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
+              <ChevronLeft size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
+            </motion.button>
+            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
+              <ChevronRight size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+            </motion.button>
+          </div>
         </div>
+      </div>
+
+      <div className="px-1 mt-3">
+        <ShowcaseHeroCard
+          onStartShift={() => { if (haptic) haptic(10); setScreen('calendar'); }}
+          onOpenAnalytics={() => { if (haptic) haptic(10); setScreen('chart'); }}
+          onOpenBulkAdd={openBulkAdd}
+          onOpenTimesheet={() => { if (haptic) haptic(10); setScreen('total'); }}
+          t={t}
+          haptic={haptic}
+        />
       </div>
 
       <div className="px-1 mt-4">

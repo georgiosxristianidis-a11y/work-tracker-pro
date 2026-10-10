@@ -16,7 +16,7 @@
 }
 
 :root {
-  --bg: #f4f1ea; --bg-1: #eeebe2; --b: rgba(0,0,0,0.06); --t1: #1a1a1a; --t2: #6a6458; --t3: #9a9488; --a: #d4af37; --a-bg: rgba(0,0,0,0.04); --a-b: rgba(0,0,0,0.1);
+  --bg: #f4f1ea; --bg-1: #eeebe2; --b: rgba(0,0,0,0.06); --t1: #1a1a1a; --t2: #6a6458; --t3: #716c60; --a: #d4af37; --a-bg: rgba(0,0,0,0.04); --a-b: rgba(0,0,0,0.1);
   --green: #2a7a4a; --green-bg: rgba(42,122,74,0.07);
   --danger: #c47a72; --danger-bg: rgba(196,122,114,0.1);
 }

@@ -180,6 +180,33 @@ export const EditorModal = ({
                 </div>
               </div>
 
+              {/* Quick Presets */}
+              <div className="flex items-center justify-between gap-2 w-full">
+                {[4, settings.normal, 10, 12]
+                  .filter((v, i, a) => a.indexOf(v) === i)
+                  .sort((a, b) => a - b)
+                  .map((presetHours) => {
+                    const isSelected = editorHours === presetHours;
+                    return (
+                      <button
+                        key={presetHours}
+                        type="button"
+                        onClick={() => {
+                          haptic(12);
+                          setEditorHours(presetHours);
+                        }}
+                        className={`flex-1 py-2.5 px-1.5 rounded-xl text-xs font-black transition-all border tabular-nums ${
+                          isSelected
+                            ? 'bg-[var(--t1)] text-[var(--bg)] border-[var(--t1)] shadow-sm'
+                            : 'bg-[var(--bg-1)] text-[var(--t2)] border-[var(--b)] hover:border-[var(--a)]/40 hover:text-[var(--t1)] active:scale-95'
+                        }`}
+                      >
+                        {presetHours}h
+                      </button>
+                    );
+                  })}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <motion.button 
                   whileHover="hover"

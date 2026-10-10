@@ -1,8 +1,8 @@
-import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Calendar, ArrowDownUp, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, ArrowDownUp, X, ChevronRight as ChevronIcon, Zap, Check } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
-import { DayInspector } from './DayInspector';
+import { AnimatedWand } from './AnimatedWand';
 import { AppSettings, DOW_NAMES, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../constants';
 import { formatMoney } from '../lib/utils';
 import { Entry } from '../lib/db';
@@ -32,74 +32,118 @@ interface DayCellProps {
   ds: string;
   hours: number;
   isToday: boolean;
-  isSelected: boolean;
-  isWeekend: boolean;
+  isSaturday: boolean;
+  isSunday: boolean;
   normalHours: number;
-  onSelect: (ds: string) => void;
-  onDoubleTap: (ds: string) => void;
-  haptic: (pattern?: number | number[]) => void;
+  onSingleTap: (ds: string, currentHours: number) => void;
+  onLongPress: (ds: string, currentHours: number) => void;
 }
 
 const DayCell = React.memo(({ 
-  day, ds, hours, isToday, isSelected, isWeekend, normalHours,
-  onSelect, onDoubleTap, haptic
+  day, ds, hours, isToday, isSaturday, isSunday,
+  normalHours, onSingleTap, onLongPress
 }: DayCellProps) => {
-  const lastTapRef = useRef<number>(0);
-  const isOvertime = hours > normalHours;
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressTriggeredRef = useRef(false);
+  const startPosRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handleClick = () => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      // Double tap detected
-      haptic([20, 20]);
-      onDoubleTap(ds);
-    } else {
-      haptic(10);
-      onSelect(ds);
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    isLongPressTriggeredRef.current = false;
+    startPosRef.current = { x: e.clientX, y: e.clientY };
+
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressTriggeredRef.current = true;
+      onLongPress(ds, hours);
+    }, 420);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!startPosRef.current || !longPressTimerRef.current) return;
+    const dist = Math.hypot(e.clientX - startPosRef.current.x, e.clientY - startPosRef.current.y);
+    if (dist > 10) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
-    lastTapRef.current = now;
+  };
+
+  const clearTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isLongPressTriggeredRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      isLongPressTriggeredRef.current = false;
+      return;
+    }
+    onSingleTap(ds, hours);
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    clearTimer();
+    onLongPress(ds, hours);
   };
 
   return (
     <motion.button 
       type="button"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={clearTimer}
+      onPointerCancel={clearTimer}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       aria-label={`${day}, ${hours > 0 ? `${hours} hours` : isToday ? 'today' : 'empty'}`}
       className={`
-        relative aspect-square rounded-full flex flex-col items-center justify-center p-1 transition-all select-none active:scale-95
-        ${isSelected 
-          ? 'border-2 border-[var(--t1)] text-[var(--t1)] bg-[var(--bg-1)] shadow-sm' 
-          : hours > 0 
-            ? 'bg-[var(--a-bg)] border border-[var(--a-b)] text-[var(--t1)]' 
-            : isToday 
-              ? 'border border-[var(--t2)] text-[var(--t1)] bg-transparent' 
-              : isWeekend
-                ? 'border border-transparent text-[var(--t3)] opacity-60'
-                : 'border border-transparent text-[var(--t2)] hover:bg-[var(--b)]'}
+        relative aspect-square rounded-2xl border flex flex-col items-center justify-center gap-0.5 transition-all select-none active:scale-90
+        ${hours > 0 
+          ? 'bg-[var(--a-bg)] border-[var(--a-b)] text-[var(--t1)]' 
+          : isToday 
+            ? isSunday
+              ? 'bg-[var(--bg-1)] border-[var(--danger)] text-[var(--danger)] shadow-sm'
+              : 'bg-[var(--bg-1)] border-[var(--t1)] text-[var(--t1)] shadow-sm' 
+            : isSunday
+              ? 'bg-transparent border-transparent text-[var(--danger)] opacity-85 hover:bg-[var(--danger-bg)]'
+              : isSaturday
+                ? 'bg-transparent border-transparent text-[var(--t3)] opacity-40 hover:bg-[var(--b)]'
+                : 'bg-transparent border-transparent text-[var(--t2)] hover:bg-[var(--b)]'}
       `}
     >
-      <span className={`text-[15px] font-bold leading-none ${hours > 0 ? 'text-[var(--t1)]' : ''}`}>
+      <span className={`text-[15px] font-bold ${hours > 0 ? '-translate-y-[2px]' : ''} ${isSunday && hours === 0 ? 'text-[var(--danger)]' : ''}`}>
         {day}
       </span>
 
-      {hours > 0 ? (
-        <span className={`text-[10px] font-black leading-none tabular-nums mt-0.5 ${isOvertime ? 'text-[var(--a)]' : 'text-[var(--t1)]'}`}>
-          {hours}h
-        </span>
-      ) : isToday ? (
-        <div className="w-1 h-1 rounded-full bg-[var(--t1)] mt-0.5" />
-      ) : null}
+      {hours > 0 && (
+        <div className="absolute bottom-[6px] flex flex-col items-center">
+          <div className={`w-3 h-[2px] rounded-full transition-all ${
+            hours === normalHours
+              ? 'bg-[var(--t1)]' 
+              : hours > normalHours 
+                ? 'bg-[var(--a)] shadow-[0_0_4px_var(--a)]' 
+                : 'bg-[var(--t3)] opacity-60'
+          }`} />
+        </div>
+      )}
     </motion.button>
   );
 });
+
+DayCell.displayName = 'DayCell';
 
 export const CalendarScreen = ({
   viewDate, setViewDate, entries, settings, setSettings, t,
   defaultEditorHours,
   deleteEntry, saveEntry, smartFillUpToDay, calcEarnings, curSym, haptic, openQuickFill
 }: CalendarScreenProps) => {
-  const { setEditorDate, setEditorHours, saveEntry: storeSaveEntry } = useAppStore();
-
+  const { setEditorDate, setEditorHours } = useAppStore();
+  const [isWandHovered, setIsWandHovered] = useState(false);
+  const [isWandTapped, setIsWandTapped] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
@@ -109,22 +153,12 @@ export const CalendarScreen = ({
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const currentMonthPrefix = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
-  
-  // Active selected day defaults to today if on current month, otherwise the 1st
-  const isCurrentMonth = now.getFullYear() === viewDate.getFullYear() && now.getMonth() === viewDate.getMonth();
-  const defaultSelectedDay = isCurrentMonth ? today : `${currentMonthPrefix}-01`;
-  const [selectedDate, setSelectedDate] = useState<string>(defaultSelectedDay);
-
-  // Sync selected date when switching months
-  useEffect(() => {
-    if (!selectedDate.startsWith(currentMonthPrefix)) {
-      setSelectedDate(isCurrentMonth ? today : `${currentMonthPrefix}-01`);
-    }
-  }, [currentMonthPrefix, isCurrentMonth, today, selectedDate]);
 
   const monthEntries = useMemo(() => {
     return entries.filter(e => e.date.startsWith(currentMonthPrefix) && e.hours > 0);
   }, [entries, currentMonthPrefix]);
+
+  const selectedDaysCount = monthEntries.length;
 
   const monthHours = useMemo(() => {
     return monthEntries.reduce((acc, e) => acc + e.hours, 0);
@@ -137,26 +171,7 @@ export const CalendarScreen = ({
     return acc;
   }, {} as Record<string, number>), [entries]);
 
-  const handleSaveHours = useCallback(async (date: string, hours: number) => {
-    if (saveEntry) {
-      await saveEntry(date, hours);
-    } else {
-      await storeSaveEntry(date, hours);
-    }
-  }, [saveEntry, storeSaveEntry]);
-
-  const handleDoubleTapDay = useCallback(async (date: string) => {
-    const existing = entryMap[date];
-    if (existing && existing > 0) {
-      // Open detailed editor instead of destructive delete
-      setEditorDate(date);
-      setEditorHours(existing);
-    } else {
-      // Instantly log standard hours for empty day
-      await handleSaveHours(date, defaultEditorHours || 8);
-    }
-  }, [entryMap, defaultEditorHours, handleSaveHours, setEditorDate, setEditorHours]);
-
+  const isCurrentMonth = now.getFullYear() === viewDate.getFullYear() && now.getMonth() === viewDate.getMonth();
   const canSmartFill = isCurrentMonth && now.getDate() >= 1;
   const smartFillTargetDay = now.getDate();
 
@@ -180,9 +195,28 @@ export const CalendarScreen = ({
     return mNames[viewDate.getMonth()];
   }, [settings.language, viewDate]);
 
+  const handleSingleTap = useCallback(async (ds: string, currentHours: number) => {
+    if (currentHours > 0) {
+      haptic([20, 30]);
+      await deleteEntry(ds);
+    } else {
+      haptic(15);
+      const standardHours = settings.normal || defaultEditorHours || 8;
+      if (saveEntry) {
+        await saveEntry(ds, standardHours);
+      }
+    }
+  }, [haptic, deleteEntry, saveEntry, settings.normal, defaultEditorHours]);
+
+  const handleLongPress = useCallback((ds: string, currentHours: number) => {
+    haptic([15, 25]);
+    setEditorDate(ds);
+    setEditorHours(currentHours || settings.normal || defaultEditorHours || 8);
+  }, [haptic, setEditorDate, setEditorHours, settings.normal, defaultEditorHours]);
+
   return (
-    <div className="space-y-4">
-      {/* Top Header: Month Title, Interactive KPI Pill, Month Navigation */}
+    <div className="space-y-7">
+      {/* Top Header: Month Title, Days KPI Badge (Core Metric #2), Month Navigation */}
       <div className="relative flex items-center justify-between gap-3">
         <div className="flex flex-col min-w-0">
           <span className="text-micro font-bold text-[var(--t3)] uppercase tracking-widest leading-none mb-1 ml-1 block h-[12px]">
@@ -194,20 +228,20 @@ export const CalendarScreen = ({
         </div>
         
         <div className="flex items-center gap-2 shrink-0">
-          {/* Interactive Metric Strip (Opens Shift History Drawer) */}
-          <button
+          {/* Days KPI Badge (Core metric: count of worked days in month) */}
+          <motion.button
             type="button"
             onClick={() => { haptic(10); setIsHistoryOpen(true); }}
-            className="py-1 px-3 rounded-panel border border-[var(--b)] bg-[var(--bg-1)] flex items-center justify-center gap-1.5 shadow-sm text-xs font-bold text-[var(--t1)] tabular-nums hover:border-[var(--a)]/40 hover:bg-[var(--b)] active:scale-95 transition-all group"
-            aria-label={t('View month shift history')}
+            className="py-1 px-3 rounded-panel border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-[3.25rem] min-h-[2.75rem] hover:border-[var(--a)]/40 hover:bg-[var(--b)] active:scale-95 transition-all group"
+            aria-label={t('Days')}
           >
-            <span>{monthHours}h</span>
-            <span className="text-[var(--t3)] opacity-60">•</span>
-            <span className={settings.privacyMode ? 'blur-sm' : ''}>
-              {curSym}{formatMoney(monthEarnings)}
+            <span className="text-micro font-black uppercase tracking-widest text-[var(--t3)] opacity-60 leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
+              {t('Days')}
             </span>
-            <ChevronRight size={13} className="text-[var(--t3)] group-hover:text-[var(--t1)] transition-colors -mr-0.5" />
-          </button>
+            <span className="text-base font-black text-[var(--t1)] leading-none tabular-nums">
+              {selectedDaysCount}
+            </span>
+          </motion.button>
 
           <div className="flex gap-1.5">
             <motion.button 
@@ -228,12 +262,38 @@ export const CalendarScreen = ({
         </div>
       </div>
 
-      {/* Hero: Elevated Spacious Calendar Card (Harmonic Air & Breathing Space) */}
-      <div className="p-4 sm:p-5 bg-[var(--bg-1)] border border-[var(--b)] rounded-card shadow-sm relative">
+      {/* Calendar Card: High Breathing Room, Radar Pulse Hint, Saturday Dimmed, Sunday Accent */}
+      <div className="p-5 sm:p-6 bg-[var(--bg-1)] border border-[var(--b)] rounded-[1.75rem] shadow-sm relative">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-7 gap-y-3.5 gap-x-1.5 touch-pan-y"
+          transition={{ duration: 0.8 }}
+          className="text-center pb-2 flex justify-center opacity-40 mb-3"
+        >
+          <div className="flex items-center gap-2 px-2 py-1">
+            <div className="relative flex items-center justify-center w-4 h-4">
+              <motion.div 
+                animate={{ scale: [1, 4.5], opacity: [0.8, 0], borderWidth: ["1px", "0px"] }}
+                transition={{ duration: 4.5, repeat: Infinity, ease: "easeOut" }}
+                className="absolute w-1.5 h-1.5 rounded-full border border-[var(--t3)]"
+              />
+              <motion.div 
+                animate={{ scale: [1, 4.5], opacity: [0.8, 0], borderWidth: ["1px", "0px"] }}
+                transition={{ duration: 4.5, repeat: Infinity, delay: 2.25, ease: "easeOut" }}
+                className="absolute w-1.5 h-1.5 rounded-full border border-[var(--t3)]"
+              />
+              <div className="relative z-10 w-1.5 h-1.5 rounded-full bg-[var(--t3)] opacity-50" />
+            </div>
+            <span className="text-micro font-medium text-[var(--t3)] opacity-50 uppercase tracking-widest translate-y-[1px]">
+              {settings.language === 'RUS' ? 'Тап — смена • Зажатие — детали' : settings.language === 'GR' ? 'Πατήστε για καταγραφή • Κρατήστε για επεξεργασία' : 'Tap to log • Hold to edit'}
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="grid grid-cols-7 gap-y-3.5 gap-x-2 touch-pan-y"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.05}
@@ -251,16 +311,24 @@ export const CalendarScreen = ({
             }
           }}
         >
-          {DOW_NAMES.map((d, idx) => (
-            <div 
-              key={d} 
-              className={`text-center text-micro font-black uppercase tracking-widest py-1.5 select-none ${
-                idx >= 5 ? 'text-[var(--t3)] opacity-60' : 'text-[var(--t3)]'
-              }`}
-            >
-              {d}
-            </div>
-          ))}
+          {DOW_NAMES.map((d, idx) => {
+            const isSaturday = idx === 5;
+            const isSunday = idx === 6;
+            return (
+              <div 
+                key={d} 
+                className={`text-center text-micro font-black uppercase tracking-widest py-1.5 select-none ${
+                  isSunday 
+                    ? 'text-[var(--danger)] opacity-85 font-bold' 
+                    : isSaturday 
+                      ? 'text-[var(--t3)] opacity-40' 
+                      : 'text-[var(--t3)]'
+                }`}
+              >
+                {d}
+              </div>
+            );
+          })}
 
           {Array.from({ length: startOffset }).map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square" />
@@ -271,9 +339,9 @@ export const CalendarScreen = ({
             const ds = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const hours = entryMap[ds] || 0;
             const isToday = ds === today;
-            const isSelected = ds === selectedDate;
             const dow = new Date(viewDate.getFullYear(), viewDate.getMonth(), day).getDay();
-            const isWeekend = dow === 0 || dow === 6;
+            const isSaturday = dow === 6;
+            const isSunday = dow === 0;
             
             return (
               <DayCell
@@ -282,42 +350,81 @@ export const CalendarScreen = ({
                 ds={ds} 
                 hours={hours} 
                 isToday={isToday}
-                isSelected={isSelected}
-                isWeekend={isWeekend}
-                normalHours={settings.normal}
-                onSelect={setSelectedDate}
-                onDoubleTap={handleDoubleTapDay}
-                haptic={haptic}
+                isSaturday={isSaturday}
+                isSunday={isSunday}
+                normalHours={settings.normal || defaultEditorHours || 8}
+                onSingleTap={handleSingleTap}
+                onLongPress={handleLongPress}
               />
             );
           })}
         </motion.div>
       </div>
 
-      {/* Bottom Focused Day Cockpit (DayInspector & Smart Actions) */}
-      <DayInspector
-        selectedDate={selectedDate}
-        entry={entryMap[selectedDate] ? { hours: entryMap[selectedDate] } : null}
-        settings={settings}
-        curSym={curSym}
-        calcEarnings={calcEarnings}
-        onSaveHours={handleSaveHours}
-        onDelete={deleteEntry}
-        onOpenEditor={(d, h) => {
-          setEditorDate(d);
-          setEditorHours(h);
-        }}
-        onOpenQuickFill={openQuickFill}
-        onSmartFill={canSmartFill && smartFillUpToDay ? () => smartFillUpToDay(smartFillTargetDay, defaultEditorHours) : undefined}
-        canSmartFill={canSmartFill}
-        smartFillDay={smartFillTargetDay}
-        emptyDaysCount={emptyDaysCount}
-        defaultHours={defaultEditorHours}
-        haptic={haptic}
-        t={t}
-      />
+      {/* Action Toolbar: Smart Fill & Quick Fill */}
+      <div className="flex items-center gap-2.5 pt-1">
+        {canSmartFill && smartFillUpToDay && (
+          emptyDaysCount === 0 ? (
+            <div className="flex-1 h-14 px-4 rounded-2xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t3)] text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 select-none opacity-80 shadow-sm">
+              <Check size={16} className="text-[var(--green)] shrink-0" strokeWidth={2.5} />
+              <Zap size={15} className="shrink-0 text-[var(--a)]" strokeWidth={2.2} />
+              <span className="truncate">1–{smartFillTargetDay} {t('complete')}</span>
+            </div>
+          ) : (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                haptic([15, 20]);
+                smartFillUpToDay(smartFillTargetDay, defaultEditorHours);
+              }}
+              className="flex-1 h-14 px-4 rounded-2xl border border-[var(--a-b)] bg-[var(--a-bg)] text-[var(--a)] text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+            >
+              <Zap size={16} className="shrink-0" strokeWidth={2.2} />
+              <span className="truncate">
+                Smart Fill ({emptyDaysCount} {emptyDaysCount === 1 ? t('day') : t('days')})
+              </span>
+            </motion.button>
+          )
+        )}
 
-      {/* Secondary Shift History Drawer (Completely Off-Canvas until Requested) */}
+        <motion.button 
+          onHoverStart={() => setIsWandHovered(true)}
+          onHoverEnd={() => setIsWandHovered(false)}
+          onPointerDown={() => setIsWandTapped(true)}
+          onPointerUp={() => setIsWandTapped(false)}
+          onPointerLeave={() => {
+            setIsWandHovered(false);
+            setIsWandTapped(false);
+          }}
+          onClick={() => { haptic([10, 20]); openQuickFill(); }} 
+          className={`h-14 rounded-2xl border border-[var(--b)] bg-[var(--bg-1)] font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 text-[var(--t2)] transition-colors hover:bg-[var(--b)] hover:text-[var(--t1)] active:scale-[0.98] shadow-sm ${
+            canSmartFill && smartFillUpToDay ? 'px-5 shrink-0' : 'w-full'
+          }`}
+        >
+          <AnimatedWand size={18} className="text-[var(--a)]" strokeWidth={2} isHovered={isWandHovered} isTapped={isWandTapped} />
+          <span>{t('Quick Fill')}</span>
+        </motion.button>
+      </div>
+
+      {/* Secondary Shift Ledger Access (Calm, Off-Canvas, Keeps Calendar 100% Focused) */}
+      {selectedDaysCount > 0 && (
+        <div className="flex justify-center pt-1">
+          <button
+            type="button"
+            onClick={() => { haptic(10); setIsHistoryOpen(true); }}
+            className="text-xs font-bold uppercase tracking-widest text-[var(--t3)] hover:text-[var(--t1)] transition-colors flex items-center gap-2 py-2 px-4 rounded-xl border border-transparent hover:border-[var(--b)] hover:bg-[var(--bg-1)] active:scale-95"
+          >
+            <span>{t('Recent Entries')}</span>
+            <span className="text-[11px] font-black tabular-nums bg-[var(--b)] px-1.5 py-0.5 rounded-md text-[var(--t2)]">
+              {selectedDaysCount}
+            </span>
+            <ChevronIcon size={14} className="opacity-60" />
+          </button>
+        </div>
+      )}
+
+      {/* Off-Canvas Shift History Drawer */}
       <AnimatePresence>
         {isHistoryOpen && (
           <motion.div
@@ -345,7 +452,7 @@ export const CalendarScreen = ({
                     {monthName} {viewDate.getFullYear()}
                   </h3>
                   <div className="text-xs font-semibold text-[var(--t3)] tabular-nums mt-0.5">
-                    {monthHours}h • {curSym}{formatMoney(monthEarnings)} ({monthEntries.length} {t('days')})
+                    {monthHours}h • {curSym}{formatMoney(monthEarnings)} ({selectedDaysCount} {t('Days')})
                   </div>
                 </div>
 
@@ -377,7 +484,6 @@ export const CalendarScreen = ({
                       const dateObj = new Date(Number(yStr), Number(mStr) - 1, Number(dStr));
                       const dowIdx = dateObj.getDay();
                       const mappedDow = dowIdx === 0 ? 6 : dowIdx - 1;
-                      const isSelected = e.date === selectedDate;
                       
                       return (
                         <div key={e.date} className="relative w-full overflow-hidden rounded-[1rem] bg-[var(--a-bg)]">
@@ -398,12 +504,11 @@ export const CalendarScreen = ({
                             whileDrag={{ scale: 0.98 }}
                             onClick={() => { 
                               haptic(10); 
-                              setSelectedDate(e.date); 
+                              setEditorDate(e.date);
+                              setEditorHours(e.hours);
                               setIsHistoryOpen(false);
                             }}
-                            className={`relative z-10 bg-[var(--bg-1)] flex items-center gap-4 p-3 rounded-[1rem] border transition-colors cursor-pointer ${
-                              isSelected ? 'border-[var(--a)]' : 'border-[var(--b)]'
-                            }`}
+                            className="relative z-10 bg-[var(--bg-1)] flex items-center gap-4 p-3 rounded-[1rem] border border-[var(--b)] hover:border-[var(--a)] transition-colors cursor-pointer"
                             style={{ willChange: "transform" }}
                           >
                             <div className="w-10 h-10 rounded-[12px] bg-[var(--a)] flex flex-col items-center justify-center gap-0.5 text-[var(--bg)] transition-transform shrink-0 font-black">

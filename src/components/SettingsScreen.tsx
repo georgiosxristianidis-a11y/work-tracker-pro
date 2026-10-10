@@ -5,6 +5,7 @@ import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, Ale
 import { AnimatedTrash } from './AnimatedTrash';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { useDataExport } from '../hooks/useDataExport';
 
 interface SettingsScreenProps {
   settings: AppSettings;
@@ -19,21 +20,27 @@ interface SettingsScreenProps {
   restoreFromCloud: () => void;
   deleteAllTap: { trigger: () => void; isConfirming: boolean };
   toggleTheme: () => void;
-  exportCSV: () => void;
-  exportTXT: () => void;
-  exportPDF: (period: '6months' | 'year') => void;
-  exportICS: () => void;
-  shareToTelegram: (format?: 'summary' | 'txt' | 'csv' | 'json' | 'pdf') => void;
-  shareBackup: () => void;
-  isExporting: boolean;
-  addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void;
+  viewDate: Date;
+  calcEarnings: (hours: number) => number;
+  addToast: (msg: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
 export const SettingsScreen = ({
   settings, setSettings, t, curSym, haptic, syncStatus, syncErrorMsg,
   lastSynced, syncTapActual, restoreFromCloud, deleteAllTap, toggleTheme,
-  exportCSV, exportTXT, exportPDF, exportICS, shareToTelegram, shareBackup, isExporting, addToast
+  viewDate, calcEarnings, addToast
 }: SettingsScreenProps) => {
+  const {
+    exportCSV, exportTXT, exportPDF, exportICS,
+    shareToTelegram, shareBackup, isExporting
+  } = useDataExport({
+    settings,
+    curSym,
+    viewDate,
+    calcEarnings,
+    addToast,
+    haptic
+  });
   const { isInstallable, promptInstall } = usePWAInstall();
 
   const [localRate, setLocalRate] = React.useState(settings.rate === 0 ? '' : settings.rate.toString());

@@ -24,6 +24,7 @@ import { Toasts, ToastMessage } from './components/Toasts';
 import { QuickFillModal } from './components/QuickFillModal';
 import { EditorModal } from './components/EditorModal';
 import { BulkAddModal } from './components/BulkAddModal';
+import { OfflineFallbackBoundary } from './components/OfflineFallbackBoundary';
 import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, AppSettings } from './constants';
 
 const AnalyticsScreen = lazy(() => import('./components/AnalyticsScreen').then(m => ({ default: m.AnalyticsScreen })));
@@ -135,6 +136,17 @@ export default function App() {
   useEffect(() => {
     if (isAuthReady) loadEntries();
   }, [viewDate, isAuthReady, loadEntries]);
+
+  // Idle cache warmup: prefetch heavy lazy modules after initial render so PWA is 100% offline-ready
+  useEffect(() => {
+    if (!isAuthReady || typeof window === 'undefined') return;
+    const timer = setTimeout(() => {
+      if (navigator.onLine) {
+        import('./components/AnalyticsScreen').catch(() => {});
+      }
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [isAuthReady]);
 
   const { calcEarnings, totalEarned, totalHours, goalPct, chartData } = useTrends(
     entries,
@@ -337,24 +349,30 @@ export default function App() {
                   />
                 )}
                 {screen === 'chart' && (
-                  <AnalyticsScreen
-                    t={t}
-                    aiLangOverride={aiLangOverride}
-                    setAiLangOverride={setAiLangOverride}
-                    settings={settings}
-                    haptic={h}
-                    generateAiInsight={generateAiInsight}
-                    isAiLoading={isAiLoading}
-                    aiInsight={aiInsight}
-                    setAiInsight={setAiInsight}
-                    goalPct={goalPct}
-                    entries={entries}
-                    totalHours={totalHours}
-                    curSym={curSym}
-                    chartPeriod={chartPeriod}
-                    setChartPeriod={setChartPeriod}
-                    chartData={chartData}
-                  />
+                  <OfflineFallbackBoundary
+                    title={settings.language === 'RUS' ? 'Аналитика офлайн' : settings.language === 'GR' ? 'Στατιστικά εκτός σύνδεσης' : 'Analytics Offline'}
+                    description={settings.language === 'RUS' ? 'Подключитесь к сети один раз, чтобы модуль графиков загрузился для работы офлайн.' : 'Connect to the internet once to download charts for offline use.'}
+                    retryText={settings.language === 'RUS' ? 'Повторить' : 'Try Again'}
+                  >
+                    <AnalyticsScreen
+                      t={t}
+                      aiLangOverride={aiLangOverride}
+                      setAiLangOverride={setAiLangOverride}
+                      settings={settings}
+                      haptic={h}
+                      generateAiInsight={generateAiInsight}
+                      isAiLoading={isAiLoading}
+                      aiInsight={aiInsight}
+                      setAiInsight={setAiInsight}
+                      goalPct={goalPct}
+                      entries={entries}
+                      totalHours={totalHours}
+                      curSym={curSym}
+                      chartPeriod={chartPeriod}
+                      setChartPeriod={setChartPeriod}
+                      chartData={chartData}
+                    />
+                  </OfflineFallbackBoundary>
                 )}
                 {screen === 'settings' && (
                   <SettingsScreen

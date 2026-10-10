@@ -111,9 +111,9 @@ const DayCell = React.memo(({
               ? 'bg-[var(--bg-1)] border-[var(--danger)] text-[var(--danger)] shadow-sm'
               : 'bg-[var(--bg-1)] border-[var(--t1)] text-[var(--t1)] shadow-sm' 
             : isSunday
-              ? 'bg-transparent border-transparent text-[var(--danger)] opacity-85 hover:bg-[var(--danger-bg)]'
+              ? 'bg-transparent border-transparent text-[var(--danger)] hover:bg-[var(--danger-bg)] font-bold'
               : isSaturday
-                ? 'bg-transparent border-transparent text-[var(--t3)] opacity-75 hover:bg-[var(--b)]'
+                ? 'bg-transparent border-transparent text-[var(--t3)] font-medium hover:bg-[var(--b)]'
                 : 'bg-transparent border-transparent text-[var(--t2)] hover:bg-[var(--b)]'}
       `}
     >
@@ -127,7 +127,7 @@ const DayCell = React.memo(({
             hours === normalHours
               ? 'bg-[var(--t1)]' 
               : hours > normalHours 
-                ? 'bg-[var(--a)] shadow-[0_0_4px_var(--a)]' 
+                ? 'bg-[var(--amber)] shadow-[0_0_6px_var(--amber)]' 
                 : 'bg-[var(--t3)] opacity-80'
           }`} />
         </div>
@@ -521,7 +521,7 @@ export const CalendarScreen = ({
                               <div className="text-sm font-bold text-[var(--t1)] flex items-center gap-2 truncate">
                                 {e.hours}h 
                                 {e.hours > settings.normal && (
-                                  <span className="text-micro bg-[var(--green-bg)] text-[var(--green)] px-1.5 py-0.5 rounded uppercase shrink-0 font-bold">
+                                  <span className="text-micro bg-[var(--amber-bg)] text-[var(--amber)] px-1.5 py-0.5 rounded uppercase shrink-0 font-bold">
                                     +{e.hours - settings.normal}h OT
                                   </span>
                                 )}

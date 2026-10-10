@@ -1,12 +1,24 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { createRequire } from 'module';
+import fs from 'fs';
 import {defineConfig, Plugin} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-const require = createRequire(import.meta.url);
-const pkg = require('./package.json');
+function watchPackageJson(): Plugin {
+  return {
+    name: 'watch-package-json',
+    configureServer(server) {
+      const pkgPath = path.resolve(__dirname, 'package.json');
+      server.watcher.add(pkgPath);
+      server.watcher.on('change', (file) => {
+        if (path.resolve(file) === pkgPath) {
+          server.restart();
+        }
+      });
+    },
+  };
+}
 
 function preloadEpilogueFont(): Plugin {
   return {
@@ -38,6 +50,7 @@ function preloadEpilogueFont(): Plugin {
 }
 
 export default defineConfig(() => {
+  const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
   return {
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
@@ -46,6 +59,7 @@ export default defineConfig(() => {
       react(), 
       tailwindcss(),
       preloadEpilogueFont(),
+      watchPackageJson(),
       VitePWA({
         registerType: 'autoUpdate',
         workbox: {

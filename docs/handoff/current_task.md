@@ -1,13 +1,25 @@
 # TASK HANDOFF: main
-- **Timestamp**: 2026-10-10T21:59:00.000Z
+- **Timestamp**: 2026-10-10T23:30:21.032Z
 - **Branch**: main
-- **Last Commit**: 6dc9de9 feat(home): sync space-y-6 rhythm, elevate Days in Monthly Summary and strict tabular-nums
+- **Last Commit**: 9ea3469 fix(version): sync app version on bump in dev and fix vercel deployment
 - **Gate Status**: PASS (TypeScript + Build OK)
 
-## Active Pipeline Router
-- Router: `docs/handoff/roadmap_router.md`
-- Master Cards: `docs/ROUTER.md`
+## Changed Files (git status -s)
+```
+M package-lock.json
+ M package.json
+ M src/App.tsx
+ M src/components/CalendarScreen.tsx
+ M src/components/SettingsScreen.tsx
+ M src/hooks/useTranslation.ts
+ M src/index.css
+?? src/components/BrandedQRCode.tsx
+?? src/components/DevicePairModal.tsx
+?? src/components/QRScannerModal.tsx
+?? src/hooks/useDevicePairing.ts
+?? src/lib/device-pairing.ts
+```
 
 ## Next Action
-- [ ] Commit Card 03: Dark & Indigo Palette Deep Polish (WCAG AA)
-- [ ] Proceed to [Card 04: Smart Fill to Today Preset](04_smart_fill_today.md)
+- [ ] Verify next atomic goal
+- [ ] Run `npm run gate` before commit

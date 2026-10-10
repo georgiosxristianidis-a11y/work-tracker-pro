@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -23,12 +23,13 @@ interface SettingsScreenProps {
   viewDate: Date;
   calcEarnings: (hours: number) => number;
   addToast: (msg: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
+  onOpenDevicePair?: () => void;
 }
 
 export const SettingsScreen = ({
   settings, setSettings, t, curSym, haptic, syncStatus, syncErrorMsg,
   lastSynced, syncTapActual, restoreFromCloud, deleteAllTap, toggleTheme,
-  viewDate, calcEarnings, addToast
+  viewDate, calcEarnings, addToast, onOpenDevicePair
 }: SettingsScreenProps) => {
   const {
     exportCSV, exportTXT, exportPDF, exportICS,
@@ -542,6 +543,14 @@ export const SettingsScreen = ({
               className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 bg-[var(--bg)] border border-[var(--b)] text-[var(--t1)] shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
             >
               <Download size={14} /> {t('Restore from Cloud')}
+            </button>
+
+            <button
+              onClick={() => { haptic(10); onOpenDevicePair?.(); }}
+              disabled={settings.strictOfflineMode}
+              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 bg-[#d4af37]/10 hover:bg-[#d4af37]/20 border border-[#d4af37]/30 text-[#d4af37] shadow-[0_2px_10px_rgba(212,175,55,0.08)]"
+            >
+              <QrCode size={14} /> {t('Pair Device (QR Code)')}
             </button>
           </div>
         </div>

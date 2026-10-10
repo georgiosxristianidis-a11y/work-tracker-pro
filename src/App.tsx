@@ -24,6 +24,8 @@ import { Toasts, ToastMessage } from './components/Toasts';
 import { QuickFillModal } from './components/QuickFillModal';
 import { EditorModal } from './components/EditorModal';
 import { BulkAddModal } from './components/BulkAddModal';
+import { DevicePairModal } from './components/DevicePairModal';
+import { useDevicePairing } from './hooks/useDevicePairing';
 import { OfflineFallbackBoundary } from './components/OfflineFallbackBoundary';
 import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, AppSettings } from './constants';
 
@@ -250,6 +252,19 @@ export default function App() {
     clearMonth
   } = useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, undoLabel: t('Undo'), onSync: scheduleBackgroundSync });
 
+  const {
+    isPairModalOpen,
+    setIsPairModalOpen,
+    incomingPayload,
+    setIncomingPayload,
+    applyPairing
+  } = useDevicePairing({
+    getDeviceId,
+    loadEntries,
+    addToast,
+    haptic: h
+  });
+
   const applyTap = useDoubleTap(handleApplyTemplate);
   const clearTap = useDoubleTap(clearMonth);
   const syncTapActual = useDoubleTap(syncWithSupabaseAction);
@@ -393,6 +408,7 @@ export default function App() {
                     viewDate={viewDate}
                     calcEarnings={calcEarnings}
                     addToast={addToast}
+                    onOpenDevicePair={() => setIsPairModalOpen(true)}
                   />
                 )}
                 {screen === 'total' && <TotalScreen allEntries={allEntries} viewDate={viewDate} settings={settings} calcEarnings={calcEarnings} curSym={curSym} t={t} />}
@@ -439,6 +455,20 @@ export default function App() {
           haptic={h}
           saveMultipleEntries={saveMultipleEntries}
           settings={settings}
+        />
+
+        {/* Device Pair & QR Sync Modal */}
+        <DevicePairModal
+          isOpen={isPairModalOpen || incomingPayload !== null}
+          onClose={() => {
+            setIsPairModalOpen(false);
+            setIncomingPayload(null);
+          }}
+          theme={settings.theme}
+          deviceId={getDeviceId()}
+          localEntriesCount={entries.length}
+          onApplyPairing={applyPairing}
+          addToast={addToast}
         />
 
         {/* Toasts */}

@@ -7,12 +7,12 @@ import { useAppStore } from '../store/useAppStore';
 const Clock = () => {
   const [time, setTime] = useState(new Date());
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
+    const timer = setInterval(() => setTime(new Date()), 30000);
     return () => clearInterval(timer);
   }, []);
   return (
-    <span className="text-micro font-bold text-[var(--t3)] uppercase tracking-widest mt-0.5">
-      {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+    <span className="text-micro font-semibold text-[var(--t3)] tracking-wider mt-0.5 tabular-nums">
+      {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
     </span>
   );
 };
@@ -58,7 +58,7 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
             <Logo className="w-full h-full" />
           </motion.div>
           <div className="flex flex-col ml-1">
-            <span className="text-[11px] font-black tracking-[0.2em] uppercase leading-none gemini-text-gradient bg-clip-text text-left">
+            <span className="text-[11px] font-black tracking-[0.18em] uppercase leading-none text-[var(--t1)] text-left">
               Work Tracker Pro
             </span>
             <div className="flex justify-start text-left gap-1">
@@ -68,25 +68,17 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
         </button>
       </div>
       
-      <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 mr-1 rounded-full text-xs font-bold lowercase transition-all duration-500 ${strictMode ? 'bg-[var(--b)] text-[var(--t2)] border border-[var(--b)]' : isOnline ? 'bg-[var(--t1)] text-[var(--bg)] border border-transparent' : 'bg-[var(--b)] text-[var(--t2)] border border-[var(--b)]'}`}>
+      <div className="flex items-center gap-1.5 px-2.5 py-1 mr-1 rounded-full text-xs font-semibold border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] shrink-0 transition-colors">
         {strictMode ? (
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] border border-[var(--danger)]/50 opacity-40" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] opacity-60" />
         ) : syncStatus === 'syncing' ? (
           <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
         ) : (!isOnline || syncStatus === 'error') ? (
-          <motion.div 
-            animate={{ opacity: [0.2, 1, 0.2] }} 
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] opacity-60" 
-          />
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--t3)] opacity-60" />
         ) : (
-          <motion.div 
-            animate={{ opacity: [0.2, 1, 0.2] }} 
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" 
-          />
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
         )}
-        <span>{strictMode ? t('offline') : isOnline ? (syncStatus === 'syncing' ? t('syncing') : t('online')) : t('offline')}</span>
+        <span className="lowercase text-micro font-bold">{strictMode ? t('offline') : isOnline ? (syncStatus === 'syncing' ? t('syncing') : t('online')) : t('offline')}</span>
       </div>
     </div>
   );

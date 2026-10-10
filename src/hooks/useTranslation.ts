@@ -127,6 +127,13 @@ const dictRUS: Record<string, string> = {
   "Let's go!": 'Вперед к делу!',
   'Start Work': 'Начать работу',
   'Undo': 'Отмена',
+  'complete': 'заполнено',
+  'day': 'день',
+  'No hours logged': 'Часы не записаны',
+  'Edit Details': 'Редактировать',
+  'Decrease hours': 'Уменьшить часы',
+  'Increase hours': 'Увеличить часы',
+  'Custom hours': 'Свои часы',
 };
 
 const dictGR: Record<string, string> = {

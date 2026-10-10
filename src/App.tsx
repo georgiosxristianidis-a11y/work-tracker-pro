@@ -241,9 +241,10 @@ export default function App() {
     isQuickFillOpen,
     setIsQuickFillOpen,
     handleApplyTemplate,
+    smartFillUpToDay,
     getDefaultHours,
     clearMonth
-  } = useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, undoLabel: t('Undo') });
+  } = useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, undoLabel: t('Undo'), onSync: scheduleBackgroundSync });
 
   const applyTap = useDoubleTap(handleApplyTemplate);
   const clearTap = useDoubleTap(clearMonth);
@@ -335,6 +336,8 @@ export default function App() {
                     t={t}
                     defaultEditorHours={getDefaultHours()}
                     deleteEntry={deleteEntry}
+                    saveEntry={saveEntry}
+                    smartFillUpToDay={smartFillUpToDay}
                     calcEarnings={calcEarnings}
                     curSym={curSym}
                     clearTap={deleteEntryTap}

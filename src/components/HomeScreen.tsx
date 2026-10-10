@@ -120,11 +120,11 @@ export const HomeScreen = ({
                   />
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
-                  <div className={`text-[12px] font-bold flex items-center gap-1 ${earningsTrend > 0 ? 'text-[var(--a)]' : earningsTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
+                  <div className={`text-[12px] font-bold flex items-center gap-1 ${earningsTrend > 0 ? 'text-[var(--green)]' : earningsTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
                     {earningsTrend > 0 ? <TrendingUp size={12} strokeWidth={3} /> : (earningsTrend < 0 ? <TrendingUp size={12} strokeWidth={3} className="rotate-180" /> : null)}
                     {earningsTrend > 0 ? '+' : ''}{earningsTrend}%
                   </div>
-                  <span className="text-xs text-[var(--t3)] opacity-40 font-normal">{t('vs last month')}</span>
+                  <span className="text-xs text-[var(--t3)] font-normal">{t('vs last month')}</span>
                 </div>
               </div>
               <div className="flex flex-col items-start text-left flex-1 min-w-0">
@@ -134,14 +134,14 @@ export const HomeScreen = ({
                     value={totalHours}
                     className="text-2xl font-black text-[var(--t1)]"
                   />
-                  <span className="text-sm font-bold text-[var(--t3)] opacity-40">h</span>
+                  <span className="text-sm font-bold text-[var(--t3)]">h</span>
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
                   <div className={`text-[12px] font-bold flex items-center gap-1 ${hoursTrend > 0 ? 'text-[var(--a)]' : hoursTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
                     {hoursTrend > 0 ? <TrendingUp size={12} strokeWidth={3} /> : (hoursTrend < 0 ? <TrendingUp size={12} strokeWidth={3} className="rotate-180" /> : null)}
                     {hoursTrend > 0 ? '+' : ''}{hoursTrend}%
                   </div>
-                  <span className="text-xs text-[var(--t3)] opacity-40 font-normal">{t('vs last month')}</span>
+                  <span className="text-xs text-[var(--t3)] font-normal">{t('vs last month')}</span>
                 </div>
               </div>
             </div>

@@ -11,6 +11,7 @@ import { SuccessSparkles } from './SuccessSparkles';
 import { useCelebration } from '../hooks/useCelebration';
 import { RollingNumber } from './RollingNumber';
 import { ShowcaseHeroCard } from './ShowcaseHeroCard';
+import type { ChartDataItem } from './AnalyticsChart';
 
 interface HomeScreenProps {
   viewDate: Date;
@@ -28,7 +29,7 @@ interface HomeScreenProps {
   curSym: string;
   deleteEntry?: (date: string) => Promise<void>;
   haptic?: (pattern: number | number[]) => void;
-  chartData?: any[];
+  chartData?: ChartDataItem[];
   openBulkAdd: () => void;
 }
 

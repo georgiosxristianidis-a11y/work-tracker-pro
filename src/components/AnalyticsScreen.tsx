@@ -5,6 +5,7 @@ import { AppSettings, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../co
 import { Entry } from '../lib/db';
 import { CountingNumber } from './CountingNumber';
 
+import type { ChartDataItem } from './AnalyticsChart';
 const AnalyticsChart = React.lazy(() => import('./AnalyticsChart'));
 
 interface AnalyticsScreenProps {
@@ -23,7 +24,7 @@ interface AnalyticsScreenProps {
   curSym: string;
   chartPeriod: 6 | 12;
   setChartPeriod: React.Dispatch<React.SetStateAction<6 | 12>>;
-  chartData: any[];
+  chartData: ChartDataItem[];
 }
 
 export const AnalyticsScreen = ({
@@ -141,21 +142,21 @@ export const AnalyticsScreen = ({
                   />
                 </svg>
                 <div className="text-center space-y-1 relative z-10">
-                  <div className="text-4xl font-black text-[var(--t1)]"><CountingNumber value={goalPct} decimals={1} />%</div>
+                  <div className="text-4xl font-black tabular-nums tracking-tight text-[var(--t1)]"><CountingNumber value={goalPct} decimals={1} />%</div>
                   <div className="text-micro font-bold text-[var(--t3)]">{t('of Goal')}</div>
                 </div>
               </div>
               <div className="grid grid-cols-4 w-full gap-2 pt-6 border-t border-[var(--b)]">
                 <div className="text-center space-y-1">
-                  <div className="text-lg font-black text-[var(--t1)]">{entries.length}</div>
+                  <div className="text-lg font-black tabular-nums text-[var(--t1)]">{entries.length}</div>
                   <div className="text-micro font-bold text-[var(--t3)]">{t('Days')}</div>
                 </div>
                 <div className="text-center space-y-1">
-                  <div className="text-lg font-black text-[var(--t1)]">{totalHours}h</div>
+                  <div className="text-lg font-black tabular-nums text-[var(--t1)]">{totalHours}h</div>
                   <div className="text-micro font-bold text-[var(--t3)]">{t('Hours')}</div>
                 </div>
                 <div className="text-center space-y-1">
-                  <div className="text-lg font-black text-[var(--t1)]">{curSym}{settings.goal}</div>
+                  <div className="text-lg font-black tabular-nums text-[var(--t1)]">{curSym}{settings.goal}</div>
                   <div className="text-micro font-bold text-[var(--t3)]">{t('Goal')}</div>
                 </div>
                 <div className="text-center space-y-1 flex flex-col items-center">
@@ -199,13 +200,13 @@ export const AnalyticsScreen = ({
           <div className="w-full flex-shrink-0 px-1">
             <div className="h-full p-8 rounded-card border border-[var(--b)] bg-[var(--bg-1)] flex flex-col gap-6">
               <div className="flex flex-col mb-4 gap-3">
-                <span className="text-xs font-black text-[var(--t3)]">{t('Monthly Activity')}</span>
+                <span className="text-micro font-bold uppercase tracking-[0.2em] text-[var(--t3)]">{t('Monthly Activity')}</span>
                 
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-2">
                     <div className="flex-1 flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
                       <button
-                        onClick={() => setChartMetric('earnings')}
+                        onClick={() => { haptic(8); setChartMetric('earnings'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartMetric === 'earnings' 
                             ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
@@ -215,7 +216,7 @@ export const AnalyticsScreen = ({
                         {t('Earnings')}
                       </button>
                       <button
-                        onClick={() => setChartMetric('hours')}
+                        onClick={() => { haptic(8); setChartMetric('hours'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartMetric === 'hours' 
                             ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
@@ -225,7 +226,7 @@ export const AnalyticsScreen = ({
                         {t('Hours')}
                       </button>
                       <button
-                        onClick={() => setChartMetric('velocity')}
+                        onClick={() => { haptic(8); setChartMetric('velocity'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartMetric === 'velocity' 
                             ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
@@ -239,7 +240,7 @@ export const AnalyticsScreen = ({
 
                     <div className="flex-1 flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
                       <button
-                        onClick={() => setChartType('area')}
+                        onClick={() => { haptic(8); setChartType('area'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartType === 'area' 
                             ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
@@ -249,7 +250,7 @@ export const AnalyticsScreen = ({
                         {t('Area')}
                       </button>
                       <button
-                        onClick={() => setChartType('bar')}
+                        onClick={() => { haptic(8); setChartType('bar'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartType === 'bar' 
                             ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
@@ -343,26 +344,26 @@ export const AnalyticsScreen = ({
           <div className="w-full flex-shrink-0 px-1">
             <div className="h-full p-8 rounded-card border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-6 relative overflow-hidden">
               <div className="flex flex-col items-center gap-2 relative z-10">
-                <span className="text-xs font-black text-[var(--t3)] uppercase tracking-widest">{t('Work Velocity')}</span>
+                <span className="text-micro font-bold uppercase tracking-[0.2em] text-[var(--t3)]">{t('Work Velocity')}</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-6xl font-black tracking-tighter text-[var(--t1)]">{currentVelocity}</span>
+                  <span className="text-6xl font-black tracking-tighter text-[var(--t1)] tabular-nums">{currentVelocity}</span>
                   <span className="text-sm font-bold text-[var(--t3)]">h/d</span>
                 </div>
-                <span className="text-sm font-bold text-[var(--t2)]">{t('Average hours per active day')}</span>
+                <span className="text-xs font-medium text-[var(--t2)]">{t('Average hours per active day')}</span>
               </div>
               
               <div className="flex w-full items-center justify-between pt-6 border-t border-[var(--b)] z-10">
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-[var(--t3)] uppercase">{t('Previous Month')}</span>
+                  <span className="text-micro font-bold uppercase tracking-widest text-[var(--t3)] mb-0.5">{t('Previous Month')}</span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-[var(--t2)]">{prevVelocity}</span>
+                    <span className="text-2xl font-black text-[var(--t2)] tabular-nums">{prevVelocity}</span>
                     <span className="text-xs font-bold text-[var(--t3)]">h/d</span>
                   </div>
                 </div>
                 
                 <div className="flex flex-col items-end">
-                  <span className="text-xs font-bold text-[var(--t3)] uppercase">{t('Trend')}</span>
-                  <div className={`px-2 py-1 rounded-md text-sm font-black flex items-center gap-1 ${velocityTrend > 0 ? 'bg-[var(--a)] text-[var(--bg)]' : velocityTrend < 0 ? 'bg-[var(--t3)] text-[var(--bg)]' : 'bg-[var(--b)] text-[var(--t2)]'}`}>
+                  <span className="text-micro font-bold uppercase tracking-widest text-[var(--t3)] mb-0.5">{t('Trend')}</span>
+                  <div className={`px-2.5 py-1 rounded-md text-sm font-black tabular-nums flex items-center gap-1 ${velocityTrend > 0 ? 'bg-[var(--green)]/15 text-[var(--green)] border border-[var(--green)]/30' : velocityTrend < 0 ? 'bg-rose-500/15 text-rose-500 border border-rose-500/30' : 'bg-[var(--b)] text-[var(--t2)]'}`}>
                     {velocityTrend > 0 ? '+' : ''}{velocityTrend}%
                   </div>
                 </div>

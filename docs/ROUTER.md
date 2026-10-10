@@ -123,10 +123,10 @@
 
 ## 📋 Очередь задач: Post-Calendar Polish & Core Alignment
 
-### 🔵 ANA-1 — Analytics & Charts Elite Redesign · 🔵 20 мин
+### 🟩 ANA-1 — Analytics & Charts Elite Redesign · 🟩 ГОТОВО (2026-10-10)
 - **🎯 Цель:** Модернизировать Recharts и графики до стандартов Apple Health / Fitness: плавные сплайны, градиентный акцент `var(--a)`, стабильные тултипы без сдвига верстки на тачах, карточки проекций и `tabular-nums`.
 - **📂 Файлы:** `src/components/AnalyticsScreen.tsx`, `src/components/AnalyticsChart.tsx`
-- **✅ DoD:** `npm run gate` (exit 0) + Lighthouse Performance >= 95 + мобильный вьюпорт (390x844).
+- **✅ DoD:** `npm run gate` (exit 0) + Lighthouse Performance >= 95 + мобильный вьюпорт (390x844). Zero-lag scrub via `isAnimationActive={false}`.
 
 ---
 

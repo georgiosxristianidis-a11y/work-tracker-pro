@@ -113,7 +113,7 @@ const DayCell = React.memo(({
             : isSunday
               ? 'bg-transparent border-transparent text-[var(--danger)] opacity-85 hover:bg-[var(--danger-bg)]'
               : isSaturday
-                ? 'bg-transparent border-transparent text-[var(--t3)] opacity-40 hover:bg-[var(--b)]'
+                ? 'bg-transparent border-transparent text-[var(--t3)] opacity-75 hover:bg-[var(--b)]'
                 : 'bg-transparent border-transparent text-[var(--t2)] hover:bg-[var(--b)]'}
       `}
     >
@@ -128,7 +128,7 @@ const DayCell = React.memo(({
               ? 'bg-[var(--t1)]' 
               : hours > normalHours 
                 ? 'bg-[var(--a)] shadow-[0_0_4px_var(--a)]' 
-                : 'bg-[var(--t3)] opacity-60'
+                : 'bg-[var(--t3)] opacity-80'
           }`} />
         </div>
       )}
@@ -237,7 +237,7 @@ export const CalendarScreen = ({
             className="py-1 px-3 rounded-panel border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-[3.25rem] min-h-[2.75rem] hover:border-[var(--a)]/40 hover:bg-[var(--b)] active:scale-95 transition-all group"
             aria-label={t('Days')}
           >
-            <span className="text-micro font-black uppercase tracking-widest text-[var(--t3)] opacity-60 leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
+            <span className="text-micro font-black uppercase tracking-widest text-[var(--t3)] leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
               {t('Days')}
             </span>
             <span className="text-base font-black text-[var(--t1)] leading-none tabular-nums">
@@ -323,7 +323,7 @@ export const CalendarScreen = ({
                   isSunday 
                     ? 'text-[var(--danger)] opacity-85 font-bold' 
                     : isSaturday 
-                      ? 'text-[var(--t3)] opacity-40' 
+                      ? 'text-[var(--t3)] opacity-75' 
                       : 'text-[var(--t3)]'
                 }`}
               >

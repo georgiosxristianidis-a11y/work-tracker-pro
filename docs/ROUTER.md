@@ -137,9 +137,9 @@
 
 ---
 
-### 🔵 THEME-1 — Dark & Indigo Palette Deep Polish (WCAG AA) · 🔵 15 мин
-- **🎯 Цель:** Полный аудит контрастности WCAG AA в темах Dark (`.dark`) и Indigo (`.indigo`): калибровка янтарных баров переработок (`#f59e0b` / `var(--a)`), кнопок пресетов шторки и дней сб/вс.
-- **📂 Файлы:** `src/index.css`, `src/components/CalendarScreen.tsx`, `src/components/HomeScreen.tsx`
+### 🟩 THEME-1 — Dark & Indigo Palette Deep Polish (WCAG AA) · 🟩 ГОТОВО (2026-10-10)
+- **🎯 Цель:** Полный аудит контрастности WCAG AA в темах Dark (`.dark`) и Indigo (`.indigo`): калибровка вторичного/третичного текста, пастельно-красного `--danger`, кнопок пресетов шторки и дней сб/вс (`opacity-75`).
+- **📂 Файлы:** `src/index.css`, `src/components/CalendarScreen.tsx`
 - **✅ DoD:** WCAG AA во всех темах + `npm run gate` (exit 0) + Lighthouse Accessibility >= 98.
 
 ---

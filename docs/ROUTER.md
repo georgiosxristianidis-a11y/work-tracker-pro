@@ -130,10 +130,10 @@
 
 ---
 
-### 🔵 HOME-1 — Home Dashboard Elite Rhythm & Metrics Sync · 🔵 15 мин
-- **🎯 Цель:** Синхронизировать радиусы карточек и вертикальный ритм (`space-y-7`) с новым экраном Календаря; поднять видимость ключевой метрики «Отработано дней»; строгий `tabular-nums` на одометрах и счетчиках.
-- **📂 Файлы:** `src/components/HomeScreen.tsx`, `src/components/MetricCard.tsx`
-- **✅ DoD:** `npm run gate` (exit 0) + отсутствие сдвигов разметки.
+### 🟩 HOME-1 — Home Dashboard Elite Rhythm & Metrics Sync · 🟩 ГОТОВО (2026-10-10)
+- **🎯 Цель:** Синхронизировать радиусы карточек и вертикальный ритм (`space-y-6`) с новым экраном Календаря; вывести метрику «Отработано дней» в триумвират Monthly Summary (Заработок • Часы • Дни); строгий `tabular-nums` на одометрах и счетчиках.
+- **📂 Файлы:** `src/components/HomeScreen.tsx`, `src/components/DashboardWidgets.tsx`
+- **✅ DoD:** `npm run gate` (exit 0) + сбалансированная 3-колоночная сводка месяца без сдвигов верстки.
 
 ---
 

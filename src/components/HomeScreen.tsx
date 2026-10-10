@@ -84,7 +84,7 @@ export const HomeScreen = ({
   );
 
   return (
-    <div className="space-y-4 pt-1 relative">
+    <div className="space-y-6 pt-1 relative">
       <SuccessSparkles
         active={celebration.active}
         glyph={celebration.glyph}
@@ -109,7 +109,7 @@ export const HomeScreen = ({
             className="py-1 px-3 rounded-panel border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-[3.25rem] min-h-[2.75rem] hover:border-[var(--a)]/40 hover:bg-[var(--b)] active:scale-95 transition-all group"
             aria-label={t('Days')}
           >
-            <span className="text-micro font-bold uppercase tracking-widest text-[var(--t3)] opacity-60 leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
+            <span className="text-micro font-bold uppercase tracking-widest text-[var(--t3)] leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
               {t('Days')}
             </span>
             <span className="text-base font-black text-[var(--t1)] leading-none tabular-nums">
@@ -128,7 +128,7 @@ export const HomeScreen = ({
         </div>
       </div>
 
-      <div className="px-1 mt-3">
+      <div className="px-1">
         <ShowcaseHeroCard
           onStartShift={() => { if (haptic) haptic(10); setScreen('calendar'); }}
           onOpenAnalytics={() => { if (haptic) haptic(10); setScreen('chart'); }}
@@ -139,46 +139,62 @@ export const HomeScreen = ({
         />
       </div>
 
-      <div className="px-1 mt-4">
+      <div className="px-1">
         <div className="p-6 rounded-card border border-[var(--b)] bg-[var(--bg-1)] shadow-[0_8px_32px_rgba(0,0,0,0.03)] flex flex-col gap-4 relative overflow-hidden">
           {/* Subtle accent gradient for premium feel without breaking the solid style */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--a)]/5 rounded-full blur-3xl pointer-events-none" />
           
           <span className="text-xs font-black uppercase tracking-widest text-[var(--t3)] relative z-10">{t('Monthly Summary')}</span>
           <div className="relative min-h-[100px] flex justify-center">
-            <div data-testid="monthly-stats" className={`flex gap-4 sm:gap-10 w-full max-w-[300px] justify-between transition-all duration-500 ${totalHours === 0 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}>
+            <div data-testid="monthly-stats" className={`grid grid-cols-3 gap-2 sm:gap-4 w-full max-w-[360px] justify-between transition-all duration-500 ${totalHours === 0 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}>
               <div className="flex flex-col items-start text-left flex-1 min-w-0">
-                <span className="text-[12px] text-[var(--t3)] opacity-60 mb-1">{t('Earnings')}</span>
-                <div className={`flex items-baseline gap-2.5 h-[36px] justify-start whitespace-nowrap overflow-visible transition-all duration-500 ${settings.privacyMode ? 'blur-xl opacity-20' : ''}`}>
-                  <span className="text-lg text-[var(--t3)] font-light">{curSym}</span>
+                <span className="text-micro font-bold uppercase tracking-wider text-[var(--t3)] mb-1">{t('Earnings')}</span>
+                <div className={`flex items-baseline gap-1.5 h-[36px] justify-start whitespace-nowrap overflow-visible transition-all duration-500 ${settings.privacyMode ? 'blur-xl opacity-20' : ''}`}>
+                  <span className="text-base text-[var(--t3)] font-light">{curSym}</span>
                   <RollingNumber
                     value={formatMoney(totalEarned)}
-                    className="text-2xl font-black text-[var(--t1)]"
+                    className="text-xl sm:text-2xl font-black text-[var(--t1)] tabular-nums"
                   />
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
-                  <div className={`text-[12px] font-bold flex items-center gap-1 ${earningsTrend > 0 ? 'text-[var(--green)]' : earningsTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
+                  <div className={`text-[12px] font-bold tabular-nums flex items-center gap-1 ${earningsTrend > 0 ? 'text-[var(--green)]' : earningsTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
                     {earningsTrend > 0 ? <TrendingUp size={12} strokeWidth={3} /> : (earningsTrend < 0 ? <TrendingUp size={12} strokeWidth={3} className="rotate-180" /> : null)}
                     {earningsTrend > 0 ? '+' : ''}{earningsTrend}%
                   </div>
-                  <span className="text-xs text-[var(--t3)] font-normal">{t('vs last month')}</span>
+                  <span className="text-micro text-[var(--t3)] font-normal">{t('vs last month')}</span>
                 </div>
               </div>
               <div className="flex flex-col items-start text-left flex-1 min-w-0">
-                <span className="text-[12px] text-[var(--t3)] opacity-60 mb-1">{t('Hours')}</span>
-                <div className="flex items-baseline gap-2.5 h-[36px] justify-start whitespace-nowrap overflow-visible">
+                <span className="text-micro font-bold uppercase tracking-wider text-[var(--t3)] mb-1">{t('Hours')}</span>
+                <div className="flex items-baseline gap-1 h-[36px] justify-start whitespace-nowrap overflow-visible">
                   <RollingNumber
                     value={totalHours}
-                    className="text-2xl font-black text-[var(--t1)]"
+                    className="text-xl sm:text-2xl font-black text-[var(--t1)] tabular-nums"
                   />
-                  <span className="text-sm font-bold text-[var(--t3)]">h</span>
+                  <span className="text-xs sm:text-sm font-bold text-[var(--t3)]">h</span>
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
-                  <div className={`text-[12px] font-bold flex items-center gap-1 ${hoursTrend > 0 ? 'text-[var(--a)]' : hoursTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
+                  <div className={`text-[12px] font-bold tabular-nums flex items-center gap-1 ${hoursTrend > 0 ? 'text-[var(--a)]' : hoursTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
                     {hoursTrend > 0 ? <TrendingUp size={12} strokeWidth={3} /> : (hoursTrend < 0 ? <TrendingUp size={12} strokeWidth={3} className="rotate-180" /> : null)}
                     {hoursTrend > 0 ? '+' : ''}{hoursTrend}%
                   </div>
-                  <span className="text-xs text-[var(--t3)] font-normal">{t('vs last month')}</span>
+                  <span className="text-micro text-[var(--t3)] font-normal">{t('vs last month')}</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-start text-left flex-1 min-w-0">
+                <span className="text-micro font-bold uppercase tracking-wider text-[var(--t3)] mb-1">{t('Days')}</span>
+                <div className="flex items-baseline gap-1 h-[36px] justify-start whitespace-nowrap overflow-visible">
+                  <RollingNumber
+                    value={selectedDaysCount}
+                    className="text-xl sm:text-2xl font-black text-[var(--t1)] tabular-nums"
+                  />
+                  <span className="text-xs sm:text-sm font-bold text-[var(--t3)]">d</span>
+                </div>
+                <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
+                  <div className="text-[12px] font-bold text-[var(--t2)] tabular-nums flex items-center gap-1">
+                    {daysInMonth > 0 ? `${Math.round((selectedDaysCount / daysInMonth) * 100)}%` : '0%'}
+                  </div>
+                  <span className="text-micro text-[var(--t3)] font-normal">{selectedDaysCount}/{daysInMonth}d</span>
                 </div>
               </div>
             </div>
@@ -206,7 +222,7 @@ export const HomeScreen = ({
         haptic={haptic}
       />
 
-      <div className="px-1 mt-6">
+      <div className="px-1">
         <motion.button 
           initial={{ opacity: 0, scale: 0.9, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

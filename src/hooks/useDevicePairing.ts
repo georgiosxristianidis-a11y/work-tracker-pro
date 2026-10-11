@@ -30,9 +30,50 @@ export const useDevicePairing = ({
 
   const applyPairing = useCallback(
     async (payload: PairingPayload, mode: 'merge' | 'overwrite') => {
-      if (!supabase) {
-        addToast('Облачная синхронизация недоступна', 'error');
-        return;
+      // Offline P2P direct sync fallback (works without Supabase / when cloud is sleeping)
+      if (!supabase || (!payload.at && !payload.rt && payload.entries)) {
+        if (!payload.entries || payload.entries.length === 0) {
+          if (!supabase) {
+            addToast('Облачная синхронизация недоступна и нет локальных записей в QR', 'error');
+            return;
+          }
+        } else {
+          try {
+            const p2pEntries: Entry[] = payload.entries.map((e) => ({
+              date: e.date,
+              hours: Number(e.hours),
+              month: e.date.substring(0, 7),
+              updated_at: e.updated_at
+            }));
+            const localEntries = await db.getAllEntries();
+
+            if (mode === 'overwrite') {
+              await db.clearAll();
+              if (p2pEntries.length > 0) {
+                await db.saveMany(p2pEntries);
+              }
+              addToast(`P2P: Данные заменены (${p2pEntries.length} записей)`, 'success');
+            } else {
+              const mergeResult = mergeEntries(localEntries, p2pEntries);
+              if (mergeResult.merged.length > 0) {
+                await db.saveMany(mergeResult.merged);
+              }
+              addToast(
+                `P2P: Синхронизировано +${mergeResult.newFromCloud} записей`,
+                'success'
+              );
+            }
+            await loadEntries();
+            haptic(25, true);
+            setIncomingPayload(null);
+            setIsPairModalOpen(false);
+            return;
+          } catch (p2pErr) {
+            console.error('P2P merge failed:', p2pErr);
+            addToast('Ошибка P2P синхронизации', 'error');
+            return;
+          }
+        }
       }
 
       try {

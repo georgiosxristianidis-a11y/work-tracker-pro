@@ -1,0 +1,65 @@
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Дважды в сутки: 04:41 и 16:41 UTC (минута некруглая, чтобы не толкаться в очереди Actions).
+    - cron: '41 4,16 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    name: Heartbeat write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Heartbeat RPC ping
+        id: ping
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ablpnwoounkfumesqrph.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Секрет SUPABASE_ANON_KEY не задан в Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+          resp=$(mktemp)
+          for i in 1 2 3; do
+            [ "$i" -gt 1 ] && sleep 2
+            rm -f "$resp"
+            http_code=$(curl -s -o "$resp" -w '%{http_code}' --max-time 20 \
+              -X POST "$SUPABASE_URL/rest/v1/rpc/keepalive_ping" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{}') || true
+
+            echo "Пинг $i/3: HTTP $http_code, ответ $(wc -c 2>/dev/null < "$resp" || echo 0) байт"
+
+            case "$http_code" in
+              2??) : ;;
+              404)
+                echo "::error::SQL не применён (HTTP 404 на rpc/keepalive_ping) — выполните supabase/keepalive.sql в Supabase SQL Editor."
+                exit 1
+                ;;
+              401|403)
+                echo "::error::Supabase отклонил ключ (HTTP $http_code) — проверьте SUPABASE_ANON_KEY."
+                exit 1
+                ;;
+              000|5??)
+                echo "::error::Supabase не отвечает (HTTP $http_code) — проект, вероятно, уснул в панели Supabase."
+                exit 1
+                ;;
+              *)
+                echo "::error::Неожиданный ответ HTTP $http_code"
+                exit 1
+                ;;
+            esac
+          done
+          echo "Keep-alive: Heartbeat успешно записан в Supabase Postgres."

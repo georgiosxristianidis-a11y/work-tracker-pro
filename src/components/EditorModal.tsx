@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Save, Minus, Plus, CircleCheck, Trash, Database } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AnimatedCheck } from './AnimatedCheck';
+import { TimeTapeRuler } from './TimeTapeRuler';
+import { RollingNumber } from './RollingNumber';
 import { formatMoney } from '../lib/utils';
 import { AppSettings } from '../constants';
 import { useAppStore } from '../store/useAppStore';
@@ -153,30 +155,56 @@ export const EditorModal = ({
                 </div>
               </div>
               
-              <div className="p-6 mt-6 rounded-3xl bg-[var(--bg-1)] border border-[var(--b)] flex flex-col items-center gap-3 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-[var(--a)] opacity-0 group-hover:opacity-5 transition-opacity" />
+              <div className="p-6 mt-6 rounded-3xl bg-[var(--bg-1)] border border-[var(--b)] flex flex-col items-center gap-4 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-[var(--a)] opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none" />
+                
+                {/* Header display with step buttons and RollingNumber */}
                 <div className="flex items-center justify-between w-full relative z-10">
-                  <button onClick={() => { haptic(10); setEditorHours(Math.max(0, editorHours - 0.5)); }} className="w-14 h-14 rounded-2xl bg-[var(--t1)] text-[var(--bg)] flex items-center justify-center active:scale-90 transition-all shadow-md" aria-label={t('Decrease hours')}><Minus size={24} /></button>
-                  <div className="text-4xl font-black text-[var(--t1)] flex items-baseline gap-2.5 translate-y-1">
-                    <motion.span 
-                      key={editorHours}
-                      initial={{ opacity: 0.5, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 20, mass: 0.5 }}
-                    >
-                      {editorHours}
-                    </motion.span>
-                    <span className="text-base text-[var(--t3)]">h</span>
-                  </div>
-                  <button onClick={() => { haptic(15); setEditorHours(Math.min(24, editorHours + 0.5)); }} className="w-14 h-14 rounded-2xl bg-[var(--t1)] text-[var(--bg)] flex items-center justify-center active:scale-90 transition-all shadow-md" aria-label={t('Increase hours')}><Plus size={24} /></button>
-                </div>
-                <div className="flex items-center gap-2 relative z-10">
-                  <div className="text-xs font-bold text-[var(--a)]">{curSym}{formatMoney(calcEarnings(editorHours))}</div>
-                  {editorHours > settings.normal && (
-                    <div className="text-xs font-bold bg-[var(--green-bg)] text-[var(--green)] px-2 py-0.5 rounded uppercase shadow-sm">
-                      +{editorHours - settings.normal}h OT
+                  <button 
+                    type="button"
+                    onClick={() => { haptic(10); setEditorHours(Math.max(0, Math.round((editorHours - 0.5) * 10) / 10)); }} 
+                    className="w-12 h-12 rounded-2xl bg-[var(--t1)] text-[var(--bg)] flex items-center justify-center active:scale-90 transition-all shadow-md shrink-0" 
+                    aria-label={t('Decrease hours')}
+                  >
+                    <Minus size={22} />
+                  </button>
+
+                  <div className="flex flex-col items-center">
+                    <div className="text-4xl font-black text-[var(--t1)] flex items-baseline gap-1.5 tabular-nums">
+                      <RollingNumber value={editorHours} className="font-mono tracking-tight" />
+                      <span className="text-base text-[var(--t3)] font-sans">h</span>
                     </div>
-                  )}
+
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="text-xs font-black text-[var(--a)] tabular-nums flex items-baseline">
+                        <span>{curSym}</span>
+                        <RollingNumber value={formatMoney(calcEarnings(editorHours))} />
+                      </div>
+                      {editorHours > settings.normal && (
+                        <div className="text-[10px] font-black bg-[var(--green-bg)] text-[var(--green)] px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                          +{Math.round((editorHours - settings.normal) * 10) / 10}h OT
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button 
+                    type="button"
+                    onClick={() => { haptic(15); setEditorHours(Math.min(24, Math.round((editorHours + 0.5) * 10) / 10)); }} 
+                    className="w-12 h-12 rounded-2xl bg-[var(--t1)] text-[var(--bg)] flex items-center justify-center active:scale-90 transition-all shadow-md shrink-0" 
+                    aria-label={t('Increase hours')}
+                  >
+                    <Plus size={22} />
+                  </button>
+                </div>
+
+                {/* Tactile Time Tape Ruler */}
+                <div className="w-full relative z-10 pt-1">
+                  <TimeTapeRuler
+                    value={editorHours}
+                    onChange={setEditorHours}
+                    haptic={haptic}
+                  />
                 </div>
               </div>
 

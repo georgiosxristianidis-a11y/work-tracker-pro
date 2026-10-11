@@ -89,17 +89,9 @@
 
 ---
 
-### 🟣 FX-6 — Синтезированный аудио-клифф (Web Audio Micro-Chime, 0 KB) · 🟣 15 мин
-- **🎯 Цель:** Добавить хрустальный перезвон при Goal Reached без скачивания внешних mp3-файлов (0 байт в бандл).
-- **📂 Файлы:** `src/lib/particle-celebration.ts` (или новая утилита `src/lib/audio.ts`)
-- **📏 Правила:**
-  - Нативный `window.AudioContext || window.webkitAudioContext`.
-  - Синтез 2-3 синусоидальных осцилляторов (пентатоника, высокие частоты 1200–2400 Hz с exponentialRampToValueAtTime затуханием 0.8с).
-  - Срабатывает ТОЛЬКО после первого пользовательского жеста (требование браузерной Audio Autoplay Policy).
-  - Проверка: если в приложении включен `soundEnabled: false` или режим без звука — вызов игнорируется.
-  - Обязательный `audioCtx.close()` после затухания нот.
-- **✅ Done:** При триггере Goal Reached звучит кристальный мажорный перезвон; 0 внешних mp3-файлов; нет утечек аудио-контекстов.
-- **🔍 Verify:** `npm run gate` + вызов на мобильном браузере.
+### 🚫 FX-6 — Синтезированный аудио-клифф (Web Audio Micro-Chime) · 🚫 ОТКЛОНЕНО (2026-10-12)
+- **🎯 Решение по аудиту #devil:** Отклонено в пользу строго тактильной отдачи (Haptics Only). Нулевой звуковой шум в рабочей обстановке, отсутствие проблем с Web Audio Autoplay Policy и лишних обработчиков.
+- **✅ Статус:** Утверждён безопасный вибро-отклик без аудио-клиффов (`settings.hapticEnabled`).
 
 ---
 
@@ -137,3 +129,17 @@
 - **🎯 Цель:** Добавить кинематический эффект перелистывания настольного / отрывного календаря для счетчика отработанных дней («8 days») в шапке CalendarScreen и HomeScreen.
 - **📂 Файлы:** `src/components/CalendarDaysBadge.tsx`, `src/components/CalendarScreen.tsx`, `src/components/HomeScreen.tsx`
 - **✅ DoD:** 3D-перспектива 600px, поворот по оси X с физикой spring, направленность анимации (вперед при увеличении и тапе, назад при уменьшении), тактильный отклик `haptic([12, 18])` и микро-задержка 220 мс перед открытием истории. Успешный `npm run gate` (exit 0), PR #8 merged в main, релиз `v0.1.14` в проде.
+
+---
+
+### 🟩 BUILD-1 — Синхронизация версии приложения при bump и Vercel autobump · 🟩 ГОТОВО (2026-10-11)
+- **🎯 Цель:** Обеспечить автоматическое обновление отображаемой версии при `npm run bump` в локальном dev-сервере без рестарта вручную и устранить подавление авто-деплоя релизов на Vercel.
+- **📂 Файлы:** `vite.config.ts`, `.github/workflows/ci.yml`
+- **✅ DoD:** `fs.readFileSync` для чтения версии без Node CJS кэша; плагин `watchPackageJson` с `server.restart()`; замена `[skip ci]` на `[skip actions]` в CI для разрешения сборки на Vercel. `npm run gate` (exit 0).
+
+---
+
+### 🟩 PAIR-1 — QR Cross-Device Pairing & Offline P2P Transfer · 🟩 ГОТОВО (2026-10-11)
+- **🎯 Цель:** Обеспечить бесшовное сопряжение устройств и перенос данных через сканирование QR-кода без обязательного логина в облако (100% offline-first P2P).
+- **📂 Файлы:** `src/lib/device-pairing.ts`, `src/components/DevicePairModal.tsx`, `src/components/QRScannerModal.tsx`, `src/hooks/useDevicePairing.ts`
+- **✅ DoD:** Генерация самодостаточного payload с локальными записями при отсутствии сессии Supabase; поддержка режимов merge/overwrite; тактильный отклик; валидация структуры данных. `npm run gate` (exit 0).

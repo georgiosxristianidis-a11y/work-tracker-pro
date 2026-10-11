@@ -55,7 +55,7 @@
 
 ---
 
-### 🟢 UI-TAPE-1 — Тактильный барабан ввода времени (Time Tape Ruler) · 🟢 20 мин
+### 🟩 UI-TAPE-1 — Тактильный барабан ввода времени (Time Tape Ruler) · 🟩 ГОТОВО (2026-10-11)
 - **🎯 Цель:** Заменить монотонное кликанье кнопок `[-]` и `[+]` в EditorModal на горизонтальную тактильную ленту-рулетку с инерцией и магнитным snap на каждом часе.
 - **📂 Файлы:** `src/components/TimeTapeRuler.tsx`, `src/components/EditorModal.tsx`
 - **📏 Правила:**
@@ -144,7 +144,14 @@
 
 ---
 
-### 🔵 FILL-1 — Smart Fill to Today Preset (1–Сегодня) · 🔵 15 мин
+### 🟩 FILL-1 — Smart Fill to Today Preset (1–Сегодня) · 🟩 ГОТОВО (2026-10-11)
 - **🎯 Цель:** Добавить в Smart Fill пресет «Заполнить до сегодня (1–N)»: пропуск выходных, отсутствие записей в будущих днях месяца, моментальный расчет и 1-тап отмена через Undo-тост.
 - **📂 Файлы:** `src/hooks/useQuickFill.ts`, `src/components/QuickFillModal.tsx`, `src/components/CalendarScreen.tsx`
-- **✅ DoD:** `npm run gate` (exit 0) + корректное заполнение только прошедших рабочих дней месяца.
+- **✅ DoD:** `npm run gate` (exit 0) + корректное заполнение только прошедших рабочих дней месяца. PR #8 merged into main.
+
+---
+
+### 🟩 CAL-FLIP-1 — 3D-анимация перелистывания бейджа дней (Desk / Tear-off Flip) · 🟩 ГОТОВО (2026-10-11)
+- **🎯 Цель:** Добавить кинематический эффект перелистывания настольного / отрывного календаря для счетчика отработанных дней («8 days») в шапке CalendarScreen и HomeScreen.
+- **📂 Файлы:** `src/components/CalendarDaysBadge.tsx`, `src/components/CalendarScreen.tsx`, `src/components/HomeScreen.tsx`
+- **✅ DoD:** 3D-перспектива 600px, поворот по оси X с физикой spring, направленность анимации (вперед при увеличении и тапе, назад при уменьшении), тактильный отклик `haptic([12, 18])` и микро-задержка 220 мс перед открытием истории. Успешный `npm run gate` (exit 0), PR #8 merged в main, релиз `v0.1.14` в проде.

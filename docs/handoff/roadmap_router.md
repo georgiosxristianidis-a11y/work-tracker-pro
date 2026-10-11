@@ -10,7 +10,11 @@
 3. [Card 03: Dark & Indigo Palette Deep Polish](03_dark_indigo_theme_polish.md)
    - Priority: #3 | Files: `index.css`, `CalendarScreen.tsx`, `HomeScreen.tsx`
 4. [Card 04: Smart Fill to Today Preset](04_smart_fill_today.md)
-   - Priority: #4 | Files: `useQuickFill.ts`, `QuickFillModal.tsx`, `CalendarScreen.tsx`
+   - Priority: #4 | Files: `useQuickFill.ts`, `QuickFillModal.tsx`, `CalendarScreen.tsx` | Status: Complete
+5. [Card 05: Calendar Days 3D Flip Badge](05_calendar_flip_badge.md)
+   - Priority: #5 | Files: `CalendarDaysBadge.tsx`, `CalendarScreen.tsx`, `HomeScreen.tsx` | Status: Complete
+6. [Card 06: Tactile Time Tape Ruler](05_time_tape_ruler.md)
+   - Priority: #6 | Files: `TimeTapeRuler.tsx`, `EditorModal.tsx` | Status: Complete
 
 ## Session Protocol
 - Take strictly ONE task card per agent session.

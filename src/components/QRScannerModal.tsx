@@ -5,14 +5,21 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import jsQR from 'jsqr';
-import { Camera, X, Zap, ZapOff, Upload, AlertCircle } from 'lucide-react';
-import { decodePairingPayload, PairingPayload } from '../lib/device-pairing';
+import { Camera, X, Zap, ZapOff, Upload, AlertCircle, Clock } from 'lucide-react';
+import {
+  decodePairingPayload,
+  isPairingPayloadExpired,
+  PairingPayload
+} from '../lib/device-pairing';
 
 interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScanSuccess: (payload: PairingPayload) => void;
 }
+
+const SCAN_THROTTLE_MS = 125; // ~8 FPS scanner loop for battery preservation
+const CROP_CANVAS_DIM = 400; // Optimal 400x400 center crop for jsQR
 
 export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   isOpen,
@@ -23,6 +30,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  const lastScanTimeRef = useRef<number>(0);
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -45,6 +53,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     (rawValue: string) => {
       const payload = decodePairingPayload(rawValue);
       if (payload) {
+        if (isPairingPayloadExpired(payload)) {
+          setErrorMessage(
+            'Срок действия этого QR-кода истёк (10 минут). Нажмите «Обновить код» на первом устройстве.'
+          );
+          return;
+        }
         stopCamera();
         onScanSuccess(payload);
       }
@@ -57,36 +71,49 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    const now = performance.now();
+    const shouldProcess = now - lastScanTimeRef.current >= SCAN_THROTTLE_MS;
+
+    if (shouldProcess && video.readyState === video.HAVE_ENOUGH_DATA) {
+      lastScanTimeRef.current = now;
+
+      // Center Crop logic: process reticle area to conserve CPU & memory
+      const vWidth = video.videoWidth;
+      const vHeight = video.videoHeight;
+      const minDim = Math.min(vWidth, vHeight);
+      const cropSize = Math.floor(minDim * 0.72);
+      const sx = (vWidth - cropSize) / 2;
+      const sy = (vHeight - cropSize) / 2;
+
+      canvas.width = CROP_CANVAS_DIM;
+      canvas.height = CROP_CANVAS_DIM;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, CROP_CANVAS_DIM, CROP_CANVAS_DIM);
 
         // Try native BarcodeDetector if available
         if ('BarcodeDetector' in window) {
           try {
-            // @ts-expect-error BarcodeDetector standard experimental API
+            // @ts-expect-error BarcodeDetector experimental API
             const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
             detector
-              .detect(video)
+              .detect(canvas)
               .then((barcodes: Array<{ rawValue: string }>) => {
                 if (barcodes.length > 0) {
                   handleDetectedCode(barcodes[0].rawValue);
                 }
               })
               .catch(() => {
-                // Fallback to jsQR on detection failure
+                // Fallback to jsQR
               });
           } catch {
             // Fallback to jsQR
           }
         }
 
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        const imageData = ctx.getImageData(0, 0, CROP_CANVAS_DIM, CROP_CANVAS_DIM);
+        const code = jsQR(imageData.data, CROP_CANVAS_DIM, CROP_CANVAS_DIM, {
           inversionAttempts: 'dontInvert'
         });
 
@@ -245,7 +272,17 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
             </div>
           )}
 
-          {/* Fallback & Error Screen */}
+          {/* Error / Expired Code Screen */}
+          {errorMessage && (
+            <div className="absolute inset-x-4 bottom-4 p-3 bg-red-950/90 border border-red-800 rounded-2xl flex items-start gap-2.5 z-20 backdrop-blur-sm animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1 text-xs text-red-200 leading-snug">
+                {errorMessage}
+              </div>
+            </div>
+          )}
+
+          {/* Camera Permission Denied Fallback */}
           {hasPermission === false && (
             <div className="flex flex-col items-center justify-center p-6 text-center z-10">
               <AlertCircle className="w-10 h-10 text-amber-400 mb-3" />

@@ -36,63 +36,61 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   const [activeTab, setActiveTab] = useState<'show' | 'scan'>('show');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [pairingUrl, setPairingUrl] = useState<string>('');
+  const [pairingCreatedAt, setPairingCreatedAt] = useState<number>(Date.now());
   const [isGenerating, setIsGenerating] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<PairingPayload | null>(null);
   const [isApplying, setIsApplying] = useState(false);
 
   const isDark = theme !== 'light';
 
+  const generateUrl = React.useCallback(async () => {
+    setIsGenerating(true);
+    try {
+      if (!supabase) {
+        addToast('Supabase не подключен в .env', 'warning');
+        setIsGenerating(false);
+        return;
+      }
+
+      const userId = await ensureAuth();
+      const { data: { session } } = await supabase.auth.getSession();
+      const now = Date.now();
+
+      if (session) {
+        const payload: PairingPayload = {
+          v: 1,
+          t: now,
+          uid: session.user.id,
+          at: session.access_token,
+          rt: session.refresh_token,
+          dev: deviceId
+        };
+        const encoded = encodePairingPayload(payload);
+        setPairingCreatedAt(now);
+        setPairingUrl(buildPairingUrl(encoded));
+      } else if (userId) {
+        const payload: PairingPayload = {
+          v: 1,
+          t: now,
+          uid: userId,
+          dev: deviceId
+        };
+        const encoded = encodePairingPayload(payload);
+        setPairingCreatedAt(now);
+        setPairingUrl(buildPairingUrl(encoded));
+      }
+    } catch (err) {
+      console.error('Failed to generate pairing payload:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [addToast, deviceId]);
+
   // Generate pairing URL whenever the modal opens
   useEffect(() => {
     if (!isOpen) return;
-
-    let isMounted = true;
-    async function generateUrl() {
-      setIsGenerating(true);
-      try {
-        if (!supabase) {
-          addToast('Supabase не подключен в .env', 'warning');
-          setIsGenerating(false);
-          return;
-        }
-
-        const userId = await ensureAuth();
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session && isMounted) {
-          const payload: PairingPayload = {
-            v: 1,
-            t: Date.now(),
-            uid: session.user.id,
-            at: session.access_token,
-            rt: session.refresh_token,
-            dev: deviceId
-          };
-          const encoded = encodePairingPayload(payload);
-          setPairingUrl(buildPairingUrl(encoded));
-        } else if (userId && isMounted) {
-          const payload: PairingPayload = {
-            v: 1,
-            t: Date.now(),
-            uid: userId,
-            dev: deviceId
-          };
-          const encoded = encodePairingPayload(payload);
-          setPairingUrl(buildPairingUrl(encoded));
-        }
-      } catch (err) {
-        console.error('Failed to generate pairing payload:', err);
-      } finally {
-        if (isMounted) setIsGenerating(false);
-      }
-    }
-
     generateUrl();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, deviceId, addToast]);
+  }, [isOpen, generateUrl]);
 
   const handleScanSuccess = (payload: PairingPayload) => {
     setIsScannerOpen(false);
@@ -241,8 +239,10 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
             ) : pairingUrl ? (
               <BrandedQRCode
                 url={pairingUrl}
+                createdAt={pairingCreatedAt}
                 theme={theme}
                 onCopied={() => addToast('Ссылка сопряжения скопирована', 'success')}
+                onRefresh={generateUrl}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-64 text-center px-4">

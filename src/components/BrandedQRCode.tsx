@@ -5,12 +5,19 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
-import { Copy, Check, Share2 } from 'lucide-react';
+import { Copy, Check, Share2, Clock, RotateCw, AlertTriangle } from 'lucide-react';
+import {
+  getPairingRemainingSeconds,
+  formatCountdown,
+  PAIRING_QR_TTL_MS
+} from '../lib/device-pairing';
 
 interface BrandedQRCodeProps {
   url: string;
+  createdAt: number;
   theme?: 'light' | 'dark' | 'indigo';
   onCopied?: () => void;
+  onRefresh?: () => void;
 }
 
 const BRAND_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
@@ -34,15 +41,36 @@ const BRAND_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100
 
 const BRAND_LOGO_DATA_URL = `data:image/svg+xml;utf8,${encodeURIComponent(BRAND_LOGO_SVG)}`;
 
-export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({ url, theme = 'dark', onCopied }) => {
+export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
+  url,
+  createdAt,
+  theme = 'dark',
+  onCopied,
+  onRefresh
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const qrCodeRef = useRef<QRCodeStyling | null>(null);
   const [copied, setCopied] = useState(false);
+  const [remainingSec, setRemainingSec] = useState(() => getPairingRemainingSeconds(createdAt));
 
   const isDark = theme !== 'light';
   const dotsColor = isDark ? '#f4f4f5' : '#15171e';
   const cornerColor = '#d4af37'; // Revolut-style gold accent
   const bgColor = isDark ? '#15171e' : '#ffffff';
+
+  // Live countdown timer
+  useEffect(() => {
+    setRemainingSec(getPairingRemainingSeconds(createdAt));
+    const interval = setInterval(() => {
+      const left = getPairingRemainingSeconds(createdAt);
+      setRemainingSec(left);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [createdAt]);
+
+  const isExpired = remainingSec <= 0;
+  const progressPct = Math.max(0, Math.min(100, (remainingSec / (PAIRING_QR_TTL_MS / 1000)) * 100));
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -96,6 +124,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({ url, theme = 'dark
   }, [url, isDark, dotsColor, cornerColor, bgColor]);
 
   const handleCopy = async () => {
+    if (isExpired) return;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -107,6 +136,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({ url, theme = 'dark
   };
 
   const handleShare = async () => {
+    if (isExpired) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -115,7 +145,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({ url, theme = 'dark
           url
         });
       } catch {
-        // Ignored if user cancels share dialog
+        // Ignored
       }
     } else {
       handleCopy();
@@ -130,27 +160,76 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({ url, theme = 'dark
           ? 'bg-[#15171e] border-white/10 shadow-black/40'
           : 'bg-white border-zinc-200 shadow-zinc-200'
       }`}>
-        {/* Subtle gold badge in corner */}
-        <div className="absolute top-2.5 right-3 text-[10px] font-bold tracking-wider text-[#d4af37] uppercase select-none">
-          SECURE SYNC
+        {/* Top badges */}
+        <div className="flex items-center justify-between w-full mb-2">
+          <span className="text-[10px] font-bold tracking-wider text-[#d4af37] uppercase select-none">
+            SECURE SYNC
+          </span>
+
+          {/* Countdown timer badge */}
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800/80 border border-zinc-700/80 text-zinc-300">
+            {isExpired ? (
+              <span className="text-amber-400 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Истёк
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-zinc-300">
+                <Clock className="w-3 h-3 text-[#d4af37]" />
+                {formatCountdown(remainingSec)}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div
-          ref={containerRef}
-          className="flex items-center justify-center rounded-2xl overflow-hidden"
-          style={{ width: 250, height: 250 }}
-        />
+        {/* QR Code Container with Expired Overlay */}
+        <div className="relative rounded-2xl overflow-hidden">
+          <div
+            ref={containerRef}
+            className={`flex items-center justify-center transition-all ${
+              isExpired ? 'opacity-20 blur-[2px]' : 'opacity-100'
+            }`}
+            style={{ width: 250, height: 250 }}
+          />
+
+          {isExpired && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black/60 rounded-2xl text-center">
+              <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
+              <p className="text-xs font-bold text-white mb-3">Срок действия кода истёк</p>
+              <button
+                onClick={onRefresh}
+                className="py-2 px-4 rounded-xl text-xs font-bold bg-[#d4af37] text-black hover:bg-[#c29e2f] transition-all flex items-center gap-1.5 shadow"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>Обновить код</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* TTL Progress Line */}
+        {!isExpired && (
+          <div className="w-full h-1 bg-zinc-800 rounded-full mt-3 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#d4af37] to-amber-300 transition-all duration-1000"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        )}
       </div>
 
       <p className="mt-3 text-xs text-center text-zinc-400 max-w-[270px]">
-        Наведите камеру смартфона для быстрого сопряжения и общей базы данных
+        {isExpired
+          ? 'Нажмите «Обновить код», чтобы сгенерировать свежий ключ сопряжения'
+          : 'Наведите камеру смартфона для быстрого сопряжения и общей базы данных'}
       </p>
 
       {/* Action buttons */}
       <div className="flex items-center gap-2 mt-4 w-full max-w-[280px]">
         <button
           onClick={handleCopy}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all active:scale-95 border ${
+          disabled={isExpired}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all active:scale-95 border disabled:opacity-40 disabled:pointer-events-none ${
             copied
               ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
               : isDark
@@ -165,7 +244,8 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({ url, theme = 'dark
         {typeof navigator !== 'undefined' && 'share' in navigator && (
           <button
             onClick={handleShare}
-            className={`flex items-center justify-center p-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 border ${
+            disabled={isExpired}
+            className={`flex items-center justify-center p-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 border disabled:opacity-40 disabled:pointer-events-none ${
               isDark
                 ? 'bg-zinc-800/80 hover:bg-zinc-800 border-zinc-700 text-zinc-200'
                 : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800'
@@ -173,6 +253,20 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({ url, theme = 'dark
             title="Поделиться"
           >
             <Share2 className="w-4 h-4" />
+          </button>
+        )}
+
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            className={`flex items-center justify-center p-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 border ${
+              isDark
+                ? 'bg-zinc-800/80 hover:bg-zinc-800 border-zinc-700 text-zinc-200'
+                : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800'
+            }`}
+            title="Обновить код"
+          >
+            <RotateCw className="w-4 h-4" />
           </button>
         )}
       </div>

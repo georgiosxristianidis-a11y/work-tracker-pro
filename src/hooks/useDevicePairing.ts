@@ -50,15 +50,18 @@ export const useDevicePairing = ({
         // 2. Query cloud entries for target user
         const { data: cloudRows, error: fetchError } = await supabase
           .from('work_entries')
-          .select('date,hours,month')
+          .select('*')
           .eq('user_id', payload.uid);
 
         if (fetchError) throw fetchError;
 
-        const cloudEntries: Entry[] = (cloudRows || []).map((r) => ({
+        const cloudEntries: Entry[] = (
+          (cloudRows as Array<{ date: string; hours: number; month: string; updated_at?: number | string }> | null) || []
+        ).map((r) => ({
           date: r.date,
           hours: Number(r.hours),
-          month: r.month
+          month: r.month,
+          updated_at: r.updated_at ? Number(r.updated_at) : undefined
         }));
 
         const localEntries = await db.getAllEntries();

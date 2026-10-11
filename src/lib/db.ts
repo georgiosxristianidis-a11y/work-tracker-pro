@@ -7,6 +7,7 @@ export interface Entry {
   date: string;
   hours: number;
   month: string;
+  updated_at?: number;
 }
 
 const DB_NAME = 'WorkTrackerProDB';
@@ -42,8 +43,12 @@ export class WorkDB {
   }
 
   async saveEntry(entry: Entry) {
+    const toSave: Entry = {
+      ...entry,
+      updated_at: entry.updated_at ?? Date.now()
+    };
     return new Promise((res, rej) => {
-      const req = this.tx('entries', 'readwrite').put(entry);
+      const req = this.tx('entries', 'readwrite').put(toSave);
       req.onsuccess = () => res(true);
       req.onerror = () => rej(req.error);
     });
@@ -52,11 +57,15 @@ export class WorkDB {
   async saveMany(entries: Entry[]): Promise<boolean> {
     if (!this.db) throw new Error('DB not initialized');
     if (entries.length === 0) return true;
+    const now = Date.now();
     return new Promise((res, rej) => {
       const tx = this.db!.transaction('entries', 'readwrite');
       const store = tx.objectStore('entries');
       for (const entry of entries) {
-        store.put(entry);
+        store.put({
+          ...entry,
+          updated_at: entry.updated_at ?? now
+        });
       }
       tx.oncomplete = () => res(true);
       tx.onerror = () => rej(tx.error);

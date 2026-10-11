@@ -155,16 +155,22 @@ export const useSupabaseSync = ({
 
       const { data, error } = await supabase
         .from('work_entries')
-        .select('date,hours,month')
+        .select('*')
         .eq('user_id', userId);
       if (error) throw error;
 
       const localEntries = await db.getAllEntries();
       const localDates = new Set(localEntries.map(e => e.date));
       const toRestore: Entry[] = [];
-      for (const row of data ?? []) {
+      const rows = (data as Array<{ date: string; hours: number; month: string; updated_at?: number | string }> | null) ?? [];
+      for (const row of rows) {
         if (localDates.has(row.date)) continue;
-        toRestore.push({ date: row.date, hours: Number(row.hours), month: row.month });
+        toRestore.push({
+          date: row.date,
+          hours: Number(row.hours),
+          month: row.month,
+          updated_at: row.updated_at ? Number(row.updated_at) : undefined
+        });
       }
       if (toRestore.length > 0) {
         await db.saveMany(toRestore);

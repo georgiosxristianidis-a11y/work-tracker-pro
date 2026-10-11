@@ -8,7 +8,7 @@ interface NavigationProps {
 
 export function Navigation({ t }: NavigationProps) {
   const { screen, setScreen } = useAppStore();
-  const [navClicks, setNavClicks] = React.useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
+  const [navClicks, setNavClicks] = React.useState({ home: 0, calendar: 0, chart: 0, finance: 0, total: 0, settings: 0 });
 
 
   return (
@@ -45,6 +45,17 @@ export function Navigation({ t }: NavigationProps) {
               <motion.line x1={6} y1={20} x2={6} y2={14} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 8 : 14 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0 }} />
               <motion.line x1={12} y1={20} x2={12} y2={6} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 14 : 6 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.05 }} />
               <motion.line x1={18} y1={20} x2={18} y2={12} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 6 : 12 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.1 }} />
+            </motion.svg>
+          )
+        },
+        {
+          id: 'finance',
+          label: 'Finance',
+          icon: (
+            <motion.svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
             </motion.svg>
           )
         },

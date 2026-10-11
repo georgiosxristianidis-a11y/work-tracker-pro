@@ -33,6 +33,7 @@ const AnalyticsScreen = lazy(() => import('./components/AnalyticsScreen').then(m
 const TotalScreen = lazy(() => import('./components/TotalScreen').then(m => ({ default: m.TotalScreen })));
 const CalendarScreen = lazy(() => import('./components/CalendarScreen').then(m => ({ default: m.CalendarScreen })));
 const SettingsScreen = lazy(() => import('./components/SettingsScreen').then(m => ({ default: m.SettingsScreen })));
+const FinancialDashboardView = lazy(() => import('./components/financial-dashboard/FinancialDashboardView').then(m => ({ default: m.FinancialDashboardView })));
 
 // --- Utilities ---
 const haptic = (pattern: number | number[] = 30, enabled = true) => {
@@ -305,10 +306,15 @@ export default function App() {
   // --- Renderers ---
   return (
     <MotionConfig reducedMotion={isPowerSaveMode ? 'always' : 'user'}>
-      <div className="flex items-center justify-center min-h-screen bg-[#111] font-['Epilogue_Variable']">
-        <AnimatePresence>
-          {isLoading && <SplashScreen />}
-        </AnimatePresence>
+      {screen === 'finance' ? (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#141518]"><div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" /></div>}>
+          <FinancialDashboardView onBackToTracker={() => setScreen('home')} />
+        </Suspense>
+      ) : (
+        <div className="flex items-center justify-center min-h-screen bg-[#111] font-['Epilogue_Variable']">
+          <AnimatePresence>
+            {isLoading && <SplashScreen />}
+          </AnimatePresence>
 
         <div id="frame" className="relative w-full max-w-[393px] h-[100dvh] sm:h-[min(100vh,852px)] bg-[var(--bg)] overflow-hidden flex flex-col shadow-2xl sm:rounded-[52px] sm:border-[11px] sm:border-[#1c1c1e]">
         <Topbar haptic={h} syncStatus={syncStatus} strictMode={settings.strictOfflineMode} t={t} />
@@ -478,8 +484,8 @@ export default function App() {
         {/* Toasts */}
         <Toasts toasts={toasts} removeToast={removeToast} />
       </div>
-
     </div>
+      )}
     </MotionConfig>
   );
 }

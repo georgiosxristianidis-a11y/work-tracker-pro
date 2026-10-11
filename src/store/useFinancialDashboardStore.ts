@@ -1,0 +1,298 @@
+import { create } from 'zustand';
+import { CurrencyMath } from '../lib/currency-math';
+import { OfflineVault } from '../lib/offline-vault';
+
+export interface CryptoAssetItem {
+  id: string;
+  name: string;
+  symbol: string;
+  balanceScaled: string; // BigInt stored as string for persistence
+  iconType: 'btc' | 'eth' | 'dash' | 'edo';
+  color: string;
+}
+
+export interface BenefitDataPoint {
+  month: string;
+  value: number; // e.g. 0 to 8 scale
+}
+
+export interface FinancialTransaction {
+  id: string;
+  type: 'send' | 'receive' | 'top_up' | 'transfer';
+  assetId: string;
+  amountScaled: string;
+  timestamp: number;
+  recipientOrSender?: string;
+}
+
+export interface FinancialDashboardState {
+  // Baseline balances (as string-serialized BigInts to ensure lossless serializability)
+  overallBalanceScaled: string;
+  profitScaled: string;
+  profitGrowthPct: number;
+  sharesScaled: string;
+  sharesGrowthPct: number;
+  capabilitiesTotalScaled: string;
+  netGrowthPct: number;
+
+  // Breakdown percentages
+  nftPercent: number;
+  stocksPercent: number;
+  cryptoPercent: number;
+
+  // Assets
+  cryptoAssets: CryptoAssetItem[];
+
+  // Benefits curve
+  benefitsData: BenefitDataPoint[];
+  selectedPeriod: string;
+
+  // User
+  userName: string;
+  userAvatar: string;
+
+  // Security & UX
+  isPrivacyMasked: boolean;
+  isVaultLocked: boolean;
+  activeModal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | null;
+  transactions: FinancialTransaction[];
+
+  // Actions
+  togglePrivacyMask: () => void;
+  setActiveModal: (modal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | null) => void;
+  setSelectedPeriod: (period: string) => void;
+  executeTransaction: (
+    type: 'send' | 'receive' | 'top_up' | 'transfer',
+    amount: number,
+    assetId: string,
+    counterparty?: string
+  ) => Promise<boolean>;
+  resetToBaseline: () => void;
+  panicWipeData: () => Promise<void>;
+  saveToVault: () => Promise<void>;
+  loadFromVault: () => Promise<void>;
+}
+
+// Exact reference values
+const BASELINE_DATA = {
+  overallBalanceScaled: CurrencyMath.toScaled(11121.22).toString(),
+  profitScaled: CurrencyMath.toScaled(4737.99).toString(),
+  profitGrowthPct: 12.3,
+  sharesScaled: CurrencyMath.toScaled(2556.80).toString(),
+  sharesGrowthPct: 8.5,
+  capabilitiesTotalScaled: CurrencyMath.toScaled(1776.00).toString(),
+  netGrowthPct: 42,
+  nftPercent: 17,
+  stocksPercent: 25,
+  cryptoPercent: 58,
+  cryptoAssets: [
+    {
+      id: 'btc',
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      balanceScaled: CurrencyMath.toScaled(2467.30).toString(),
+      iconType: 'btc' as const,
+      color: '#F7931A'
+    },
+    {
+      id: 'eth',
+      name: 'Etherium',
+      symbol: 'ETH',
+      balanceScaled: CurrencyMath.toScaled(1990.01).toString(),
+      iconType: 'eth' as const,
+      color: '#627EEA'
+    },
+    {
+      id: 'dash',
+      name: 'Dash',
+      symbol: 'DASH',
+      balanceScaled: CurrencyMath.toScaled(1455.10).toString(),
+      iconType: 'dash' as const,
+      color: '#008CE7'
+    },
+    {
+      id: 'edo',
+      name: 'Edo',
+      symbol: 'EDO',
+      balanceScaled: CurrencyMath.toScaled(988.07).toString(),
+      iconType: 'edo' as const,
+      color: '#E5A83B'
+    }
+  ],
+  benefitsData: [
+    { month: 'JUN', value: 2.1 },
+    { month: 'JUL', value: 3.4 },
+    { month: 'AUG', value: 2.8 },
+    { month: 'SEP', value: 6.2 },
+    { month: 'OCT', value: 4.0 },
+    { month: 'NOV', value: 4.8 },
+    { month: 'DEC', value: 6.9 }
+  ],
+  selectedPeriod: 'June - December',
+  userName: 'Ruben Torff',
+  userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+  isPrivacyMasked: false,
+  isVaultLocked: false,
+  activeModal: null,
+  transactions: []
+};
+
+const VAULT_STORAGE_KEY = 'dashboard_state_v1';
+
+export const useFinancialDashboardStore = create<FinancialDashboardState>((set, get) => ({
+  ...BASELINE_DATA,
+
+  togglePrivacyMask: () => {
+    set(state => ({ isPrivacyMasked: !state.isPrivacyMasked }));
+  },
+
+  setActiveModal: (modal) => {
+    set({ activeModal: modal });
+  },
+
+  setSelectedPeriod: (period) => {
+    set({ selectedPeriod: period });
+  },
+
+  resetToBaseline: () => {
+    set({ ...BASELINE_DATA });
+    get().saveToVault().catch(console.error);
+  },
+
+  executeTransaction: async (type, amount, assetId, counterparty) => {
+    if (amount <= 0) return false;
+
+    const amountScaled = CurrencyMath.toScaled(amount);
+    const state = get();
+    const currentOverall = BigInt(state.overallBalanceScaled);
+
+    const targetAsset = state.cryptoAssets.find(a => a.id === assetId);
+    if (!targetAsset) return false;
+    const currentAssetBal = BigInt(targetAsset.balanceScaled);
+
+    // Insufficient Funds Guard: prevent phantom deficits
+    if (type === 'send') {
+      if (currentAssetBal < amountScaled) {
+        return false;
+      }
+    }
+
+    const nextAssets = state.cryptoAssets.map(asset => {
+      if (asset.id !== assetId) return asset;
+      const nextBal = type === 'send'
+        ? CurrencyMath.sub(currentAssetBal, amountScaled)
+        : CurrencyMath.add(currentAssetBal, amountScaled);
+
+      return {
+        ...asset,
+        balanceScaled: nextBal.toString()
+      };
+    });
+
+    const nextOverall = type === 'send'
+      ? CurrencyMath.sub(currentOverall, amountScaled)
+      : CurrencyMath.add(currentOverall, amountScaled);
+
+    // Exact re-calculation of asset class breakdown via Largest Remainder Method
+    const cryptoTotalScaled = nextAssets.reduce(
+      (sum, item) => sum + BigInt(item.balanceScaled),
+      0n
+    );
+    const sharesScaled = BigInt(state.sharesScaled);
+    // Approximate remaining as NFT allocation
+    const baseNftScaled = CurrencyMath.toScaled(500); // stable baseline pool
+
+    const proportions = CurrencyMath.calculatePercentages([
+      baseNftScaled,
+      sharesScaled,
+      cryptoTotalScaled
+    ]);
+
+    const nextNftPct = proportions[0];
+    const nextStocksPct = proportions[1];
+    const nextCryptoPct = proportions[2];
+
+    const newTx: FinancialTransaction = {
+      id: crypto.randomUUID(),
+      type,
+      assetId,
+      amountScaled: amountScaled.toString(),
+      timestamp: Date.now(),
+      recipientOrSender: counterparty
+    };
+
+    // Update the last month in benefits chart dynamically
+    const nextBenefits = [...state.benefitsData];
+    const lastIdx = nextBenefits.length - 1;
+    if (lastIdx >= 0) {
+      const delta = type === 'send' ? -0.4 : 0.4;
+      const clamped = Math.max(1, Math.min(8, nextBenefits[lastIdx].value + delta));
+      nextBenefits[lastIdx] = {
+        ...nextBenefits[lastIdx],
+        value: Number(clamped.toFixed(1))
+      };
+    }
+
+    set({
+      overallBalanceScaled: nextOverall.toString(),
+      cryptoAssets: nextAssets,
+      nftPercent: nextNftPct,
+      stocksPercent: nextStocksPct,
+      cryptoPercent: nextCryptoPct,
+      benefitsData: nextBenefits,
+      transactions: [newTx, ...state.transactions],
+      activeModal: null
+    });
+
+    await get().saveToVault();
+    return true;
+  },
+
+  saveToVault: async () => {
+    try {
+      const state = get();
+      const persistent = {
+        overallBalanceScaled: state.overallBalanceScaled,
+        profitScaled: state.profitScaled,
+        profitGrowthPct: state.profitGrowthPct,
+        sharesScaled: state.sharesScaled,
+        sharesGrowthPct: state.sharesGrowthPct,
+        capabilitiesTotalScaled: state.capabilitiesTotalScaled,
+        netGrowthPct: state.netGrowthPct,
+        nftPercent: state.nftPercent,
+        stocksPercent: state.stocksPercent,
+        cryptoPercent: state.cryptoPercent,
+        cryptoAssets: state.cryptoAssets,
+        benefitsData: state.benefitsData,
+        transactions: state.transactions
+      };
+      await OfflineVault.saveState(VAULT_STORAGE_KEY, persistent);
+    } catch (err) {
+      console.warn('Vault save non-critical warning:', err);
+    }
+  },
+
+  loadFromVault: async () => {
+    try {
+      const saved = await OfflineVault.loadState<Partial<FinancialDashboardState>>(VAULT_STORAGE_KEY);
+      if (saved) {
+        set(state => ({
+          ...state,
+          ...saved
+        }));
+      }
+    } catch (err) {
+      console.warn('Vault load warning:', err);
+    }
+  },
+
+  panicWipeData: async () => {
+    await OfflineVault.panicWipeAll();
+    set({
+      ...BASELINE_DATA,
+      overallBalanceScaled: '0',
+      cryptoAssets: BASELINE_DATA.cryptoAssets.map(a => ({ ...a, balanceScaled: '0' })),
+      transactions: []
+    });
+  }
+}));

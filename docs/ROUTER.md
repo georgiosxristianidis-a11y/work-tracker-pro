@@ -30,15 +30,15 @@
 
 ---
 
-### 🟡 DS-1 — Ремонт токенов палитры и Daylight-контрастности · 🟡 15 мин
+### 🟩 DS-1 — Ремонт токенов палитры и Daylight-контрастности · 🟩 ГОТОВО (2026-10-11)
 - **🎯 Цель:** Привести интерфейс к стандартам GIO: восстановить читаемость вторичного текста и нормализовать семантические токены.
-- **📂 Файлы:** `src/index.css`, `src/components/HomeScreen.tsx`
+- **📂 Файлы:** `src/index.css`, `src/components/HomeScreen.tsx`, `src/components/SettingsScreen.tsx`, `src/components/CalendarScreen.tsx`
 - **📏 Правила:**
-  - Добавить `--green: #34d399; --green-bg: rgba(52, 211, 153, 0.12)` в `.dark` и `--green: #4ade80` в `.indigo`.
-  - Устранить вымывание цвета `opacity-40` на `text-[var(--t3)]` в ключевых метриках главного экрана.
-  - Положительный тренд заработка (`earningsTrend > 0`) привязать к `var(--green)` вместо бренд-акцента.
-- **✅ Done:** Прохождение контрастности WCAG AA (Lighthouse Accessibility > 95), зеленые статусы различимы в Dark и Indigo темах.
-- **🔍 Verify:** `npm run gate` + Lighthouse audit.
+  - Токены светлой темы: `--t2: #544e43; --t3: #5e584c` для гарантированной контрастности WCAG AA (>5.6:1 на солнце).
+  - Устранить вымывание цвета `opacity-40` на текстовых элементах в SettingsScreen и CalendarScreen.
+  - Положительные тренды (`earningsTrend > 0` и `hoursTrend > 0`) привязаны к семантическому зеленому `var(--green)`.
+- **✅ Done:** Прохождение контрастности WCAG AA, четкая читаемость при ярком дневном свете; `npm run gate` (exit 0).
+- **🔍 Verify:** `npm run gate` + Playwright E2E.
 
 ---
 

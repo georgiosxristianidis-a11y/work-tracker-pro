@@ -215,7 +215,7 @@ export const SettingsScreen = ({
                     <Minus size={16} strokeWidth={2.5} />
                   </motion.button>
                   <div className={`flex items-center flex-1 justify-center text-[var(--t1)] px-2 transition-all duration-300 ${settings.privacyMode ? 'blur-md' : ''}`}>
-                    <span className="text-sm font-black opacity-40 mr-1">{curSym}</span>
+                    <span className="text-sm font-black text-[var(--t3)] mr-1">{curSym}</span>
                     <input 
                       type="number" 
                       value={localRate} 
@@ -236,13 +236,13 @@ export const SettingsScreen = ({
               </div>
 
               <div className="space-y-2">
-                <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Goal')} <span className="opacity-40">/ mo</span></span>
+                <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Goal')} <span className="text-[var(--t3)]">/ mo</span></span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)] items-center focus-within:border-[var(--a)] transition-colors h-12">
                   <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, goal: Math.max(0, s.goal - 50) })); }} className="w-12 h-full rounded-control bg-[var(--bg-1)] flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
                     <Minus size={16} strokeWidth={2.5} />
                   </motion.button>
                   <div className={`flex items-center flex-1 justify-center text-[var(--t1)] px-2 transition-all duration-300 ${settings.privacyMode ? 'blur-md' : ''}`}>
-                    <span className="text-sm font-black opacity-40 mr-1">{curSym}</span>
+                    <span className="text-sm font-black text-[var(--t3)] mr-1">{curSym}</span>
                     <input 
                       type="number" 
                       value={localGoal} 
@@ -787,7 +787,7 @@ export const SettingsScreen = ({
             type="button"
             onClick={handleVersionTap}
             disabled={isUpdatingSW}
-            className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--t3)] opacity-40 hover:opacity-80 active:scale-95 transition-all select-none cursor-pointer focus:outline-none"
+            className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--t3)] opacity-70 hover:opacity-100 active:scale-95 transition-all select-none cursor-pointer focus:outline-none"
             aria-label={t('Checking for updates...')}
           >
             v{__APP_VERSION__}

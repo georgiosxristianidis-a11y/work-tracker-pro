@@ -267,7 +267,7 @@ export const CalendarScreen = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
-          className="text-center pb-2 flex justify-center opacity-40 mb-3"
+          className="text-center pb-2 flex justify-center opacity-75 mb-3"
         >
           <div className="flex items-center gap-2 px-2 py-1">
             <div className="relative flex items-center justify-center w-4 h-4">

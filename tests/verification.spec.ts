@@ -121,4 +121,25 @@ test.describe('Live Verification: New Features & Tasks', () => {
     expect(oct1?.hours).toBe(8);
   });
 
+  test('5. Safe Union Guarantee: remote 0 hours / empty base NEVER wipes local entries', async () => {
+    const sacredLocalEntries: Entry[] = [
+      { date: '2026-10-01', hours: 8, month: '2026-10', updated_at: 1000 },
+      { date: '2026-10-02', hours: 7.5, month: '2026-10', updated_at: 1000 }
+    ];
+
+    // Remote tries to delete 2026-10-01 by sending 0 hours with newer timestamp
+    const adversarialRemoteEntries: Entry[] = [
+      { date: '2026-10-01', hours: 0, month: '2026-10', updated_at: 9999 }
+    ];
+
+    const result = mergeEntries(sacredLocalEntries, adversarialRemoteEntries);
+
+    // Assert that local 8 hours and 7.5 hours are NEVER wiped out
+    expect(result.merged.length).toBe(2);
+    const oct1 = result.merged.find(e => e.date === '2026-10-01');
+    expect(oct1?.hours).toBe(8);
+    const oct2 = result.merged.find(e => e.date === '2026-10-02');
+    expect(oct2?.hours).toBe(7.5);
+  });
+
 });

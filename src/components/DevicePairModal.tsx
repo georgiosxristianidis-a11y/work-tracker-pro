@@ -48,71 +48,66 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
     setIsGenerating(true);
     try {
       const now = Date.now();
-      const localEntries = await db.getAllEntries();
-      const compactEntries = localEntries.map(e => ({
-        date: e.date,
-        hours: e.hours,
-        updated_at: e.updated_at
-      }));
 
-      if (!supabase) {
-        // Offline-first P2P mode: encode local entries directly into QR code
-        const payload: PairingPayload = {
-          v: 1,
-          t: now,
-          uid: deviceId,
-          dev: deviceId,
-          entries: compactEntries
-        };
-        const encoded = encodePairingPayload(payload);
-        setPairingCreatedAt(now);
-        setPairingUrl(buildPairingUrl(encoded));
-        return;
-      }
+      // Case 1: Supabase available (cloud pairing without bloating QR with raw entries)
+      if (supabase) {
+        try {
+          const userId = await ensureAuth();
+          const { data: { session } } = await supabase.auth.getSession();
 
-      try {
-        const userId = await ensureAuth();
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session) {
-          const payload: PairingPayload = {
-            v: 1,
-            t: now,
-            uid: session.user.id,
-            at: session.access_token,
-            rt: session.refresh_token,
-            dev: deviceId,
-            entries: compactEntries
-          };
-          const encoded = encodePairingPayload(payload);
-          setPairingCreatedAt(now);
-          setPairingUrl(buildPairingUrl(encoded));
-        } else if (userId) {
-          const payload: PairingPayload = {
-            v: 1,
-            t: now,
-            uid: userId,
-            dev: deviceId,
-            entries: compactEntries
-          };
-          const encoded = encodePairingPayload(payload);
-          setPairingCreatedAt(now);
-          setPairingUrl(buildPairingUrl(encoded));
+          if (session) {
+            const payload: PairingPayload = {
+              v: 1,
+              t: now,
+              uid: session.user.id,
+              at: session.access_token,
+              rt: session.refresh_token,
+              dev: deviceId
+            };
+            const encoded = encodePairingPayload(payload);
+            setPairingCreatedAt(now);
+            setPairingUrl(buildPairingUrl(encoded));
+            setIsGenerating(false);
+            return;
+          } else if (userId) {
+            const payload: PairingPayload = {
+              v: 1,
+              t: now,
+              uid: userId,
+              dev: deviceId
+            };
+            const encoded = encodePairingPayload(payload);
+            setPairingCreatedAt(now);
+            setPairingUrl(buildPairingUrl(encoded));
+            setIsGenerating(false);
+            return;
+          }
+        } catch (cloudErr) {
+          console.warn('Cloud session lookup failed, falling back to local pairing:', cloudErr);
         }
-      } catch (authErr) {
-        console.warn('Cloud auth failed, falling back to offline P2P QR:', authErr);
-        // Fallback to offline P2P QR if Supabase call fails or database is paused
-        const payload: PairingPayload = {
-          v: 1,
-          t: now,
-          uid: deviceId,
-          dev: deviceId,
-          entries: compactEntries
-        };
-        const encoded = encodePairingPayload(payload);
-        setPairingCreatedAt(now);
-        setPairingUrl(buildPairingUrl(encoded));
       }
+
+      // Case 2: Offline / Local Pairing (Cloud is disabled, absent, or paused)
+      const localEntries = await db.getAllEntries();
+      const payload: PairingPayload = {
+        v: 1,
+        t: now,
+        uid: deviceId,
+        dev: deviceId
+      };
+
+      // Only embed inline entries if count is small (<= 15) to prevent QR code length overflow
+      if (localEntries.length > 0 && localEntries.length <= 15) {
+        payload.entries = localEntries.map(e => ({
+          date: e.date,
+          hours: e.hours,
+          updated_at: e.updated_at
+        }));
+      }
+
+      const encoded = encodePairingPayload(payload);
+      setPairingCreatedAt(now);
+      setPairingUrl(buildPairingUrl(encoded));
     } catch (err) {
       console.error('Failed to generate pairing payload:', err);
     } finally {

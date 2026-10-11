@@ -52,6 +52,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
   const qrCodeRef = useRef<QRCodeStyling | null>(null);
   const [copied, setCopied] = useState(false);
   const [remainingSec, setRemainingSec] = useState(() => getPairingRemainingSeconds(createdAt));
+  const [renderError, setRenderError] = useState<string | null>(null);
 
   const isDark = theme !== 'light';
   const dotsColor = isDark ? '#f4f4f5' : '#15171e';
@@ -73,53 +74,64 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
   const progressPct = Math.max(0, Math.min(100, (remainingSec / (PAIRING_QR_TTL_MS / 1000)) * 100));
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !url) return;
 
-    if (!qrCodeRef.current) {
-      qrCodeRef.current = new QRCodeStyling({
-        width: 250,
-        height: 250,
-        type: 'svg',
-        data: url,
-        image: BRAND_LOGO_DATA_URL,
-        margin: 6,
-        qrOptions: {
-          typeNumber: 0,
-          mode: 'Byte',
-          errorCorrectionLevel: 'H'
-        },
-        imageOptions: {
-          hideBackgroundDots: true,
-          imageSize: 0.32,
-          margin: 4,
-          crossOrigin: 'anonymous'
-        },
-        dotsOptions: {
-          color: dotsColor,
-          type: 'rounded'
-        },
-        cornersSquareOptions: {
-          color: cornerColor,
-          type: 'extra-rounded'
-        },
-        cornersDotOptions: {
-          color: dotsColor,
-          type: 'dot'
-        },
-        backgroundOptions: {
-          color: bgColor
-        }
-      });
-      containerRef.current.innerHTML = '';
-      qrCodeRef.current.append(containerRef.current);
-    } else {
-      qrCodeRef.current.update({
-        data: url,
-        dotsOptions: { color: dotsColor, type: 'rounded' },
-        cornersSquareOptions: { color: cornerColor, type: 'extra-rounded' },
-        cornersDotOptions: { color: dotsColor, type: 'dot' },
-        backgroundOptions: { color: bgColor }
-      });
+    try {
+      setRenderError(null);
+      if (!qrCodeRef.current) {
+        qrCodeRef.current = new QRCodeStyling({
+          width: 250,
+          height: 250,
+          type: 'svg',
+          data: url,
+          image: BRAND_LOGO_DATA_URL,
+          margin: 6,
+          qrOptions: {
+            typeNumber: 0,
+            mode: 'Byte',
+            errorCorrectionLevel: 'M'
+          },
+          imageOptions: {
+            hideBackgroundDots: true,
+            imageSize: 0.28,
+            margin: 4,
+            crossOrigin: 'anonymous'
+          },
+          dotsOptions: {
+            color: dotsColor,
+            type: 'rounded'
+          },
+          cornersSquareOptions: {
+            color: cornerColor,
+            type: 'extra-rounded'
+          },
+          cornersDotOptions: {
+            color: dotsColor,
+            type: 'dot'
+          },
+          backgroundOptions: {
+            color: bgColor
+          }
+        });
+        containerRef.current.innerHTML = '';
+        qrCodeRef.current.append(containerRef.current);
+      } else {
+        qrCodeRef.current.update({
+          data: url,
+          qrOptions: {
+            typeNumber: 0,
+            mode: 'Byte',
+            errorCorrectionLevel: 'M'
+          },
+          dotsOptions: { color: dotsColor, type: 'rounded' },
+          cornersSquareOptions: { color: cornerColor, type: 'extra-rounded' },
+          cornersDotOptions: { color: dotsColor, type: 'dot' },
+          backgroundOptions: { color: bgColor }
+        });
+      }
+    } catch (err) {
+      console.warn('QR code generation overflow or error:', err);
+      setRenderError('Слишком большой объем данных для одного QR-кода.');
     }
   }, [url, isDark, dotsColor, cornerColor, bgColor]);
 
@@ -183,14 +195,24 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
         </div>
 
         {/* QR Code Container with Expired Overlay */}
-        <div className="relative rounded-2xl overflow-hidden">
+        <div className="relative rounded-2xl overflow-hidden" style={{ minWidth: 250, minHeight: 250 }}>
           <div
             ref={containerRef}
             className={`flex items-center justify-center transition-all ${
-              isExpired ? 'opacity-20 blur-[2px]' : 'opacity-100'
+              isExpired || renderError ? 'opacity-20 blur-[2px]' : 'opacity-100'
             }`}
             style={{ width: 250, height: 250 }}
           />
+
+          {renderError && !isExpired && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-zinc-900/90 rounded-2xl text-center">
+              <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
+              <p className="text-xs font-bold text-zinc-200 mb-1">Слишком много записей</p>
+              <p className="text-[11px] text-zinc-400 max-w-[200px] leading-tight mb-2">
+                Для передачи полной истории используйте «Файл бэкапа» в настройках.
+              </p>
+            </div>
+          )}
 
           {isExpired && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black/60 rounded-2xl text-center">

@@ -8,9 +8,9 @@ test.describe('Save Button Test', () => {
     const calendarButton = page.locator('nav button').nth(1);
     await calendarButton.click();
 
-    // Click on day 15
+    // Right-click or long-press on day 15 to open editor modal
     const dayBtn = page.locator('button', { hasText: /^15$/ }).first();
-    await dayBtn.click();
+    await dayBtn.click({ button: 'right' });
     
     // Save button should be visible
     const saveBtn = page.locator('button', { hasText: 'Save' });

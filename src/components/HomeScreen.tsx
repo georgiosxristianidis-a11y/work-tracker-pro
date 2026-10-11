@@ -11,6 +11,7 @@ import { SuccessSparkles } from './SuccessSparkles';
 import { useCelebration } from '../hooks/useCelebration';
 import { RollingNumber } from './RollingNumber';
 import { ShowcaseHeroCard } from './ShowcaseHeroCard';
+import { CalendarDaysBadge } from './CalendarDaysBadge';
 import type { ChartDataItem } from './AnalyticsChart';
 
 interface HomeScreenProps {
@@ -102,20 +103,13 @@ export const HomeScreen = ({
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* Days KPI Badge (Core metric: count of worked days in month) */}
-          <motion.button 
-            type="button"
-            onClick={() => { if (haptic) haptic(10); setScreen('calendar'); }}
-            className="py-1 px-3 rounded-panel border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-[3.25rem] min-h-[2.75rem] hover:border-[var(--a)]/40 hover:bg-[var(--b)] active:scale-95 transition-all group"
-            aria-label={t('Days')}
-          >
-            <span className="text-micro font-bold uppercase tracking-widest text-[var(--t3)] leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
-              {t('Days')}
-            </span>
-            <span className="text-base font-black text-[var(--t1)] leading-none tabular-nums">
-              {selectedDaysCount}
-            </span>
-          </motion.button>
+          {/* Days KPI Badge (Core metric: count of worked days in month with 3D calendar flip animation) */}
+          <CalendarDaysBadge
+            count={selectedDaysCount}
+            label={t('Days')}
+            onClick={() => setScreen('calendar')}
+            haptic={haptic}
+          />
 
           <div className="flex gap-1.5">
             <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>

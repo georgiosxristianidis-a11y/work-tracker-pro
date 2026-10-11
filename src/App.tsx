@@ -248,9 +248,10 @@ export default function App() {
     setIsQuickFillOpen,
     handleApplyTemplate,
     smartFillUpToDay,
+    smartFillPreview,
     getDefaultHours,
     clearMonth
-  } = useQuickFill({ viewDate, excludeSundays, loadEntries, addToast, undoLabel: t('Undo'), onSync: scheduleBackgroundSync });
+  } = useQuickFill({ viewDate, entries, excludeSundays, loadEntries, addToast, undoLabel: t('Undo'), onSync: scheduleBackgroundSync });
 
   const {
     isPairModalOpen,
@@ -357,6 +358,7 @@ export default function App() {
                     deleteEntry={deleteEntry}
                     saveEntry={saveEntry}
                     smartFillUpToDay={smartFillUpToDay}
+                    smartFillPreview={smartFillPreview}
                     calcEarnings={calcEarnings}
                     curSym={curSym}
                     clearTap={deleteEntryTap}
@@ -435,6 +437,8 @@ export default function App() {
           setExcludeSundays={setExcludeSundays}
           applyTap={applyTap}
           clearTap={clearTap}
+          smartFillPreview={smartFillPreview}
+          onSmartFill={smartFillUpToDay}
         />
 
         {/* Editor Sheet */}

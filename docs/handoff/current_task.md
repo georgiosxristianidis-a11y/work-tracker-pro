@@ -1,12 +1,19 @@
 # TASK HANDOFF: main
-- **Timestamp**: 2026-10-11T15:29:22.817Z
+- **Timestamp**: 2026-10-11T15:46:06.202Z
 - **Branch**: main
-- **Last Commit**: 7dd43d5 chore(release): v0.1.12 [skip actions]
+- **Last Commit**: 9e93176 docs: sync micro-state handoff for v0.1.12
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-(clean working tree)
+M docs/handoff/current_task.md
+ M src/App.tsx
+ M src/components/CalendarScreen.tsx
+ M src/components/HomeScreen.tsx
+ M src/components/QuickFillModal.tsx
+ M src/hooks/useQuickFill.ts
+ M src/hooks/useTranslation.ts
+?? src/components/CalendarDaysBadge.tsx
 ```
 
 ## Next Action

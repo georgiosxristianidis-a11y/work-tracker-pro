@@ -135,6 +135,10 @@ const dictRUS: Record<string, string> = {
   'Decrease hours': 'Уменьшить часы',
   'Increase hours': 'Увеличить часы',
   'Custom hours': 'Свои часы',
+  'Fill 1st to Today': 'Заполнить до сегодня',
+  '1st to Today': 'С 1-го по сегодня',
+  'Full Month': 'Весь месяц',
+  'empty workdays': 'пустых смен',
 };
 
 const dictGR: Record<string, string> = {
@@ -214,6 +218,13 @@ const dictGR: Record<string, string> = {
   'Checking for updates...': 'Έλεγχος για ενημερώσεις...',
   'Updating application...': 'Ενημέρωση εφαρμογής...',
   'Latest version installed': 'Έχετε την πιο πρόσφατη έκδοση',
+  'Fill 1st to Today': 'Συμπλήρωση έως σήμερα',
+  '1st to Today': '1η έως σήμερα',
+  'days': 'ημέρες',
+  'day': 'ημέρα',
+  'complete': 'ολοκληρώθηκε',
+  'Full Month': 'Όλος ο μήνας',
+  'empty workdays': 'κενές βάρδιες',
 };
 
 export function useTranslation(language: string) {

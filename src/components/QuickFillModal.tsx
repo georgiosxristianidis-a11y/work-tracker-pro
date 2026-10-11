@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings2 } from 'lucide-react';
+import { Settings2, Zap, Check } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
+import type { SmartFillPreview } from '../hooks/useQuickFill';
 
 interface QuickFillModalProps {
   isOpen: boolean;
@@ -18,6 +19,8 @@ interface QuickFillModalProps {
   setExcludeSundays: (exclude: boolean) => void;
   applyTap: { isConfirming: boolean; trigger: () => void };
   clearTap: { isConfirming: boolean; trigger: () => void };
+  smartFillPreview?: SmartFillPreview;
+  onSmartFill?: () => Promise<void> | void;
 }
 
 export const QuickFillModal = ({
@@ -34,7 +37,9 @@ export const QuickFillModal = ({
   excludeSundays,
   setExcludeSundays,
   applyTap,
-  clearTap
+  clearTap,
+  smartFillPreview,
+  onSmartFill
 }: QuickFillModalProps) => {
   return (
     <AnimatePresence>
@@ -57,8 +62,59 @@ export const QuickFillModal = ({
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pt-4 pb-[calc(64px+env(safe-area-inset-bottom))] space-y-6">
+            {/* Smart Fill Preset: 1st to Today */}
+            {smartFillPreview && smartFillPreview.canSmartFill && (
+              <div className="p-4 rounded-3xl border border-[var(--b)] bg-[var(--bg-1)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[var(--a-bg)] border border-[var(--a-b)] flex items-center justify-center text-[var(--a)] shrink-0">
+                      <Zap size={16} strokeWidth={2.4} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm text-[var(--t1)]">{t('1st to Today')}</div>
+                      <div className="text-[11px] text-[var(--t3)] font-mono">
+                        {smartFillPreview.dateRangeLabel} ({smartFillPreview.hoursPerDay}h/{t('day')})
+                      </div>
+                    </div>
+                  </div>
+
+                  {smartFillPreview.emptyCount > 0 ? (
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-black tabular-nums bg-[var(--a-bg)] border border-[var(--a-b)] text-[var(--a)]">
+                      {smartFillPreview.emptyCount} {smartFillPreview.emptyCount === 1 ? t('day') : t('days')}
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold text-[var(--green)] bg-[var(--green-bg,rgba(34,197,94,0.1))] flex items-center gap-1">
+                      <Check size={12} strokeWidth={2.5} />
+                      {t('complete')}
+                    </span>
+                  )}
+                </div>
+
+                {smartFillPreview.emptyCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      haptic([15, 20]);
+                      await onSmartFill?.();
+                      setIsOpen(false);
+                    }}
+                    className="w-full h-11 rounded-2xl bg-[var(--a-bg)] border border-[var(--a-b)] text-[var(--a)] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                  >
+                    <Zap size={14} className="shrink-0" />
+                    <span>{t('Fill 1st to Today')} ({smartFillPreview.totalHours}h)</span>
+                  </button>
+                ) : (
+                  <div className="h-10 rounded-2xl bg-[var(--bg)] border border-[var(--b)] text-[var(--t3)] text-xs font-bold flex items-center justify-center gap-2 select-none opacity-80">
+                    <Check size={14} className="text-[var(--green)] shrink-0" strokeWidth={2.5} />
+                    <span>{smartFillPreview.dateRangeLabel} {t('complete')}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Templates */}
             <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-widest text-[var(--t3)] px-1">{t('Full Month')}</div>
               <div className="grid grid-cols-2 gap-2">
                 {['2/2-11', '5/2-8', '6/1-10', '4/4-12'].map((tmpl) => (
                   <button

@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Calendar, ArrowDownUp, X, ChevronRight as ChevronIcon, Zap, Check } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AnimatedWand } from './AnimatedWand';
+import { CalendarDaysBadge } from './CalendarDaysBadge';
 import { AppSettings, DOW_NAMES, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../constants';
 import { formatMoney } from '../lib/utils';
 import { Entry } from '../lib/db';
 import { useAppStore } from '../store/useAppStore';
+import type { SmartFillPreview } from '../hooks/useQuickFill';
 
 interface CalendarScreenProps {
   viewDate: Date;
@@ -19,6 +21,7 @@ interface CalendarScreenProps {
   deleteEntry: (date: string) => void;
   saveEntry?: (date: string, hours: number) => Promise<void> | void;
   smartFillUpToDay?: (targetDay?: number, customHours?: number) => Promise<void>;
+  smartFillPreview?: SmartFillPreview;
   calcEarnings: (hours: number) => number;
   curSym: string;
   clearTap: { trigger: () => void; isConfirming: boolean };
@@ -141,7 +144,7 @@ DayCell.displayName = 'DayCell';
 export const CalendarScreen = ({
   viewDate, setViewDate, entries, settings, setSettings, t,
   defaultEditorHours,
-  deleteEntry, saveEntry, smartFillUpToDay, calcEarnings, curSym, haptic, openQuickFill
+  deleteEntry, saveEntry, smartFillUpToDay, smartFillPreview, calcEarnings, curSym, haptic, openQuickFill
 }: CalendarScreenProps) => {
   const { setEditorDate, setEditorHours } = useAppStore();
   const [isWandHovered, setIsWandHovered] = useState(false);
@@ -174,10 +177,11 @@ export const CalendarScreen = ({
   }, {} as Record<string, number>), [entries]);
 
   const isCurrentMonth = now.getFullYear() === viewDate.getFullYear() && now.getMonth() === viewDate.getMonth();
-  const canSmartFill = isCurrentMonth && now.getDate() >= 1;
-  const smartFillTargetDay = now.getDate();
+  const canSmartFill = smartFillPreview ? smartFillPreview.canSmartFill : (isCurrentMonth && now.getDate() >= 1);
+  const smartFillTargetDay = smartFillPreview ? smartFillPreview.targetDay : now.getDate();
 
   const emptyDaysCount = useMemo(() => {
+    if (smartFillPreview) return smartFillPreview.emptyCount;
     if (!canSmartFill) return 0;
     let count = 0;
     for (let i = 1; i <= smartFillTargetDay; i++) {
@@ -190,7 +194,7 @@ export const CalendarScreen = ({
       }
     }
     return count;
-  }, [canSmartFill, smartFillTargetDay, currentMonthPrefix, viewDate, entryMap, settings.normal]);
+  }, [smartFillPreview, canSmartFill, smartFillTargetDay, currentMonthPrefix, viewDate, entryMap, settings.normal]);
 
   const monthName = useMemo(() => {
     const mNames = settings.language === 'RUS' ? MONTH_NAMES_RUS : settings.language === 'GR' ? MONTH_NAMES_GR : MONTH_NAMES;
@@ -230,20 +234,13 @@ export const CalendarScreen = ({
         </div>
         
         <div className="flex items-center gap-2 shrink-0">
-          {/* Days KPI Badge (Core metric: count of worked days in month) */}
-          <motion.button
-            type="button"
-            onClick={() => { haptic(10); setIsHistoryOpen(true); }}
-            className="py-1 px-3 rounded-panel border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-0.5 shadow-sm min-w-[3.25rem] min-h-[2.75rem] hover:border-[var(--a)]/40 hover:bg-[var(--b)] active:scale-95 transition-all group"
-            aria-label={t('Days')}
-          >
-            <span className="text-micro font-black uppercase tracking-widest text-[var(--t3)] leading-none mb-0.5 group-hover:text-[var(--t2)] transition-colors">
-              {t('Days')}
-            </span>
-            <span className="text-base font-black text-[var(--t1)] leading-none tabular-nums">
-              {selectedDaysCount}
-            </span>
-          </motion.button>
+          {/* Days KPI Badge (Core metric: count of worked days in month with 3D calendar flip animation) */}
+          <CalendarDaysBadge
+            count={selectedDaysCount}
+            label={t('Days')}
+            onClick={() => setIsHistoryOpen(true)}
+            haptic={haptic}
+          />
 
           <div className="flex gap-1.5">
             <motion.button 
@@ -370,7 +367,7 @@ export const CalendarScreen = ({
             <div className="flex-1 h-14 px-4 rounded-2xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t3)] text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 select-none opacity-80 shadow-sm">
               <Check size={16} className="text-[var(--green)] shrink-0" strokeWidth={2.5} />
               <Zap size={15} className="shrink-0 text-[var(--a)]" strokeWidth={2.2} />
-              <span className="truncate">1–{smartFillTargetDay} {t('complete')}</span>
+              <span className="truncate">{smartFillPreview?.dateRangeLabel || `1–${smartFillTargetDay}`} {t('complete')}</span>
             </div>
           ) : (
             <motion.button

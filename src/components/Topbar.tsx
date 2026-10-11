@@ -46,9 +46,9 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
           </button>
         </div>
         <button 
-          aria-label="Home Screen"
+          aria-label="Work Tracker Pro"
           onClick={() => { haptic(15); setScreen('home'); }}
-          className="flex items-center gap-2.5 group shrink-0"
+          className="flex items-center gap-3 group shrink-0"
         >
           <motion.div 
             whileTap={{ scale: 0.85, y: 2 }}
@@ -57,14 +57,7 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
           >
             <Logo className="w-full h-full" />
           </motion.div>
-          <div className="flex flex-col ml-1">
-            <span className="text-[11px] font-black tracking-[0.18em] uppercase leading-none text-[var(--t1)] text-left">
-              Work Tracker Pro
-            </span>
-            <div className="flex justify-start text-left gap-1">
-              <Clock />
-            </div>
-          </div>
+          <Clock />
         </button>
       </div>
       

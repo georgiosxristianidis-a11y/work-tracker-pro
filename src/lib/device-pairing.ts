@@ -14,6 +14,7 @@ export interface PairingPayload {
   at?: string;
   rt?: string;
   dev?: string;
+  entries?: Array<{ date: string; hours: number; updated_at?: number }>;
 }
 
 export interface MergeResult {

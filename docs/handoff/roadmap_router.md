@@ -15,6 +15,10 @@
    - Priority: #5 | Files: `CalendarDaysBadge.tsx`, `CalendarScreen.tsx`, `HomeScreen.tsx` | Status: Complete
 6. [Card 06: Tactile Time Tape Ruler](05_time_tape_ruler.md)
    - Priority: #6 | Files: `TimeTapeRuler.tsx`, `EditorModal.tsx` | Status: Complete
+7. Card 07: Dynamic Version Bump Sync & Vercel Autobump Fix
+   - Priority: #7 | Files: `vite.config.ts`, `.github/workflows/ci.yml` | Status: Complete
+8. Card 08: QR Cross-Device Pairing & Offline P2P Transfer
+   - Priority: #8 | Files: `device-pairing.ts`, `DevicePairModal.tsx`, `useDevicePairing.ts` | Status: Complete
 
 ## Session Protocol
 - Take strictly ONE task card per agent session.

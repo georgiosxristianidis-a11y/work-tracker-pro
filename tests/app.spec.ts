@@ -5,8 +5,8 @@ test.describe('Work Tracker Pro Navigation', () => {
   test('Should load and display the home screen correctly', async ({ page }) => {
     await page.goto('/');
     
-    // Check if the home screen logo and title are visible
-    await expect(page.locator('text=Work Tracker Pro').first()).toBeVisible();
+    // Check if the home screen logo button is visible
+    await expect(page.locator('button[aria-label*="Work Tracker Pro"]').first()).toBeVisible();
     
     // Check navigation bar existence
     await expect(page.locator('nav')).toBeVisible();

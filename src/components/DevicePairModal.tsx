@@ -13,6 +13,7 @@ import {
   PairingPayload
 } from '../lib/device-pairing';
 import { supabase, ensureAuth } from '../lib/supabase';
+import { db } from '../lib/db';
 
 interface DevicePairModalProps {
   isOpen: boolean;
@@ -46,34 +47,67 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   const generateUrl = React.useCallback(async () => {
     setIsGenerating(true);
     try {
-      if (!supabase) {
-        addToast('Supabase не подключен в .env', 'warning');
-        setIsGenerating(false);
-        return;
-      }
-
-      const userId = await ensureAuth();
-      const { data: { session } } = await supabase.auth.getSession();
       const now = Date.now();
+      const localEntries = await db.getAllEntries();
+      const compactEntries = localEntries.map(e => ({
+        date: e.date,
+        hours: e.hours,
+        updated_at: e.updated_at
+      }));
 
-      if (session) {
+      if (!supabase) {
+        // Offline-first P2P mode: encode local entries directly into QR code
         const payload: PairingPayload = {
           v: 1,
           t: now,
-          uid: session.user.id,
-          at: session.access_token,
-          rt: session.refresh_token,
-          dev: deviceId
+          uid: deviceId,
+          dev: deviceId,
+          entries: compactEntries
         };
         const encoded = encodePairingPayload(payload);
         setPairingCreatedAt(now);
         setPairingUrl(buildPairingUrl(encoded));
-      } else if (userId) {
+        return;
+      }
+
+      try {
+        const userId = await ensureAuth();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+          const payload: PairingPayload = {
+            v: 1,
+            t: now,
+            uid: session.user.id,
+            at: session.access_token,
+            rt: session.refresh_token,
+            dev: deviceId,
+            entries: compactEntries
+          };
+          const encoded = encodePairingPayload(payload);
+          setPairingCreatedAt(now);
+          setPairingUrl(buildPairingUrl(encoded));
+        } else if (userId) {
+          const payload: PairingPayload = {
+            v: 1,
+            t: now,
+            uid: userId,
+            dev: deviceId,
+            entries: compactEntries
+          };
+          const encoded = encodePairingPayload(payload);
+          setPairingCreatedAt(now);
+          setPairingUrl(buildPairingUrl(encoded));
+        }
+      } catch (authErr) {
+        console.warn('Cloud auth failed, falling back to offline P2P QR:', authErr);
+        // Fallback to offline P2P QR if Supabase call fails or database is paused
         const payload: PairingPayload = {
           v: 1,
           t: now,
-          uid: userId,
-          dev: deviceId
+          uid: deviceId,
+          dev: deviceId,
+          entries: compactEntries
         };
         const encoded = encodePairingPayload(payload);
         setPairingCreatedAt(now);
@@ -84,7 +118,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [addToast, deviceId]);
+  }, [deviceId]);
 
   // Generate pairing URL whenever the modal opens
   useEffect(() => {

@@ -122,6 +122,8 @@ export const SettingsScreen = ({
             }
           }}
           className="text-xs font-black text-[var(--t3)] select-none"
+          data-testid="settings-title"
+          aria-label="Settings"
         >
           {t('Settings')}
         </span>

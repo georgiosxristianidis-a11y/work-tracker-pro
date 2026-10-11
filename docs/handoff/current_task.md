@@ -1,16 +1,13 @@
-# TASK HANDOFF: main
-- **Timestamp**: 2026-10-11T18:01:17.578Z
-- **Branch**: main
-- **Last Commit**: 883d867 chore(release): v0.1.16 [skip actions]
+# TASK HANDOFF: feature/hero-card-clean-rhythm
+- **Timestamp**: 2026-10-11T19:31:07.353Z
+- **Branch**: feature/hero-card-clean-rhythm
+- **Last Commit**: 80d6851 chore(release): v0.1.17 [skip actions]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M docs/ROUTER.md
- M src/components/CalendarScreen.tsx
- M src/components/HomeScreen.tsx
- M src/components/SettingsScreen.tsx
- M src/index.css
+M docs/handoff/current_task.md
+ M src/components/ShowcaseHeroCard.tsx
 ```
 
 ## Next Action

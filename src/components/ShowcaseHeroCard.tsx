@@ -132,9 +132,9 @@ export const ShowcaseHeroCard: React.FC<ShowcaseHeroCardProps> = ({
                 <div className="text-micro font-bold uppercase tracking-[0.2em] text-[var(--t3)]">
                   {active.tag}
                 </div>
-                <h3 className="text-xl font-black tracking-tight text-[var(--t1)] leading-snug">
+                <h2 className="text-xl font-black tracking-tight text-[var(--t1)] leading-snug">
                   {active.title}
-                </h3>
+                </h2>
                 <p className="text-xs text-[var(--t2)] leading-relaxed line-clamp-2 max-w-[280px]">
                   {active.description}
                 </p>

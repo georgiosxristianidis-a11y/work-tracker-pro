@@ -57,7 +57,9 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
           >
             <Logo className="w-full h-full" />
           </motion.div>
-          <Clock />
+          <div aria-hidden="true">
+            <Clock />
+          </div>
         </button>
       </div>
       

@@ -23,8 +23,6 @@ import { useDoubleTap } from './hooks/useDoubleTap';
 import { Toasts, ToastMessage } from './components/Toasts';
 import { QuickFillModal } from './components/QuickFillModal';
 import { EditorModal } from './components/EditorModal';
-import { BulkAddModal } from './components/BulkAddModal';
-import { DevicePairModal } from './components/DevicePairModal';
 import { useDevicePairing } from './hooks/useDevicePairing';
 import { OfflineFallbackBoundary } from './components/OfflineFallbackBoundary';
 import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, AppSettings } from './constants';
@@ -33,6 +31,8 @@ const AnalyticsScreen = lazy(() => import('./components/AnalyticsScreen').then(m
 const TotalScreen = lazy(() => import('./components/TotalScreen').then(m => ({ default: m.TotalScreen })));
 const CalendarScreen = lazy(() => import('./components/CalendarScreen').then(m => ({ default: m.CalendarScreen })));
 const SettingsScreen = lazy(() => import('./components/SettingsScreen').then(m => ({ default: m.SettingsScreen })));
+const BulkAddModal = lazy(() => import('./components/BulkAddModal').then(m => ({ default: m.BulkAddModal })));
+const DevicePairModal = lazy(() => import('./components/DevicePairModal').then(m => ({ default: m.DevicePairModal })));
 
 // --- Utilities ---
 const haptic = (pattern: number | number[] = 30, enabled = true) => {
@@ -89,17 +89,15 @@ export default function App() {
     const init = async () => {
       try {
         await db.init();
-
-        // Migrate from old version
-        const migratedCount = await migrateFromLocalStorage();
-        if (migratedCount > 0) {
-          addToast(`Migrated ${migratedCount} entries`, 'success');
-        }
-
-        await loadSettings();
-        await loadEntries();
-
+        await Promise.all([loadSettings(), loadEntries()]);
         setIsAuthReady(true);
+
+        // Non-blocking background migration
+        migrateFromLocalStorage().then(migratedCount => {
+          if (migratedCount > 0) {
+            addToast(`Migrated ${migratedCount} entries`, 'success');
+          }
+        }).catch(console.error);
       } catch (err) {
         console.error('Init failed:', err);
         addToast('Local storage is unavailable. Data will not be saved.', 'error');
@@ -452,28 +450,32 @@ export default function App() {
           haptic={h}
         />
         
-        <BulkAddModal
-          isOpen={isBulkAddOpen}
-          setIsOpen={setIsBulkAddOpen}
-          t={t}
-          haptic={h}
-          saveMultipleEntries={saveMultipleEntries}
-          settings={settings}
-        />
+        <Suspense fallback={null}>
+          <BulkAddModal
+            isOpen={isBulkAddOpen}
+            setIsOpen={setIsBulkAddOpen}
+            t={t}
+            haptic={h}
+            saveMultipleEntries={saveMultipleEntries}
+            settings={settings}
+          />
+        </Suspense>
 
         {/* Device Pair & QR Sync Modal */}
-        <DevicePairModal
-          isOpen={isPairModalOpen || incomingPayload !== null}
-          onClose={() => {
-            setIsPairModalOpen(false);
-            setIncomingPayload(null);
-          }}
-          theme={settings.theme}
-          deviceId={getDeviceId()}
-          localEntriesCount={entries.length}
-          onApplyPairing={applyPairing}
-          addToast={addToast}
-        />
+        <Suspense fallback={null}>
+          <DevicePairModal
+            isOpen={isPairModalOpen || incomingPayload !== null}
+            onClose={() => {
+              setIsPairModalOpen(false);
+              setIncomingPayload(null);
+            }}
+            theme={settings.theme}
+            deviceId={getDeviceId()}
+            localEntriesCount={entries.length}
+            onApplyPairing={applyPairing}
+            addToast={addToast}
+          />
+        </Suspense>
 
         {/* Toasts */}
         <Toasts toasts={toasts} removeToast={removeToast} />

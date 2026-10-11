@@ -180,7 +180,7 @@ export const HomeScreen = ({
                   <span className="text-xs sm:text-sm font-bold text-[var(--t3)]">h</span>
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
-                  <div className={`text-[12px] font-bold tabular-nums flex items-center gap-1 ${hoursTrend > 0 ? 'text-[var(--a)]' : hoursTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
+                  <div className={`text-[12px] font-bold tabular-nums flex items-center gap-1 ${hoursTrend > 0 ? 'text-[var(--green)]' : hoursTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>
                     {hoursTrend > 0 ? <TrendingUp size={12} strokeWidth={3} /> : (hoursTrend < 0 ? <TrendingUp size={12} strokeWidth={3} className="rotate-180" /> : null)}
                     {hoursTrend > 0 ? '+' : ''}{hoursTrend}%
                   </div>

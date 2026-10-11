@@ -1,13 +1,12 @@
-# TASK HANDOFF: feature/hero-card-clean-rhythm
-- **Timestamp**: 2026-10-11T19:31:07.353Z
-- **Branch**: feature/hero-card-clean-rhythm
-- **Last Commit**: 80d6851 chore(release): v0.1.17 [skip actions]
+# TASK HANDOFF: main
+- **Timestamp**: 2026-10-11T19:35:37.686Z
+- **Branch**: main
+- **Last Commit**: fb6df56 chore(release): v0.1.18 [skip actions]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M docs/handoff/current_task.md
- M src/components/ShowcaseHeroCard.tsx
+(clean working tree)
 ```
 
 ## Next Action

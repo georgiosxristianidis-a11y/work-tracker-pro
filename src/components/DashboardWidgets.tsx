@@ -178,7 +178,7 @@ export function DashboardWidgets({
                   className="flex items-baseline justify-center gap-2.5 py-4 text-[var(--t1)] transition-all duration-300 cursor-pointer select-none"
                   role="button"
                   tabIndex={0}
-                  aria-label={settings.privacyMode ? t('Show Earnings') : t('Hide Earnings')}
+                  aria-label={settings.privacyMode ? `${curSym} •••• — ${t('Show Earnings')}` : `${curSym} ${formatMoney(totalEarned)} — ${t('Hide Earnings')}`}
                 >
                   {settings.privacyMode ? (
                     <span className="text-3xl font-black tracking-widest text-[var(--t2)]">{curSym} ••••</span>

@@ -23,6 +23,6 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview -- --port 4000 --host 0.0.0.0',
     url: 'http://localhost:4000',
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
   },
 });

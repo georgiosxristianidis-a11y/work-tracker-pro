@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -122,6 +122,8 @@ export const SettingsScreen = ({
             }
           }}
           className="text-xs font-black text-[var(--t3)] select-none"
+          data-testid="settings-title"
+          aria-label="Settings"
         >
           {t('Settings')}
         </span>
@@ -500,6 +502,24 @@ export const SettingsScreen = ({
                   {syncStatus === 'syncing' ? t('Syncing...') : (settings.lastSync || lastSynced) ? `${t('Last')}: ${settings.lastSync || lastSynced}` : t('Never synced')}
                 </span>
               </div>
+            </div>
+
+            <div className="mb-4 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[10px] font-semibold text-amber-300">
+                  База данных на паузе?
+                </span>
+              </div>
+              <a
+                href="https://supabase.com/dashboard/project/ablpnwoounkfumesqrph"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] font-bold text-amber-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1"
+              >
+                <span>Разбудить в Supabase</span>
+                <ExternalLink size={10} />
+              </a>
             </div>
 
             {syncStatus === 'error' && (

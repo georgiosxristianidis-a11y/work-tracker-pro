@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Play, CalendarPlus, TrendingUp, FileText, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, CalendarPlus, TrendingUp, FileText } from 'lucide-react';
 
 interface ShowcaseHeroCardProps {
   onStartShift?: () => void;
@@ -91,23 +91,9 @@ export const ShowcaseHeroCard: React.FC<ShowcaseHeroCardProps> = ({
   const ActionIcon = active.actionIcon;
 
   return (
-    <div className="relative w-full rounded-card border border-[var(--b)] bg-[var(--bg-1)] p-5 overflow-hidden shadow-sm transition-all">
-      {/* Top micro-header */}
-      <div className="flex items-center justify-between mb-4 relative z-10">
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--a)] animate-pulse" />
-          <span className="text-micro font-bold uppercase tracking-[0.2em] text-[var(--t3)]">
-            WORK TRACKER PRO
-          </span>
-        </div>
-        <div className="flex items-center gap-1 text-[var(--t3)]">
-          <Sparkles size={13} className="text-[var(--a)]" />
-          <span className="text-micro font-semibold uppercase tracking-widest">PRO ENGINE</span>
-        </div>
-      </div>
-
+    <div className="relative w-full rounded-card border border-[var(--b)] bg-[var(--bg-1)] p-6 sm:p-7 overflow-hidden shadow-sm transition-all">
       {/* Main card body with responsive grid */}
-      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6">
         {/* Left column: navigation pills & text content */}
         <div className="flex items-start gap-4 flex-1 min-w-0">
           {/* Controls pill stack (< >) */}

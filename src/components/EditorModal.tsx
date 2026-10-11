@@ -177,8 +177,14 @@ export const EditorModal = ({
 
                     <div className="flex items-center gap-2 mt-1">
                       <div className="text-xs font-black text-[var(--a)] tabular-nums flex items-baseline">
-                        <span>{curSym}</span>
-                        <RollingNumber value={formatMoney(calcEarnings(editorHours))} />
+                        {settings.privacyMode ? (
+                          <span className="tracking-widest">{curSym}••••</span>
+                        ) : (
+                          <>
+                            <span>{curSym}</span>
+                            <RollingNumber value={formatMoney(calcEarnings(editorHours))} />
+                          </>
+                        )}
                       </div>
                       {editorHours > settings.normal && (
                         <div className="text-[10px] font-black bg-[var(--green-bg)] text-[var(--green)] px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">

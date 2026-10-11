@@ -37,4 +37,24 @@ test.describe('Work Tracker Pro Navigation', () => {
     await expect(page.locator('text=/v\\d+\\.\\d+\\.\\d+/')).toBeVisible();
   });
 
+  test('Should toggle Privacy Mode hiding and revealing earnings with bullets', async ({ page }) => {
+    await page.goto('/');
+
+    // Locate Topbar privacy toggle
+    const privacyToggle = page.locator('button[aria-label="Hide Earnings"], button[aria-label="Show Earnings"]').first();
+    await expect(privacyToggle).toBeVisible();
+
+    // Toggle privacy on
+    await privacyToggle.click();
+
+    // Verify masked bullet placeholder appears
+    await expect(page.locator('text=••••').filter({ visible: true }).first()).toBeVisible();
+
+    // Toggle privacy off
+    await privacyToggle.click();
+
+    // Verify privacy toggle restores state
+    await expect(privacyToggle).toHaveAttribute('aria-label', /Hide Earnings|Show Earnings/);
+  });
+
 });

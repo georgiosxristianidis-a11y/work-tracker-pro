@@ -143,12 +143,24 @@ export const HomeScreen = ({
             <div data-testid="monthly-stats" className={`grid grid-cols-3 gap-2 sm:gap-4 w-full max-w-[360px] justify-between transition-all duration-500 ${totalHours === 0 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}>
               <div className="flex flex-col items-start text-left flex-1 min-w-0">
                 <span className="text-micro font-bold uppercase tracking-wider text-[var(--t3)] mb-1">{t('Earnings')}</span>
-                <div className={`flex items-baseline gap-1.5 h-[36px] justify-start whitespace-nowrap overflow-visible transition-all duration-500 ${settings.privacyMode ? 'blur-xl opacity-20' : ''}`}>
-                  <span className="text-base text-[var(--t3)] font-light">{curSym}</span>
-                  <RollingNumber
-                    value={formatMoney(totalEarned)}
-                    className="text-xl sm:text-2xl font-black text-[var(--t1)] tabular-nums"
-                  />
+                <div 
+                  onClick={() => { if (haptic) haptic(10); setSettings(s => ({ ...s, privacyMode: !s.privacyMode })); }}
+                  className="flex items-baseline gap-1.5 h-[36px] justify-start whitespace-nowrap overflow-visible transition-all duration-300 cursor-pointer select-none"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={settings.privacyMode ? t('Show Earnings') : t('Hide Earnings')}
+                >
+                  {settings.privacyMode ? (
+                    <span className="text-xl sm:text-2xl font-black text-[var(--t2)] tracking-widest">{curSym} ••••</span>
+                  ) : (
+                    <>
+                      <span className="text-base text-[var(--t3)] font-light">{curSym}</span>
+                      <RollingNumber
+                        value={formatMoney(totalEarned)}
+                        className="text-xl sm:text-2xl font-black text-[var(--t1)] tabular-nums"
+                      />
+                    </>
+                  )}
                 </div>
                 <div className="flex flex-col mt-2 gap-1 items-start whitespace-nowrap">
                   <div className={`text-[12px] font-bold tabular-nums flex items-center gap-1 ${earningsTrend > 0 ? 'text-[var(--green)]' : earningsTrend < 0 ? 'text-[var(--danger)]' : 'text-[var(--t1)]'}`}>

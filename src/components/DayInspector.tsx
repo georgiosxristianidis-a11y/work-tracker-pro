@@ -86,8 +86,8 @@ export const DayInspector = React.memo(({
                         +{hours - settings.normal}h OT
                       </span>
                     )}
-                    <span className={`text-xs font-bold text-[var(--t2)] leading-none tabular-nums ${settings.privacyMode ? 'blur-sm' : ''}`}>
-                      {curSym}{formatMoney(calcEarnings(hours))}
+                    <span className="text-xs font-bold text-[var(--t2)] leading-none tabular-nums">
+                      {settings.privacyMode ? `${curSym}••••` : `${curSym}${formatMoney(calcEarnings(hours))}`}
                     </span>
                   </>
                 ) : (

@@ -83,9 +83,17 @@ void main() {
   vec2 swirl = curlNoise(pos * 2.2 + aDelay * 12.0) * curlStrength;
   vec2 finalPos = pos + swirl;
 
-  vAlpha = smoothstep(0.0, 0.2, uProgress) * (1.0 - smoothstep(0.75, 1.0, uProgress));
+  // Kinetic dispersion burst after glyph lock window (uProgress > 0.80)
+  float burstProgress = smoothstep(0.80, 1.0, uProgress);
+  float len = length(pos);
+  vec2 dir = len > 0.001 ? (pos / len) : aRandom;
+  // Outward impulse + subtle gravity drop (zero division safe)
+  vec2 dispersion = dir * (burstProgress * burstProgress * 0.4) - vec2(0.0, burstProgress * burstProgress * 0.15);
+  finalPos += dispersion;
+
+  vAlpha = smoothstep(0.0, 0.15, uProgress) * (1.0 - smoothstep(0.82, 1.0, uProgress));
   gl_Position = vec4(finalPos * 0.7, 0.0, 1.0);
-  gl_PointSize = uPointSize;
+  gl_PointSize = uPointSize * (1.0 - burstProgress * 0.3);
 }
 `;
 
@@ -149,6 +157,8 @@ export interface CelebrationOptions {
   count?: number;
   /** Animation duration in ms (default 1500) */
   duration?: number;
+  /** Blending mode: 'additive' creates a neon core in dark themes, 'normal' avoids washout in light themes */
+  blendMode?: 'normal' | 'additive';
 }
 
 export interface CelebrationHandle {
@@ -222,9 +232,13 @@ export function createCelebration(
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   gl.uniform1f(uPointSize, 3.0 * dpr);
 
-  // Blending for soft transparent particles
+  // Blending: additive for neon glow on dark backgrounds, standard alpha for light backgrounds
   gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  if (opts.blendMode === 'additive') {
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+  } else {
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  }
 
   let rafId = 0;
   let disposed = false;

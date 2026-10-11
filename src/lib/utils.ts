@@ -5,3 +5,14 @@ export const formatMoney = (val: number, decimals: number = 2) => {
   return parts.join(',');
 };
 
+export const PRIVACY_MASK = '••••';
+
+export const formatPrivacyMoney = (
+  val: number,
+  isPrivate: boolean,
+  curSym: string = '',
+  decimals: number = 2
+): string => {
+  if (isPrivate) return curSym ? `${curSym}${PRIVACY_MASK}` : PRIVACY_MASK;
+  return curSym ? `${curSym}${formatMoney(val, decimals)}` : formatMoney(val, decimals);
+};

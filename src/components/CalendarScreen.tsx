@@ -451,7 +451,7 @@ export const CalendarScreen = ({
                     {monthName} {viewDate.getFullYear()}
                   </h3>
                   <div className="text-xs font-semibold text-[var(--t3)] tabular-nums mt-0.5">
-                    {monthHours}h • {curSym}{formatMoney(monthEarnings)} ({selectedDaysCount} {t('Days')})
+                    {monthHours}h • {settings.privacyMode ? `${curSym}••••` : `${curSym}${formatMoney(monthEarnings)}`} ({selectedDaysCount} {t('Days')})
                   </div>
                 </div>
 
@@ -525,8 +525,8 @@ export const CalendarScreen = ({
                               </div>
                               <div className="text-xs text-[var(--t3)] font-medium truncate">{e.date}</div>
                             </div>
-                            <div className={`text-sm font-black text-[var(--t1)] shrink-0 tabular-nums ${settings.privacyMode ? 'blur-md' : ''}`}>
-                              {curSym}{formatMoney(calcEarnings(e.hours))}
+                            <div className="text-sm font-black text-[var(--t1)] shrink-0 tabular-nums">
+                              {settings.privacyMode ? `${curSym}••••` : `${curSym}${formatMoney(calcEarnings(e.hours))}`}
                             </div>
                           </motion.div>
                         </div>

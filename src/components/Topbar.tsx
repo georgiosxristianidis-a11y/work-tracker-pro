@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Logo } from './Logo';
 import { useAppStore } from '../store/useAppStore';
@@ -25,7 +25,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
-  const { screen, setScreen } = useAppStore();
+  const { screen, setScreen, settings, setSettings } = useAppStore();
   const isOnline = navigator.onLine && !strictMode;
 
   return (
@@ -68,17 +68,31 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
         </button>
       </div>
       
-      <div className="flex items-center gap-1.5 px-2.5 py-1 mr-1 rounded-full text-xs font-semibold border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] shrink-0 transition-colors">
-        {strictMode ? (
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] opacity-60" />
-        ) : syncStatus === 'syncing' ? (
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
-        ) : (!isOnline || syncStatus === 'error') ? (
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--t3)] opacity-60" />
-        ) : (
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
-        )}
-        <span className="lowercase text-micro font-bold">{strictMode ? t('offline') : isOnline ? (syncStatus === 'syncing' ? t('syncing') : t('online')) : t('offline')}</span>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => {
+            haptic(10);
+            setSettings(s => ({ ...s, privacyMode: !s.privacyMode }));
+          }}
+          className="p-1.5 rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] transition-all active:scale-95"
+          aria-label={settings.privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
+          title={settings.privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
+        >
+          {settings.privacyMode ? <EyeOff size={15} strokeWidth={2.2} /> : <Eye size={15} strokeWidth={2.2} />}
+        </button>
+
+        <div className="flex items-center gap-1.5 px-2.5 py-1 mr-1 rounded-full text-xs font-semibold border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] shrink-0 transition-colors">
+          {strictMode ? (
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] opacity-60" />
+          ) : syncStatus === 'syncing' ? (
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
+          ) : (!isOnline || syncStatus === 'error') ? (
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--t3)] opacity-60" />
+          ) : (
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
+          )}
+          <span className="lowercase text-micro font-bold">{strictMode ? t('offline') : isOnline ? (syncStatus === 'syncing' ? t('syncing') : t('online')) : t('offline')}</span>
+        </div>
       </div>
     </div>
   );

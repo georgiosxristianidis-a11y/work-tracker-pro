@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { QrCode, Scan, X, Smartphone, CheckCircle, RefreshCw } from 'lucide-react';
+import { QrCode, Scan, X, Smartphone, CheckCircle, RefreshCw, Share2, Database } from 'lucide-react';
 import { BrandedQRCode } from './BrandedQRCode';
 import { QRScannerModal } from './QRScannerModal';
 import {
@@ -120,6 +120,34 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
     if (!isOpen) return;
     generateUrl();
   }, [isOpen, generateUrl]);
+
+  const handleShareBackup = async () => {
+    try {
+      const allEntries = await db.getAllEntries();
+      const data = { entries: allEntries, version: '1.0' };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const file = new File([blob], 'work-tracker-backup.json', { type: 'application/json' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Work Tracker Pro — Резервная копия базы',
+          text: `База смен (${allEntries.length} записей)`
+        });
+        addToast('Файл бэкапа отправлен', 'success');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'work-tracker-backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        addToast('Файл бэкапа скачан (.json)', 'success');
+      }
+    } catch (err) {
+      console.warn('Share backup cancelled or failed:', err);
+    }
+  };
 
   const handleScanSuccess = (payload: PairingPayload) => {
     setIsScannerOpen(false);
@@ -266,13 +294,39 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                 <span className="text-xs text-zinc-400">Формирование защищенного кода...</span>
               </div>
             ) : pairingUrl ? (
-              <BrandedQRCode
-                url={pairingUrl}
-                createdAt={pairingCreatedAt}
-                theme={theme}
-                onCopied={() => addToast('Ссылка сопряжения скопирована', 'success')}
-                onRefresh={generateUrl}
-              />
+              <>
+                <BrandedQRCode
+                  url={pairingUrl}
+                  createdAt={pairingCreatedAt}
+                  theme={theme}
+                  onCopied={() => addToast('Ссылка сопряжения скопирована', 'success')}
+                  onRefresh={generateUrl}
+                />
+                {localEntriesCount > 15 && (
+                  <div className={`mt-4 w-full p-3.5 rounded-2xl border text-center transition-all ${
+                    isDark ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Database className="w-4 h-4 text-[#d4af37]" />
+                      <span className={`text-xs font-bold ${isDark ? 'text-zinc-200' : 'text-zinc-900'}`}>
+                        Полная база: {localEntriesCount} смен
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 mb-2.5 leading-relaxed">
+                      QR связывает устройства. Для мгновенного переноса всей истории передайте файл базы данных.
+                    </p>
+                    <button
+                      onClick={handleShareBackup}
+                      className={`w-full py-2 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center gap-2 shadow-sm ${
+                        isDark ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border-zinc-700' : 'bg-white hover:bg-zinc-100 text-zinc-900 border-zinc-300'
+                      }`}
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-[#d4af37]" />
+                      <span>Поделиться файлом базы (.json)</span>
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center h-64 text-center px-4">
                 <p className="text-xs text-zinc-400 mb-2">

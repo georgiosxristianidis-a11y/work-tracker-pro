@@ -102,21 +102,30 @@ export function buildPairingUrl(encodedPayload: string): string {
 }
 
 /**
- * Merges local and remote entries safely using Last-Write-Wins (LWW) based on updated_at.
+ * Merges local and remote entries safely using Safe Union (Zero Local Deletion).
+ * Local positive entries are NEVER wiped out. Remote positive entries are added.
+ * In case of conflicting hours on the same date, the newest positive entry is preferred.
  */
 export function mergeEntries(localEntries: Entry[], cloudEntries: Entry[]): MergeResult {
   const map = new Map<string, Entry>();
   let newFromCloud = 0;
   let newFromLocal = 0;
 
+  // 1. Seed with all local positive entries (The Vault: local data is sacred)
   for (const local of localEntries) {
-    map.set(local.date, { ...local });
+    if (local.hours > 0) {
+      map.set(local.date, { ...local });
+    }
   }
 
+  // 2. Safely merge cloud / remote entries
   for (const cloud of cloudEntries) {
+    if (cloud.hours <= 0) continue; // Remote zero-hours can never overwrite local entries (Safe Union)
+
     const existing = map.get(cloud.date);
 
     if (!existing) {
+      // New remote entry added to local set
       map.set(cloud.date, { ...cloud });
       newFromCloud++;
     } else {
@@ -124,22 +133,18 @@ export function mergeEntries(localEntries: Entry[], cloudEntries: Entry[]): Merg
       const cloudTime = cloud.updated_at ?? 0;
 
       if (cloudTime > localTime) {
+        // Remote is newer and has positive hours: update to newest hours
         map.set(cloud.date, { ...cloud });
         newFromCloud++;
       } else if (localTime > cloudTime) {
         newFromLocal++;
-      } else {
-        if (existing.hours === 0 && cloud.hours > 0) {
-          map.set(cloud.date, { ...cloud });
-          newFromCloud++;
-        }
       }
     }
   }
 
-  const cloudDates = new Set(cloudEntries.map((e) => e.date));
+  const cloudDates = new Set(cloudEntries.filter((e) => e.hours > 0).map((e) => e.date));
   for (const local of localEntries) {
-    if (!cloudDates.has(local.date)) {
+    if (local.hours > 0 && !cloudDates.has(local.date)) {
       newFromLocal++;
     }
   }

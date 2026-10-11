@@ -53,7 +53,9 @@ const EntryItem = memo(({ e, calcEarnings, settings, curSym, deleteEntry, haptic
         </div>
         <div className="text-xs text-[var(--t3)] font-medium truncate">{e.date}</div>
       </div>
-      <div className={`text-sm font-black text-[var(--t1)] shrink-0 tabular-nums ${settings.privacyMode ? 'blur-md' : ''}`}>{curSym}{formatMoney(calcEarnings(e.hours))}</div>
+      <div className={`text-sm font-black text-[var(--t1)] shrink-0 tabular-nums`}>
+        {settings.privacyMode ? `${curSym}••••` : `${curSym}${formatMoney(calcEarnings(e.hours))}`}
+      </div>
     </motion.div>
   </motion.div>
 ));
@@ -171,14 +173,28 @@ export function DashboardWidgets({
                     {settings.privacyMode ? <EyeOff size={20} strokeWidth={2} /> : <Eye size={20} strokeWidth={2} />}
                   </button>
                 </div>
-                <div className={`flex items-baseline justify-center gap-2.5 py-4 text-[var(--t1)] transition-all duration-500 ${settings.privacyMode ? 'blur-xl opacity-20' : ''}`}>
-                  <span className="text-xl text-[var(--t3)] font-light">{curSym}</span>
-                  <span className="text-4xl font-light tabular-nums"><CountingNumber value={totalEarned} decimals={2} /></span>
+                <div 
+                  onClick={() => { haptic(10); setSettings((s: any) => ({ ...s, privacyMode: !s.privacyMode })); }}
+                  className="flex items-baseline justify-center gap-2.5 py-4 text-[var(--t1)] transition-all duration-300 cursor-pointer select-none"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={settings.privacyMode ? t('Show Earnings') : t('Hide Earnings')}
+                >
+                  {settings.privacyMode ? (
+                    <span className="text-3xl font-black tracking-widest text-[var(--t2)]">{curSym} ••••</span>
+                  ) : (
+                    <>
+                      <span className="text-xl text-[var(--t3)] font-light">{curSym}</span>
+                      <span className="text-4xl font-light tabular-nums"><CountingNumber value={totalEarned} decimals={2} /></span>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                      <span className={`text-[var(--t3)] tabular-nums transition-all duration-500 ${settings.privacyMode ? 'blur-md' : ''}`}>{t('Goal:')} {curSym}{settings.goal}</span>
+                      <span className="text-[var(--t3)] tabular-nums transition-all duration-500">
+                        {t('Goal:')} {settings.privacyMode ? `${curSym}••••` : `${curSym}${settings.goal}`}
+                      </span>
                       <span className="text-[var(--a)] tabular-nums">{goalPct}%</span>
                     </div>
                     <div className="h-1.5 bg-[var(--b)] rounded-full overflow-hidden">

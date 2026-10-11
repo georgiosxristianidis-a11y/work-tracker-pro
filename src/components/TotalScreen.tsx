@@ -124,8 +124,14 @@ export const TotalScreen = ({
                 : `${t('Total Earned in')} ${selectedYear}`}
           </span>
           <div className="text-4xl md:text-5xl font-light text-[var(--t1)] pb-2 flex items-baseline justify-center gap-2.5">
-            <span className="text-xl text-[var(--t3)]">{curSym}</span>
-            <CountingNumber value={yearTotal} decimals={2} />
+            {settings.privacyMode ? (
+              <span className="text-3xl md:text-4xl font-black tracking-widest text-[var(--t2)] select-none">{curSym} ••••</span>
+            ) : (
+              <>
+                <span className="text-xl text-[var(--t3)]">{curSym}</span>
+                <CountingNumber value={yearTotal} decimals={2} />
+              </>
+            )}
           </div>
           <div className="text-xs font-medium text-[var(--t2)]">{groups.length} {selectedYear === 'all' ? t('active years') : t('active months')} · {yearHours} {t('total hours')}</div>
         </div>
@@ -187,7 +193,7 @@ export const TotalScreen = ({
               </div>
               <div className="flex flex-col items-end relative z-10">
                 <div className={`text-lg font-black ${isGoalReached ? 'text-[var(--a)]' : 'text-[var(--t1)]'}`}>
-                  {curSym}{formatMoney(gEarned, 0)}
+                  {settings.privacyMode ? `${curSym}••••` : `${curSym}${formatMoney(gEarned, 0)}`}
                 </div>
                 {isGoalReached && (
                   <span className="text-micro font-black uppercase tracking-widest text-[var(--a)] opacity-80 mt-0.5">{t('Goal Reached')}</span>

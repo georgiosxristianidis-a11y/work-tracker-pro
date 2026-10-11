@@ -41,13 +41,17 @@ export const SuccessSparkles = ({
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    // Detect theme: dark and indigo themes benefit from additive glow; light theme uses normal alpha to prevent washout
+    const rootEl = typeof document !== 'undefined' ? document.documentElement : null;
+    const isDarkTheme = rootEl ? (rootEl.classList.contains('dark') || rootEl.classList.contains('indigo')) : true;
+    const blendMode = isDarkTheme ? 'additive' : 'normal';
 
     const celebration = createCelebration(canvas, {
       glyph,
       color,
       count,
       duration,
+      blendMode,
     });
 
     if (celebration) {

@@ -41,11 +41,22 @@ export function useCelebration({
   });
 
   const allEntries = useAppStore((state) => state.allEntries);
+  const settings = useAppStore((state) => state.settings);
   const currentMonthKey = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
 
   const prevMonthKeyRef = useRef(currentMonthKey);
   const prevEarnedRef = useRef(totalEarned);
   const isInitialMount = useRef(true);
+
+  const triggerHaptic = (pattern: number | number[]) => {
+    if (typeof window === 'undefined' || !('vibrate' in navigator)) return;
+    if (settings.hapticEnabled === false) return;
+    try {
+      navigator.vibrate(pattern);
+    } catch (_) {
+      // Ignore if vibration is restricted by browser context
+    }
+  };
 
   useEffect(() => {
     // If month view changed, re-sync baseline without celebration
@@ -70,6 +81,7 @@ export function useCelebration({
 
     // Tier 1 (Epic): Goal Reached
     if (goal > 0 && prevEarned < goal && totalEarned >= goal) {
+      triggerHaptic([15, 30, 20]);
       setCelebration({
         active: true,
         glyph: curSym || '€',
@@ -95,6 +107,7 @@ export function useCelebration({
       if (pastMonths.length > 0) {
         const previousBest = Math.max(...pastMonths);
         if (previousBest > 0 && prevEarned < previousBest && totalEarned >= previousBest * 1.01) {
+          triggerHaptic([15, 30, 20]);
           setCelebration({
             active: true,
             glyph: '★',
@@ -110,6 +123,7 @@ export function useCelebration({
     // Tier 2 (Significant): 75% Milestone
     const pct75 = goal * 0.75;
     if (goal > 0 && prevEarned < pct75 && totalEarned >= pct75 && totalEarned < goal) {
+      triggerHaptic(10);
       setCelebration({
         active: true,
         glyph: '75%',
@@ -123,6 +137,7 @@ export function useCelebration({
     // Tier 2 (Significant): 50% Milestone
     const pct50 = goal * 0.5;
     if (goal > 0 && prevEarned < pct50 && totalEarned >= pct50 && totalEarned < pct75) {
+      triggerHaptic(10);
       setCelebration({
         active: true,
         glyph: '50%',
@@ -132,7 +147,7 @@ export function useCelebration({
       });
       return;
     }
-  }, [totalEarned, goal, currentMonthKey, allEntries, curSym, calcEarnings]);
+  }, [totalEarned, goal, currentMonthKey, allEntries, curSym, calcEarnings, settings.hapticEnabled]);
 
   // Auto-dismiss active state after animation completes
   useEffect(() => {

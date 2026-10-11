@@ -1,18 +1,12 @@
 # TASK HANDOFF: main
-- **Timestamp**: 2026-10-11T15:09:00.278Z
+- **Timestamp**: 2026-10-11T15:29:22.817Z
 - **Branch**: main
-- **Last Commit**: 29e52e5 fix(version): sync app version on bump in dev and fix vercel deployment
+- **Last Commit**: 7dd43d5 chore(release): v0.1.12 [skip actions]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M src/components/BrandedQRCode.tsx
- M src/components/DevicePairModal.tsx
- M src/components/QRScannerModal.tsx
- M src/hooks/useDevicePairing.ts
- M src/hooks/useSupabaseSync.ts
- M src/lib/db.ts
- M src/lib/device-pairing.ts
+(clean working tree)
 ```
 
 ## Next Action

@@ -1,13 +1,12 @@
 # TASK HANDOFF: main
-- **Timestamp**: 2026-10-12T00:12:48.073Z
+- **Timestamp**: 2026-10-12T00:14:05.839Z
 - **Branch**: main
-- **Last Commit**: 6ebc41e feat: merge financial dashboard offline math and adaptive categories
+- **Last Commit**: e2753a3 chore(release): v0.1.25 [skip actions]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M package-lock.json
- M package.json
+(clean working tree)
 ```
 
 ## Next Action

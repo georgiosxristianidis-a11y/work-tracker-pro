@@ -1,14 +1,15 @@
-# TASK HANDOFF: feat/financial-dashboard-offline-math
-- **Timestamp**: 2026-10-12T00:10:00.000Z
-- **Branch**: feat/financial-dashboard-offline-math
-- **Last Commit**: 81c1cd2 feat(dashboard): integrate offline data paste modal, dynamic chart scaling, and SW caching
+# TASK HANDOFF: main
+- **Timestamp**: 2026-10-12T00:12:48.073Z
+- **Branch**: main
+- **Last Commit**: 6ebc41e feat: merge financial dashboard offline math and adaptive categories
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-(merged main into feat/financial-dashboard-offline-math)
+M package-lock.json
+ M package.json
 ```
 
 ## Next Action
-- [ ] Merge feat/financial-dashboard-offline-math into main
-- [ ] Release bump v0.1.25
+- [ ] Verify next atomic goal
+- [ ] Run `npm run gate` before commit

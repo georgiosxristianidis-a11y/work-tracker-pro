@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ShieldAlert, ShieldCheck, Download, RotateCcw, Trash2, Eye, EyeOff } from 'lucide-react';
+import { X, ShieldAlert, ShieldCheck, Download, RotateCcw, Trash2, Eye, EyeOff, ClipboardList } from 'lucide-react';
 import { useFinancialDashboardStore } from '../../store/useFinancialDashboardStore';
 import { OfflineVault } from '../../lib/offline-vault';
 

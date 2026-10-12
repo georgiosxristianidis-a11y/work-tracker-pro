@@ -1,12 +1,13 @@
 import React from 'react';
-import { LayoutGrid, PieChart, CreditCard, ShoppingBag, Settings, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { LayoutGrid, PieChart, CreditCard, ShoppingBag, Settings, ShieldCheck, Eye, EyeOff, ClipboardList } from 'lucide-react';
 import { useFinancialDashboardStore } from '../../store/useFinancialDashboardStore';
 
 interface DashboardHeaderProps {
   onOpenSecurity: () => void;
+  onOpenPaste?: () => void;
 }
 
-export function DashboardHeader({ onOpenSecurity }: DashboardHeaderProps) {
+export function DashboardHeader({ onOpenSecurity, onOpenPaste }: DashboardHeaderProps) {
   const { isPrivacyMasked, togglePrivacyMask } = useFinancialDashboardStore();
   const [activeTab, setActiveTab] = React.useState<'grid' | 'pie' | 'card' | 'bag'>('grid');
 
@@ -107,8 +108,21 @@ export function DashboardHeader({ onOpenSecurity }: DashboardHeaderProps) {
         </nav>
       </div>
 
-      {/* Right Controls: Privacy Toggle & Settings Gear */}
+      {/* Right Controls: Data Paste, Privacy Toggle & Settings Gear */}
       <div className="flex items-center gap-2">
+        {/* Quick Data Paste / Offline Import */}
+        {onOpenPaste && (
+          <button
+            type="button"
+            onClick={onOpenPaste}
+            title="Paste & Import Data (100% Offline)"
+            aria-label="Paste and recalculate data"
+            className="p-2 transition-colors duration-200 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 active:scale-95"
+          >
+            <ClipboardList className="w-[18px] h-[18px]" strokeWidth={1.8} />
+          </button>
+        )}
+
         {/* Quick Privacy Mask Toggle */}
         <button
           type="button"

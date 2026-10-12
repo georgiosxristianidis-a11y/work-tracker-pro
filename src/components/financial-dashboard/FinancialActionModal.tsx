@@ -18,7 +18,7 @@ export function FinancialActionModal() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
-  if (!activeModal || activeModal === 'security') return null;
+  if (!activeModal || activeModal === 'security' || activeModal === 'paste') return null;
 
   const title = {
     send: 'Send Funds',

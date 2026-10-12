@@ -17,17 +17,26 @@ export function BenefitsAreaChartCard() {
   const chartWidth = svgWidth - paddingLeft - paddingRight;
   const chartHeight = svgHeight - paddingTop - paddingBottom;
 
-  const maxY = 8;
+  const rawMax = Math.max(...benefitsData.map(d => d.value), 1);
+  const maxY = Math.max(8, Math.ceil(rawMax * 1.15));
   const minY = 0;
+
+  const yTicks = React.useMemo(() => [
+    maxY,
+    Math.round(maxY * 0.75),
+    Math.round(maxY * 0.5),
+    Math.round(maxY * 0.25),
+    0
+  ], [maxY]);
 
   const points = React.useMemo(() => {
     return benefitsData.map((d, index) => {
-      const x = paddingLeft + (index / (benefitsData.length - 1)) * chartWidth;
+      const x = paddingLeft + (index / (Math.max(1, benefitsData.length - 1))) * chartWidth;
       const normalizedY = (d.value - minY) / (maxY - minY);
       const y = paddingTop + (1 - normalizedY) * chartHeight;
       return { x, y, month: d.month, val: d.value };
     });
-  }, [benefitsData, chartWidth, chartHeight]);
+  }, [benefitsData, chartWidth, chartHeight, maxY]);
 
   // Generate smooth cubic Bezier path
   const { linePath, areaPath } = React.useMemo(() => {
@@ -145,8 +154,8 @@ export function BenefitsAreaChartCard() {
             </mask>
           </defs>
 
-          {/* Left Y-Axis Grid & Labels (8, 6, 4, 2, 0) */}
-          {[8, 6, 4, 2, 0].map(val => {
+          {/* Left Y-Axis Grid & Labels (Dynamic Ticks) */}
+          {yTicks.map(val => {
             const normalizedY = (val - minY) / (maxY - minY);
             const y = paddingTop + (1 - normalizedY) * chartHeight;
 

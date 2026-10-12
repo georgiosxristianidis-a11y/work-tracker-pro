@@ -54,12 +54,12 @@ export interface FinancialDashboardState {
   // Security & UX
   isPrivacyMasked: boolean;
   isVaultLocked: boolean;
-  activeModal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | null;
+  activeModal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | 'paste' | null;
   transactions: FinancialTransaction[];
 
   // Actions
   togglePrivacyMask: () => void;
-  setActiveModal: (modal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | null) => void;
+  setActiveModal: (modal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | 'paste' | null) => void;
   setSelectedPeriod: (period: string) => void;
   executeTransaction: (
     type: 'send' | 'receive' | 'top_up' | 'transfer',
@@ -67,6 +67,7 @@ export interface FinancialDashboardState {
     assetId: string,
     counterparty?: string
   ) => Promise<boolean>;
+  applyRawDataInput: (input: string) => Promise<{ success: boolean; message: string }>;
   resetToBaseline: () => void;
   panicWipeData: () => Promise<void>;
   saveToVault: () => Promise<void>;
@@ -246,6 +247,97 @@ export const useFinancialDashboardStore = create<FinancialDashboardState>((set, 
 
     await get().saveToVault();
     return true;
+  },
+
+  applyRawDataInput: async (rawText: string) => {
+    const text = rawText.trim();
+    if (!text) return { success: false, message: 'Input is empty.' };
+
+    const state = get();
+
+    // 1. Check if input is valid JSON snapshot
+    if (text.startsWith('{') && text.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed === 'object') {
+          set(prev => ({
+            ...prev,
+            ...parsed,
+            activeModal: null
+          }));
+          await get().saveToVault();
+          return { success: true, message: 'JSON state imported successfully.' };
+        }
+      } catch {
+        // Fallback to text parsing
+      }
+    }
+
+    // 2. Intelligent raw text & number extraction
+    const numberMatches = text.match(/[-+]?\$?\d[\d,]*(?:\.\d+)?(?:e[-+]?\d+)?/gi);
+    if (!numberMatches || numberMatches.length === 0) {
+      return { success: false, message: 'No valid numeric values found in text.' };
+    }
+
+    const parsedNumbers = numberMatches
+      .map(m => m.replace(/[\$,]/g, '').trim())
+      .filter(m => !isNaN(parseFloat(m)))
+      .map(m => parseFloat(m));
+
+    if (parsedNumbers.length === 0) {
+      return { success: false, message: 'Could not parse numbers.' };
+    }
+
+    // Assign to category balances
+    const nextAssets = [...state.cryptoAssets];
+    for (let i = 0; i < Math.min(parsedNumbers.length, nextAssets.length); i++) {
+      const val = Math.max(0, parsedNumbers[i]);
+      nextAssets[i] = {
+        ...nextAssets[i],
+        balanceScaled: CurrencyMath.toScaled(val).toString()
+      };
+    }
+
+    // If more numbers provided, assign to benefits curve
+    let nextBenefits = [...state.benefitsData];
+    if (parsedNumbers.length > nextAssets.length) {
+      const benefitValues = parsedNumbers.slice(nextAssets.length);
+      nextBenefits = nextBenefits.map((b, idx) => {
+        if (idx < benefitValues.length) {
+          return { ...b, value: Math.max(0.1, Number(benefitValues[idx].toFixed(1))) };
+        }
+        return b;
+      });
+    }
+
+    // Invariant recalculation
+    const totalCategoriesScaled = nextAssets.reduce(
+      (sum, item) => sum + BigInt(item.balanceScaled),
+      0n
+    );
+    const sharesScaled = BigInt(state.sharesScaled);
+    const baseFixedScaled = CurrencyMath.toScaled(500);
+    const nextOverallScaled = totalCategoriesScaled + sharesScaled + baseFixedScaled;
+
+    // Largest remainder percentages
+    const percentages = CurrencyMath.calculatePercentages([
+      baseFixedScaled,
+      sharesScaled,
+      totalCategoriesScaled
+    ]);
+
+    set({
+      cryptoAssets: nextAssets,
+      benefitsData: nextBenefits,
+      overallBalanceScaled: nextOverallScaled.toString(),
+      nftPercent: percentages[0],
+      stocksPercent: percentages[1],
+      cryptoPercent: percentages[2],
+      activeModal: null
+    });
+
+    await get().saveToVault();
+    return { success: true, message: `Applied ${parsedNumbers.length} values with exact offline math.` };
   },
 
   saveToVault: async () => {

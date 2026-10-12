@@ -7,6 +7,7 @@ import { BenefitsAreaChartCard } from './BenefitsAreaChartCard';
 import { ActionSidebar } from './ActionSidebar';
 import { FinancialActionModal } from './FinancialActionModal';
 import { SecurityControlsModal } from './SecurityControlsModal';
+import { QuickDataPasteModal } from './QuickDataPasteModal';
 import { useFinancialDashboardStore } from '../../store/useFinancialDashboardStore';
 import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 
@@ -60,7 +61,10 @@ export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardVi
           border border-white/60 transition-all duration-300"
       >
         {/* Top Header */}
-        <DashboardHeader onOpenSecurity={() => setActiveModal('security')} />
+        <DashboardHeader 
+          onOpenSecurity={() => setActiveModal('security')} 
+          onOpenPaste={() => setActiveModal('paste')}
+        />
 
         {/* Dashboard 3-Column Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
@@ -103,9 +107,10 @@ export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardVi
         </div>
       </main>
 
-      {/* Interactive Transaction and Security Modals */}
+      {/* Interactive Transaction, Security, and Data Import Modals */}
       <FinancialActionModal />
       <SecurityControlsModal />
+      <QuickDataPasteModal />
     </div>
   );
 }

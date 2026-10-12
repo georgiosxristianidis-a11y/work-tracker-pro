@@ -72,10 +72,10 @@ export function CapabilitiesDonutCard() {
 
         {/* Breakdown Level Bars */}
         <div className="flex flex-col justify-center flex-1 gap-2.5">
-          {/* NFT Assets */}
+          {/* Fixed Rate Contracts */}
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-[11.5px]">
-              <span className="font-medium text-slate-400">NFT Assets</span>
+              <span className="font-medium text-slate-400">Fixed Rate</span>
               <span className="font-bold text-slate-800">{nftPercent}%</span>
             </div>
             <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden shadow-inner">
@@ -86,10 +86,10 @@ export function CapabilitiesDonutCard() {
             </div>
           </div>
 
-          {/* Stocks */}
+          {/* Hourly Work */}
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-[11.5px]">
-              <span className="font-medium text-slate-400">Stocks</span>
+              <span className="font-medium text-slate-400">Hourly Work</span>
               <span className="font-bold text-slate-800">{stocksPercent}%</span>
             </div>
             <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden shadow-inner">
@@ -100,10 +100,10 @@ export function CapabilitiesDonutCard() {
             </div>
           </div>
 
-          {/* Crypto */}
+          {/* Direct Projects */}
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-[11.5px]">
-              <span className="font-medium text-slate-400">Crypto</span>
+              <span className="font-medium text-slate-400">Direct Projects</span>
               <span className="font-bold text-slate-800">{cryptoPercent}%</span>
             </div>
             <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden shadow-inner">

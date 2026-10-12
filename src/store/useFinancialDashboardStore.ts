@@ -7,7 +7,7 @@ export interface CryptoAssetItem {
   name: string;
   symbol: string;
   balanceScaled: string; // BigInt stored as string for persistence
-  iconType: 'btc' | 'eth' | 'dash' | 'edo';
+  iconType: 'core' | 'clients' | 'retainer' | 'consulting' | 'btc' | 'eth' | 'dash' | 'edo';
   color: string;
 }
 
@@ -35,12 +35,12 @@ export interface FinancialDashboardState {
   capabilitiesTotalScaled: string;
   netGrowthPct: number;
 
-  // Breakdown percentages
+  // Breakdown percentages (Fixed Rate, Hourly Work, Direct Projects)
   nftPercent: number;
   stocksPercent: number;
   cryptoPercent: number;
 
-  // Assets
+  // Assets / Work categories
   cryptoAssets: CryptoAssetItem[];
 
   // Benefits curve
@@ -73,7 +73,7 @@ export interface FinancialDashboardState {
   loadFromVault: () => Promise<void>;
 }
 
-// Exact reference values
+// Exact reference values adapted to Work Tracker income categories
 const BASELINE_DATA = {
   overallBalanceScaled: CurrencyMath.toScaled(11121.22).toString(),
   profitScaled: CurrencyMath.toScaled(4737.99).toString(),
@@ -82,41 +82,41 @@ const BASELINE_DATA = {
   sharesGrowthPct: 8.5,
   capabilitiesTotalScaled: CurrencyMath.toScaled(1776.00).toString(),
   netGrowthPct: 42,
-  nftPercent: 17,
-  stocksPercent: 25,
-  cryptoPercent: 58,
+  nftPercent: 17, // Fixed Rate Contracts
+  stocksPercent: 25, // Hourly Work
+  cryptoPercent: 58, // Direct Projects
   cryptoAssets: [
     {
-      id: 'btc',
-      name: 'Bitcoin',
-      symbol: 'BTC',
+      id: 'core',
+      name: 'Core Projects',
+      symbol: 'CORE',
       balanceScaled: CurrencyMath.toScaled(2467.30).toString(),
-      iconType: 'btc' as const,
-      color: '#F7931A'
-    },
-    {
-      id: 'eth',
-      name: 'Etherium',
-      symbol: 'ETH',
-      balanceScaled: CurrencyMath.toScaled(1990.01).toString(),
-      iconType: 'eth' as const,
-      color: '#627EEA'
-    },
-    {
-      id: 'dash',
-      name: 'Dash',
-      symbol: 'DASH',
-      balanceScaled: CurrencyMath.toScaled(1455.10).toString(),
-      iconType: 'dash' as const,
-      color: '#008CE7'
-    },
-    {
-      id: 'edo',
-      name: 'Edo',
-      symbol: 'EDO',
-      balanceScaled: CurrencyMath.toScaled(988.07).toString(),
-      iconType: 'edo' as const,
+      iconType: 'core' as const,
       color: '#E5A83B'
+    },
+    {
+      id: 'clients',
+      name: 'Direct Clients',
+      symbol: 'CLIENTS',
+      balanceScaled: CurrencyMath.toScaled(1990.01).toString(),
+      iconType: 'clients' as const,
+      color: '#6366F1'
+    },
+    {
+      id: 'retainer',
+      name: 'Retainer',
+      symbol: 'RETAINER',
+      balanceScaled: CurrencyMath.toScaled(1455.10).toString(),
+      iconType: 'retainer' as const,
+      color: '#0EA5E9'
+    },
+    {
+      id: 'consulting',
+      name: 'Consulting',
+      symbol: 'ADVISORY',
+      balanceScaled: CurrencyMath.toScaled(988.07).toString(),
+      iconType: 'consulting' as const,
+      color: '#10B981'
     }
   ],
   benefitsData: [

@@ -87,10 +87,10 @@ export function FinancialActionModal() {
 
         {/* Transaction Form */}
         <form onSubmit={handleConfirm} className="flex flex-col gap-4">
-          {/* Target Asset Selector */}
+          {/* Target Category Selector */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-              Select Asset
+              Select Category / Project
             </label>
             <div className="grid grid-cols-4 gap-2">
               {cryptoAssets.map(asset => {
@@ -107,7 +107,7 @@ export function FinancialActionModal() {
                     }`}
                   >
                     <span className="text-xs font-bold">{asset.symbol}</span>
-                    <span className="text-[10px] opacity-75">{asset.name}</span>
+                    <span className="text-[9.5px] opacity-75 truncate max-w-full text-center">{asset.name}</span>
                   </button>
                 );
               })}
@@ -117,7 +117,7 @@ export function FinancialActionModal() {
           {/* Amount Input */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-              Amount (USD)
+              Amount ($)
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
@@ -136,11 +136,11 @@ export function FinancialActionModal() {
           {/* Counterparty / Note Input */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-              {activeModal === 'send' ? 'Recipient Address' : 'Sender / Reference Note'}
+              {activeModal === 'send' ? 'Destination / Milestone' : 'Source / Milestone Ref'}
             </label>
             <input
               type="text"
-              placeholder={activeModal === 'send' ? 'e.g. 0x71C...b90' : 'e.g. Offline Vault Deposit'}
+              placeholder={activeModal === 'send' ? 'e.g. Milestone Release' : 'e.g. Client Payment Deposit'}
               value={counterparty}
               onChange={e => setCounterparty(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
@@ -150,7 +150,7 @@ export function FinancialActionModal() {
           {/* Real-time Math Summary */}
           <div className="p-3 bg-slate-100/80 rounded-xl text-xs space-y-1.5">
             <div className="flex justify-between text-slate-500">
-              <span>Current Asset Balance:</span>
+              <span>Category Balance:</span>
               <span className="font-semibold text-slate-800">
                 {currentAsset ? CurrencyMath.format(BigInt(currentAsset.balanceScaled), '$', 2) : '$0.00'}
               </span>

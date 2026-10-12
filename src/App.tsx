@@ -308,7 +308,7 @@ export default function App() {
     <MotionConfig reducedMotion={isPowerSaveMode ? 'always' : 'user'}>
       {screen === 'finance' ? (
         <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#141518]"><div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" /></div>}>
-          <FinancialDashboardView onBackToTracker={() => setScreen('home')} />
+          <FinancialDashboardView onBackToTracker={() => setScreen('settings')} />
         </Suspense>
       ) : (
         <div className="flex items-center justify-center min-h-screen bg-[#111] font-['Epilogue_Variable']">

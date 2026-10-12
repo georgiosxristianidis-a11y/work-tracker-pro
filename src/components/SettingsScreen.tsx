@@ -1,11 +1,12 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useDataExport } from '../hooks/useDataExport';
+import { useAppStore } from '../store/useAppStore';
 
 interface SettingsScreenProps {
   settings: AppSettings;
@@ -394,6 +395,19 @@ export const SettingsScreen = ({
               <button onClick={shareBackup} className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all">
                 <div className="flex items-center gap-3.5"><Download size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Backup Data')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
+              </button>
+              <button 
+                onClick={() => {
+                  useAppStore.getState().setScreen('finance');
+                  haptic(10);
+                }}
+                className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <LayoutDashboard size={16} className="text-[var(--a)]" />
+                  <span className="text-sm font-black text-[var(--t1)]">Financial Dashboard (Offline)</span>
+                </div>
+                <ChevronRight size={16} className="text-[var(--t3)] group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
           </div>

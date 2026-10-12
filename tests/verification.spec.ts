@@ -51,7 +51,7 @@ test.describe('Live Verification: New Features & Tasks', () => {
     await settingsTab.click();
 
     // Verify Settings Screen loaded
-    await expect(page.locator('span:has-text("Settings"), h1:has-text("Settings"), span:has-text("Настройки")').first()).toBeVisible();
+    await expect(page.locator('[data-testid="settings-title"], span:has-text("Settings"), span:has-text("Настройки"), span:has-text("Ρυθμίσεις")').first()).toBeVisible();
 
     // Find and click the Device Pairing button
     const pairButton = page.locator('button:has-text("Pair Device"), button:has-text("Привязать устройство")').first();

@@ -125,6 +125,19 @@ export function SecurityControlsModal() {
             <RotateCcw className="w-4 h-4 text-slate-500" />
           </button>
 
+          {/* Quick Data Paste / Import */}
+          <button
+            type="button"
+            onClick={() => setActiveModal('paste')}
+            className="flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 rounded-2xl shadow-sm border border-slate-100 text-left transition-all active:scale-[0.99]"
+          >
+            <div>
+              <div className="text-xs font-bold text-slate-800">Quick Data Paste & Import</div>
+              <div className="text-[11px] text-slate-400">Import figures or JSON offline with invariant checks</div>
+            </div>
+            <ClipboardList className="w-4 h-4 text-indigo-500" />
+          </button>
+
           {/* Panic Wipe (Danger Zone) */}
           <div className="p-3.5 mt-2 bg-rose-50/70 border border-rose-100 rounded-2xl">
             <div className="flex items-center justify-between mb-2">

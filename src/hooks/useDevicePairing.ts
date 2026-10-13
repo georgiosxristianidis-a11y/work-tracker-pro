@@ -78,10 +78,23 @@ export const useDevicePairing = ({
 
       try {
         // 1. Establish session on target device
-        if (payload.at && payload.rt) {
+        if (payload.rt) {
+          const { error: refreshError } = await supabase.auth.refreshSession({
+            refresh_token: payload.rt
+          });
+          if (refreshError) {
+            console.warn('RefreshSession failed, trying setSession if available:', refreshError.message);
+            if (payload.at) {
+              await supabase.auth.setSession({
+                access_token: payload.at,
+                refresh_token: payload.rt
+              });
+            }
+          }
+        } else if (payload.at) {
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: payload.at,
-            refresh_token: payload.rt
+            refresh_token: payload.rt || ''
           });
           if (sessionError) {
             console.warn('SetSession failed, proceeding with target user ID:', sessionError.message);

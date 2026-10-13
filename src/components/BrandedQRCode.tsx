@@ -60,19 +60,19 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
       setRenderError(null);
       if (!qrCodeRef.current) {
         qrCodeRef.current = new QRCodeStyling({
-          width: 250,
-          height: 250,
+          width: 260,
+          height: 260,
           type: 'svg',
           data: url,
-          margin: 6,
+          margin: 8,
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
-            errorCorrectionLevel: 'M'
+            errorCorrectionLevel: 'Q'
           },
           dotsOptions: {
             color: dotsColor,
-            type: 'rounded'
+            type: 'dots'
           },
           cornersSquareOptions: {
             color: cornerColor,
@@ -94,9 +94,9 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
-            errorCorrectionLevel: 'M'
+            errorCorrectionLevel: 'Q'
           },
-          dotsOptions: { color: dotsColor, type: 'rounded' },
+          dotsOptions: { color: dotsColor, type: 'dots' },
           cornersSquareOptions: { color: cornerColor, type: 'extra-rounded' },
           cornersDotOptions: { color: dotsColor, type: 'dot' },
           backgroundOptions: { color: bgColor }
@@ -168,14 +168,14 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
         </div>
 
         {/* QR Code Container with Expired Overlay */}
-        <div className="relative rounded-2xl overflow-hidden" style={{ minWidth: 250, minHeight: 250 }}>
+        <div className="relative rounded-2xl overflow-hidden" style={{ minWidth: 260, minHeight: 260 }}>
           <div
             ref={containerRef}
             data-testid="branded-qr-canvas"
             className={`flex items-center justify-center transition-all ${
               isExpired || renderError ? 'opacity-20 blur-[2px]' : 'opacity-100'
             }`}
-            style={{ width: 250, height: 250 }}
+            style={{ width: 260, height: 260 }}
           />
 
           {/* Centered Brand Logo Badge Overlay (Revolut/CashApp style, 100% offline & immune to CSP) */}

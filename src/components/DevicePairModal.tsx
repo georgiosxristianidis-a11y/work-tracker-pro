@@ -62,13 +62,17 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
           const authResult = await Promise.race([cloudAuthPromise, timeoutPromise]);
 
           if (authResult?.session) {
+            // Omit massive ~850-character access_token if refresh_token is present.
+            // Target device exchanges rt via supabase.auth.refreshSession in 1 lightweight request.
+            // This shrinks the QR string from ~1400 chars down to ~200 chars (Version 5 matrix with large chunky dots).
             const payload: PairingPayload = {
               v: 1,
               t: now,
               uid: authResult.session.user.id,
-              at: authResult.session.access_token,
-              rt: authResult.session.refresh_token,
-              dev: deviceId
+              dev: deviceId,
+              ...(authResult.session.refresh_token
+                ? { rt: authResult.session.refresh_token }
+                : { at: authResult.session.access_token })
             };
             const encoded = encodePairingPayload(payload);
             setPairingCreatedAt(now);
@@ -102,8 +106,8 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
         dev: deviceId
       };
 
-      // Only embed inline entries if count is small (<= 15) to prevent QR code length overflow
-      if (localEntries.length > 0 && localEntries.length <= 15) {
+      // Only embed inline entries if count is small (<= 8) to prevent QR matrix bloat
+      if (localEntries.length > 0 && localEntries.length <= 8) {
         payload.entries = localEntries.map(e => ({
           date: e.date,
           hours: e.hours,

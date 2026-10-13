@@ -71,8 +71,8 @@ test.describe('Live Verification: New Features & Tasks', () => {
     const qrSvg = page.locator('[data-testid="branded-qr-canvas"] svg');
     await expect(qrSvg).toBeVisible({ timeout: 5000 });
 
-    // Ensure the QR code actually generated matrix rects/paths and is not an empty blank square
-    const qrElementsCount = await qrSvg.locator('rect, path').count();
+    // Ensure the QR code actually generated matrix elements and is not an empty blank square
+    const qrElementsCount = await qrSvg.locator('rect, path, circle').count();
     expect(qrElementsCount).toBeGreaterThan(10);
 
     // Verify brand logo overlay badge "27" is rendered in center

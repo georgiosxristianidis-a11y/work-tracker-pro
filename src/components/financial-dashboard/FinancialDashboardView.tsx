@@ -18,19 +18,43 @@ interface FinancialDashboardViewProps {
 
 export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardViewProps) {
   const { setActiveModal, loadFromVault } = useFinancialDashboardStore();
-  const [isFullPresentation, setIsFullPresentation] = React.useState<boolean>(true);
+  
+  // Default to full-screen dashboard app, toggleable to Dribbble showcase mockup
+  const [isMockupMode, setIsMockupMode] = React.useState<boolean>(() => {
+    try {
+      return localStorage.getItem('dashboard_view_mode') === 'mockup';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleViewMode = () => {
+    setIsMockupMode(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('dashboard_view_mode', next ? 'mockup' : 'fullscreen');
+      } catch {}
+      return next;
+    });
+  };
 
   React.useEffect(() => {
     loadFromVault().catch(console.error);
   }, [loadFromVault]);
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center font-['Epilogue_Variable',sans-serif] overflow-x-hidden selection:bg-slate-900 selection:text-white">
-      {/* Split presentation background mirroring Behance/Dribbble reference showcase */}
-      <div className="fixed inset-0 pointer-events-none flex z-0">
-        <div className="w-1/2 h-full bg-[#141518]" />
-        <div className="w-1/2 h-full bg-[#E5E9EE]" />
-      </div>
+    <div className={`relative min-h-screen w-full font-['Epilogue_Variable',sans-serif] overflow-x-hidden selection:bg-slate-900 selection:text-white transition-colors duration-300 ${
+      isMockupMode 
+        ? 'flex items-center justify-center p-3 sm:p-6' 
+        : 'flex flex-col items-center justify-start bg-[#F0F3F7] p-3 sm:p-6 lg:p-8'
+    }`}>
+      {/* Split presentation background mirroring Behance/Dribbble reference showcase (active in Mockup mode) */}
+      {isMockupMode && (
+        <div className="fixed inset-0 pointer-events-none flex z-0 animate-in fade-in duration-300">
+          <div className="w-1/2 h-full bg-[#141518]" />
+          <div className="w-1/2 h-full bg-[#E5E9EE]" />
+        </div>
+      )}
 
       {/* Floating View Controls (Top Navigation pill) */}
       <div className="fixed top-4 left-4 z-40 flex items-center gap-2">
@@ -38,7 +62,7 @@ export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardVi
           <button
             type="button"
             onClick={onBackToTracker}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white/90 hover:bg-white text-slate-800 text-xs font-bold shadow-lg backdrop-blur-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white/90 hover:bg-white text-slate-800 text-xs font-bold shadow-lg backdrop-blur-md transition-all active:scale-95 border border-white/60"
           >
             <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
             <span>Work Tracker</span>
@@ -47,19 +71,32 @@ export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardVi
 
         <button
           type="button"
-          onClick={() => setIsFullPresentation(!isFullPresentation)}
-          aria-label="Toggle Fullscreen"
-          className="p-2 rounded-2xl bg-white/90 hover:bg-white text-slate-800 shadow-lg backdrop-blur-md transition-all active:scale-95"
+          onClick={toggleViewMode}
+          title={isMockupMode ? 'Развернуть на весь экран (Fullscreen)' : 'Переключить в режим презентации (Dribbble Mockup)'}
+          aria-label="Toggle Fullscreen View"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/90 hover:bg-white text-slate-800 text-xs font-bold shadow-lg backdrop-blur-md transition-all active:scale-95 border border-white/60"
         >
-          {isFullPresentation ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          {isMockupMode ? (
+            <>
+              <Maximize2 className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline text-[11px]">Fullscreen</span>
+            </>
+          ) : (
+            <>
+              <Minimize2 className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline text-[11px]">Mockup View</span>
+            </>
+          )}
         </button>
       </div>
 
-      {/* Main Neumorphic Tablet Shell matching Reference Mockup */}
+      {/* Main Neumorphic Tablet Shell */}
       <main 
-        className="relative z-10 w-full max-w-[1040px] my-6 mx-4 sm:mx-6 p-6 sm:p-8 rounded-[38px] 
-          bg-[#F0F3F7] shadow-[0_30px_70px_rgba(0,0,0,0.35),_inset_0_1px_2px_rgba(255,255,255,0.8)] 
-          border border-white/60 transition-all duration-300"
+        className={`relative z-10 w-full transition-all duration-300 ${
+          isMockupMode
+            ? 'max-w-[1040px] my-4 p-6 sm:p-8 rounded-[38px] bg-[#F0F3F7] shadow-[0_30px_70px_rgba(0,0,0,0.35),_inset_0_1px_2px_rgba(255,255,255,0.8)] border border-white/60'
+            : 'max-w-[1480px] p-6 sm:p-8 lg:p-10 rounded-[38px] bg-[#F0F3F7] shadow-[0_20px_50px_rgba(0,0,0,0.06),_inset_0_1px_2px_rgba(255,255,255,0.8)] border border-white/80'
+        }`}
       >
         {/* Top Header */}
         <DashboardHeader 

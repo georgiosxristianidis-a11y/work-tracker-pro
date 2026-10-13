@@ -1,15 +1,12 @@
-# TASK HANDOFF: feat/crisp-branded-qr
-- **Timestamp**: 2026-10-13T21:36:44.124Z
-- **Branch**: feat/crisp-branded-qr
-- **Last Commit**: ff84163 chore(release): v0.1.28 [skip actions]
+# TASK HANDOFF: feat/qr-pattern-mcfit-style
+- **Timestamp**: 2026-10-13T21:48:02.827Z
+- **Branch**: feat/qr-pattern-mcfit-style
+- **Last Commit**: d7d6cc0 chore(release): v0.1.29 [skip actions]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
 M src/components/BrandedQRCode.tsx
- M src/components/DevicePairModal.tsx
- M src/hooks/useDevicePairing.ts
- M tests/verification.spec.ts
 ```
 
 ## Next Action

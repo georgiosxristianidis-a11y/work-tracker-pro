@@ -64,7 +64,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           height: 260,
           type: 'svg',
           data: url,
-          margin: 8,
+          margin: 10,
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
@@ -72,15 +72,15 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           },
           dotsOptions: {
             color: dotsColor,
-            type: 'dots'
+            type: 'square'
           },
           cornersSquareOptions: {
             color: cornerColor,
             type: 'extra-rounded'
           },
           cornersDotOptions: {
-            color: dotsColor,
-            type: 'dot'
+            color: cornerColor,
+            type: 'extra-rounded'
           },
           backgroundOptions: {
             color: bgColor
@@ -96,9 +96,9 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
             mode: 'Byte',
             errorCorrectionLevel: 'Q'
           },
-          dotsOptions: { color: dotsColor, type: 'dots' },
+          dotsOptions: { color: dotsColor, type: 'square' },
           cornersSquareOptions: { color: cornerColor, type: 'extra-rounded' },
-          cornersDotOptions: { color: dotsColor, type: 'dot' },
+          cornersDotOptions: { color: cornerColor, type: 'extra-rounded' },
           backgroundOptions: { color: bgColor }
         });
       }
@@ -178,13 +178,13 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
             style={{ width: 260, height: 260 }}
           />
 
-          {/* Centered Brand Logo Badge Overlay (Revolut/CashApp style, 100% offline & immune to CSP) */}
+          {/* Centered Brand Logo Badge Overlay (Reference-style Island Badge) */}
           {!isExpired && !renderError && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className={`w-11 h-11 rounded-xl p-0.5 shadow-md border flex items-center justify-center transition-transform ${
-                isDark ? 'bg-[#15171e] border-white/10' : 'bg-white border-zinc-200'
+              <div className={`w-12 h-12 rounded-2xl p-1 shadow-lg border flex items-center justify-center transition-transform ${
+                isDark ? 'bg-[#15171e] border-[#15171e]' : 'bg-white border-white'
               }`}>
-                <div className="w-full h-full rounded-lg bg-zinc-900 border border-zinc-700 flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="w-full h-full rounded-xl bg-zinc-900 border border-zinc-700/80 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
                   <span className="text-[13px] font-black text-white tracking-tighter leading-none select-none">
                     27
                   </span>

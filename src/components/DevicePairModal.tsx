@@ -52,16 +52,22 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
       // Case 1: Supabase available (cloud pairing without bloating QR with raw entries)
       if (supabase) {
         try {
-          const userId = await ensureAuth();
-          const { data: { session } } = await supabase.auth.getSession();
+          const cloudAuthPromise = (async () => {
+            const uid = await ensureAuth();
+            if (!uid) return null;
+            const { data: { session } } = await supabase.auth.getSession();
+            return { uid, session };
+          })();
+          const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 2500));
+          const authResult = await Promise.race([cloudAuthPromise, timeoutPromise]);
 
-          if (session) {
+          if (authResult?.session) {
             const payload: PairingPayload = {
               v: 1,
               t: now,
-              uid: session.user.id,
-              at: session.access_token,
-              rt: session.refresh_token,
+              uid: authResult.session.user.id,
+              at: authResult.session.access_token,
+              rt: authResult.session.refresh_token,
               dev: deviceId
             };
             const encoded = encodePairingPayload(payload);
@@ -69,11 +75,11 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
             setPairingUrl(buildPairingUrl(encoded));
             setIsGenerating(false);
             return;
-          } else if (userId) {
+          } else if (authResult?.uid) {
             const payload: PairingPayload = {
               v: 1,
               t: now,
-              uid: userId,
+              uid: authResult.uid,
               dev: deviceId
             };
             const encoded = encodePairingPayload(payload);

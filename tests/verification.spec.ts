@@ -68,8 +68,16 @@ test.describe('Live Verification: New Features & Tasks', () => {
 
     // Verify QR Code container is rendered (SECURE SYNC badge + QR Code SVG)
     await expect(page.locator('text=SECURE SYNC')).toBeVisible({ timeout: 5000 });
-    const qrSvg = page.locator('div:has-text("SECURE SYNC") svg').first();
+    const qrSvg = page.locator('[data-testid="branded-qr-canvas"] svg');
     await expect(qrSvg).toBeVisible({ timeout: 5000 });
+
+    // Ensure the QR code actually generated matrix rects/paths and is not an empty blank square
+    const qrElementsCount = await qrSvg.locator('rect, path').count();
+    expect(qrElementsCount).toBeGreaterThan(10);
+
+    // Verify brand logo overlay badge "27" is rendered in center
+    const brandBadge = page.locator('div:has-text("SECURE SYNC") span:has-text("27")');
+    await expect(brandBadge).toBeVisible();
 
     // Verify copy button is present and clickable
     const copyButton = page.locator('button:has-text("Копировать"), button:has-text("Copy")').first();

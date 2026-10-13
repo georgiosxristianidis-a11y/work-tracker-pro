@@ -20,26 +20,6 @@ interface BrandedQRCodeProps {
   onRefresh?: () => void;
 }
 
-const BRAND_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <defs>
-    <clipPath id="logo-clip">
-      <rect x="5" y="5" width="90" height="90" rx="20" />
-    </clipPath>
-    <mask id="logo-mask">
-      <rect x="0" y="0" width="100" height="100" fill="white" />
-      <path d="M-10 25 L25 -10" stroke="black" stroke-width="12" />
-      <path d="M75 110 L110 75" stroke="black" stroke-width="12" />
-    </mask>
-  </defs>
-  <rect width="100" height="100" rx="20" fill="#15171e" />
-  <rect x="5" y="5" width="90" height="90" rx="20" stroke="#f4f4f5" stroke-width="8" mask="url(#logo-mask)" />
-  <text x="50" y="54" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="46" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#f4f4f5">27</text>
-  <g clip-path="url(#logo-clip)">
-    <rect x="5" y="90" width="90" height="10" fill="#d4af37"/>
-  </g>
-</svg>`;
-
-const BRAND_LOGO_DATA_URL = `data:image/svg+xml;utf8,${encodeURIComponent(BRAND_LOGO_SVG)}`;
 
 export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
   url,
@@ -84,18 +64,11 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           height: 250,
           type: 'svg',
           data: url,
-          image: BRAND_LOGO_DATA_URL,
           margin: 6,
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
             errorCorrectionLevel: 'M'
-          },
-          imageOptions: {
-            hideBackgroundDots: true,
-            imageSize: 0.28,
-            margin: 4,
-            crossOrigin: 'anonymous'
           },
           dotsOptions: {
             color: dotsColor,
@@ -198,11 +171,28 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
         <div className="relative rounded-2xl overflow-hidden" style={{ minWidth: 250, minHeight: 250 }}>
           <div
             ref={containerRef}
+            data-testid="branded-qr-canvas"
             className={`flex items-center justify-center transition-all ${
               isExpired || renderError ? 'opacity-20 blur-[2px]' : 'opacity-100'
             }`}
             style={{ width: 250, height: 250 }}
           />
+
+          {/* Centered Brand Logo Badge Overlay (Revolut/CashApp style, 100% offline & immune to CSP) */}
+          {!isExpired && !renderError && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className={`w-11 h-11 rounded-xl p-0.5 shadow-md border flex items-center justify-center transition-transform ${
+                isDark ? 'bg-[#15171e] border-white/10' : 'bg-white border-zinc-200'
+              }`}>
+                <div className="w-full h-full rounded-lg bg-zinc-900 border border-zinc-700 flex flex-col items-center justify-center relative overflow-hidden">
+                  <span className="text-[13px] font-black text-white tracking-tighter leading-none select-none">
+                    27
+                  </span>
+                  <div className="absolute bottom-0 inset-x-0 h-1 bg-[#d4af37]" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {renderError && !isExpired && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-zinc-900/90 rounded-2xl text-center">

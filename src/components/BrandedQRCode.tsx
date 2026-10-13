@@ -279,7 +279,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
                 ? 'bg-zinc-800/80 hover:bg-zinc-800 border-zinc-700 text-zinc-200'
                 : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800'
             }`}
-            title="Обновить код"
+            title={tr('Refresh code')}
           >
             <RotateCw className="w-4 h-4" />
           </button>

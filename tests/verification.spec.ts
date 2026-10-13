@@ -59,20 +59,28 @@ test.describe('Live Verification: New Features & Tasks', () => {
     await expect(pairButton).toBeVisible();
     await pairButton.click();
 
-    // Verify modal is open and has "Синхронизация устройств"
-    await expect(page.locator('h3:has-text("Синхронизация устройств"), h3:has-text("Device Pairing")').first()).toBeVisible();
+    // Verify modal is open and has translated title
+    await expect(page.locator('h3:has-text("Синхронизация устройств"), h3:has-text("Device Pairing"), h3:has-text("Σύζευξη συσκευών")').first()).toBeVisible();
 
-    // CRITICAL: Verify that the error message "Для сопряжения необходима настройка облачного подключения" is NOT displayed!
-    const cloudError = page.locator('text=Для сопряжения необходима настройка облачного подключения');
+    // CRITICAL: Verify that the error message is NOT displayed!
+    const cloudError = page.locator('text="Для сопряжения необходима настройка облачного подключения", text="Cloud connection required for pairing."');
     await expect(cloudError).toHaveCount(0);
 
     // Verify QR Code container is rendered (SECURE SYNC badge + QR Code SVG)
     await expect(page.locator('text=SECURE SYNC')).toBeVisible({ timeout: 5000 });
-    const qrSvg = page.locator('div:has-text("SECURE SYNC") svg').first();
+    const qrSvg = page.locator('[data-testid="branded-qr-canvas"] svg');
     await expect(qrSvg).toBeVisible({ timeout: 5000 });
 
+    // Ensure the QR code actually generated matrix elements and is not an empty blank square
+    const qrElementsCount = await qrSvg.locator('rect, path, circle').count();
+    expect(qrElementsCount).toBeGreaterThan(10);
+
+    // Verify brand logo overlay badge "27" is rendered in center
+    const brandBadge = page.locator('div:has-text("SECURE SYNC") span:has-text("27")');
+    await expect(brandBadge).toBeVisible();
+
     // Verify copy button is present and clickable
-    const copyButton = page.locator('button:has-text("Копировать"), button:has-text("Copy")').first();
+    const copyButton = page.locator('button:has-text("Копировать"), button:has-text("Copy"), button:has-text("Αντιγραφή")').first();
     await expect(copyButton).toBeVisible();
   });
 

@@ -16,6 +16,7 @@ interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScanSuccess: (payload: PairingPayload) => void;
+  t?: (key: string) => string;
 }
 
 const SCAN_THROTTLE_MS = 125; // ~8 FPS scanner loop for battery preservation
@@ -24,8 +25,10 @@ const CROP_CANVAS_DIM = 400; // Optimal 400x400 center crop for jsQR
 export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   isOpen,
   onClose,
-  onScanSuccess
+  onScanSuccess,
+  t
 }) => {
+  const tr = t || ((k: string) => k);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -55,7 +58,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
       if (payload) {
         if (isPairingPayloadExpired(payload)) {
           setErrorMessage(
-            'Срок действия этого QR-кода истёк (10 минут). Нажмите «Обновить код» на первом устройстве.'
+            tr('QR code expired (10 minutes). Tap "Refresh code" on first device.')
           );
           return;
         }
@@ -63,7 +66,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         onScanSuccess(payload);
       }
     },
-    [stopCamera, onScanSuccess]
+    [stopCamera, onScanSuccess, tr]
   );
 
   const scanFrame = useCallback(() => {
@@ -168,11 +171,11 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         setHasPermission(false);
         const errObj = err as { name?: string; message?: string };
         if (errObj.name === 'NotAllowedError') {
-          setErrorMessage('Доступ к камере заблокирован. Разрешите доступ в настройках браузера.');
+          setErrorMessage(tr('Camera access blocked. Allow access in browser settings.'));
         } else if (errObj.name === 'NotFoundError') {
-          setErrorMessage('Камера на этом устройстве не найдена.');
+          setErrorMessage(tr('Camera not found on this device.'));
         } else {
-          setErrorMessage('Не удалось запустить камеру. Проверьте права доступа.');
+          setErrorMessage(tr('Failed to start camera. Check permissions.'));
         }
       }
     }
@@ -183,7 +186,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
       isMounted = false;
       stopCamera();
     };
-  }, [isOpen, scanFrame, stopCamera]);
+  }, [isOpen, scanFrame, stopCamera, tr]);
 
   const toggleTorch = async () => {
     if (!streamRef.current) return;
@@ -219,7 +222,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         if (code && code.data) {
           handleDetectedCode(code.data);
         } else {
-          setErrorMessage('На выбранном изображении не удалось обнаружить QR-код.');
+          setErrorMessage(tr('No QR code detected in image'));
         }
       }
     };
@@ -235,7 +238,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         <div className="flex items-center justify-between p-4 border-b border-zinc-800/80">
           <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
             <Camera className="w-4 h-4 text-[#d4af37]" />
-            <span>Сканирование QR-кода</span>
+            <span>{tr('Scan QR Code')}</span>
           </div>
           <button
             onClick={() => {
@@ -291,7 +294,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
               {/* Upload image fallback */}
               <label className="flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold bg-zinc-800 text-zinc-200 hover:bg-zinc-700 cursor-pointer border border-zinc-700 transition-all">
                 <Upload className="w-4 h-4 text-[#d4af37]" />
-                <span>Выбрать скриншот/фото</span>
+                <span>{tr('Choose screenshot/photo')}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -307,7 +310,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         <div className="flex items-center justify-between p-4 bg-zinc-900 border-t border-zinc-800 text-xs">
           <label className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200 cursor-pointer">
             <Upload className="w-4 h-4" />
-            <span>Загрузить фото</span>
+            <span>{tr('Upload photo')}</span>
             <input
               type="file"
               accept="image/*"
@@ -326,7 +329,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
               }`}
             >
               {torchOn ? <Zap className="w-3.5 h-3.5" /> : <ZapOff className="w-3.5 h-3.5" />}
-              <span>Фонарик</span>
+              <span>{tr('Flashlight')}</span>
             </button>
           )}
         </div>

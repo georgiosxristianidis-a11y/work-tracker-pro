@@ -8,6 +8,7 @@ import { ActionSidebar } from './ActionSidebar';
 import { FinancialActionModal } from './FinancialActionModal';
 import { SecurityControlsModal } from './SecurityControlsModal';
 import { QuickDataPasteModal } from './QuickDataPasteModal';
+import { SmartImportModal } from './SmartImportModal';
 import { useFinancialDashboardStore } from '../../store/useFinancialDashboardStore';
 import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 
@@ -64,6 +65,7 @@ export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardVi
         <DashboardHeader 
           onOpenSecurity={() => setActiveModal('security')} 
           onOpenPaste={() => setActiveModal('paste')}
+          onOpenImport={() => setActiveModal('import')}
         />
 
         {/* Dashboard 3-Column Grid Layout */}
@@ -111,6 +113,7 @@ export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardVi
       <FinancialActionModal />
       <SecurityControlsModal />
       <QuickDataPasteModal />
+      <SmartImportModal />
     </div>
   );
 }

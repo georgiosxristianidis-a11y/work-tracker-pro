@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { CurrencyMath } from '../lib/currency-math';
 import { OfflineVault } from '../lib/offline-vault';
+import { db } from '../lib/db';
 
 export interface CryptoAssetItem {
   id: string;
@@ -54,12 +55,12 @@ export interface FinancialDashboardState {
   // Security & UX
   isPrivacyMasked: boolean;
   isVaultLocked: boolean;
-  activeModal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | 'paste' | null;
+  activeModal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | 'paste' | 'import' | null;
   transactions: FinancialTransaction[];
 
   // Actions
   togglePrivacyMask: () => void;
-  setActiveModal: (modal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | 'paste' | null) => void;
+  setActiveModal: (modal: 'send' | 'receive' | 'top_up' | 'transfer' | 'security' | 'paste' | 'import' | null) => void;
   setSelectedPeriod: (period: string) => void;
   executeTransaction: (
     type: 'send' | 'receive' | 'top_up' | 'transfer',
@@ -68,6 +69,10 @@ export interface FinancialDashboardState {
     counterparty?: string
   ) => Promise<boolean>;
   applyRawDataInput: (input: string) => Promise<{ success: boolean; message: string }>;
+  syncWithWorkTrackerHistory: (
+    entries: { date: string; hours: number; month: string }[],
+    hourlyRate?: number
+  ) => Promise<{ success: boolean; message: string }>;
   resetToBaseline: () => void;
   panicWipeData: () => Promise<void>;
   saveToVault: () => Promise<void>;
@@ -338,6 +343,95 @@ export const useFinancialDashboardStore = create<FinancialDashboardState>((set, 
 
     await get().saveToVault();
     return { success: true, message: `Applied ${parsedNumbers.length} values with exact offline math.` };
+  },
+
+  syncWithWorkTrackerHistory: async (
+    entries: { date: string; hours: number; month: string }[],
+    hourlyRate = 25
+  ) => {
+    if (!entries || entries.length === 0) {
+      return { success: false, message: 'No entries to synchronize.' };
+    }
+
+    try {
+      // 1. Batch save all entries into IndexedDB WorkDB
+      await db.init();
+      await db.saveMany(entries);
+
+      // 2. Exact BigInt earnings calculation
+      const totalHours = entries.reduce((acc, e) => acc + e.hours, 0);
+      const totalEarned = totalHours * hourlyRate;
+      const totalEarnedScaled = CurrencyMath.toScaled(totalEarned);
+
+      // 3. Exact 4-category allocation:
+      // Core (40%), Clients (30%), Retainer (20%), Consulting (10%)
+      const coreScaled = (totalEarnedScaled * 40n) / 100n;
+      const clientsScaled = (totalEarnedScaled * 30n) / 100n;
+      const retainerScaled = (totalEarnedScaled * 20n) / 100n;
+      const consultingScaled = totalEarnedScaled - (coreScaled + clientsScaled + retainerScaled);
+
+      const state = get();
+      const nextAssets = state.cryptoAssets.map(asset => {
+        if (asset.id === 'core') return { ...asset, balanceScaled: coreScaled.toString() };
+        if (asset.id === 'clients') return { ...asset, balanceScaled: clientsScaled.toString() };
+        if (asset.id === 'retainer') return { ...asset, balanceScaled: retainerScaled.toString() };
+        if (asset.id === 'consulting') return { ...asset, balanceScaled: consultingScaled.toString() };
+        return asset;
+      });
+
+      // 4. Monthly aggregation for Benefits curve (most recent 7-12 months)
+      const monthlyHoursMap = new Map<string, number>();
+      for (const entry of entries) {
+        monthlyHoursMap.set(entry.month, (monthlyHoursMap.get(entry.month) || 0) + entry.hours);
+      }
+
+      const sortedMonths = Array.from(monthlyHoursMap.keys()).sort();
+      const recentMonths = sortedMonths.slice(-7);
+      const nextBenefits: BenefitDataPoint[] = recentMonths.map(m => {
+        const hrs = monthlyHoursMap.get(m) || 0;
+        const earnedK = (hrs * hourlyRate) / 1000;
+        const parts = m.split('-');
+        const monthNum = parseInt(parts[1] || '1', 10);
+        const monthNames = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
+        const label = monthNames[monthNum % 12] || m;
+        return {
+          month: label,
+          value: Math.max(0.5, Math.round(earnedK * 10) / 10)
+        };
+      });
+
+      // 5. Overall Balance recalculation with exact invariant
+      const totalCategoriesScaled = coreScaled + clientsScaled + retainerScaled + consultingScaled;
+      const sharesScaled = BigInt(state.sharesScaled);
+      const baseFixedScaled = CurrencyMath.toScaled(500);
+      const nextOverallScaled = totalCategoriesScaled + sharesScaled + baseFixedScaled;
+
+      // 6. Hare-Niemeyer percentage breakdown
+      const percentages = CurrencyMath.calculatePercentages([
+        baseFixedScaled,
+        sharesScaled,
+        totalCategoriesScaled
+      ]);
+
+      set({
+        cryptoAssets: nextAssets,
+        benefitsData: nextBenefits.length >= 2 ? nextBenefits : state.benefitsData,
+        overallBalanceScaled: nextOverallScaled.toString(),
+        nftPercent: percentages[0],
+        stocksPercent: percentages[1],
+        cryptoPercent: percentages[2],
+        activeModal: null
+      });
+
+      await get().saveToVault();
+
+      return {
+        success: true,
+        message: `Synchronized ${entries.length} records (${Math.round(totalHours)}h, $${CurrencyMath.format(totalEarnedScaled, '')}).`
+      };
+    } catch (err: any) {
+      return { success: false, message: `Sync failed: ${err?.message || 'Unknown error'}` };
+    }
   },
 
   saveToVault: async () => {

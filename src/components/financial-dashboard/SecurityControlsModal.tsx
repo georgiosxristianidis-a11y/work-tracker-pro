@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ShieldAlert, ShieldCheck, Download, RotateCcw, Trash2, Eye, EyeOff, ClipboardList } from 'lucide-react';
+import { X, ShieldAlert, ShieldCheck, Download, RotateCcw, Trash2, Eye, EyeOff, ClipboardList, Sparkles } from 'lucide-react';
 import { useFinancialDashboardStore } from '../../store/useFinancialDashboardStore';
 import { OfflineVault } from '../../lib/offline-vault';
 
@@ -136,6 +136,19 @@ export function SecurityControlsModal() {
               <div className="text-[11px] text-slate-400">Import figures or JSON offline with invariant checks</div>
             </div>
             <ClipboardList className="w-4 h-4 text-indigo-500" />
+          </button>
+
+          {/* Smart Multi-Format Import & 3-5Y History */}
+          <button
+            type="button"
+            onClick={() => setActiveModal('import')}
+            className="flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 rounded-2xl shadow-sm border border-slate-100 text-left transition-all active:scale-[0.99]"
+          >
+            <div>
+              <div className="text-xs font-bold text-slate-800">Smart Document Import & 3–5Y Fill</div>
+              <div className="text-[11px] text-slate-400">PDF, DOCX, MD, JSON or multi-year history generation</div>
+            </div>
+            <Sparkles className="w-4 h-4 text-indigo-500" />
           </button>
 
           {/* Panic Wipe (Danger Zone) */}

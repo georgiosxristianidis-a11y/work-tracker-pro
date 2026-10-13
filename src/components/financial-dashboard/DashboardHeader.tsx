@@ -1,13 +1,14 @@
 import React from 'react';
-import { LayoutGrid, PieChart, CreditCard, ShoppingBag, Settings, ShieldCheck, Eye, EyeOff, ClipboardList } from 'lucide-react';
+import { LayoutGrid, PieChart, CreditCard, ShoppingBag, Settings, ShieldCheck, Eye, EyeOff, ClipboardList, Sparkles } from 'lucide-react';
 import { useFinancialDashboardStore } from '../../store/useFinancialDashboardStore';
 
 interface DashboardHeaderProps {
   onOpenSecurity: () => void;
   onOpenPaste?: () => void;
+  onOpenImport?: () => void;
 }
 
-export function DashboardHeader({ onOpenSecurity, onOpenPaste }: DashboardHeaderProps) {
+export function DashboardHeader({ onOpenSecurity, onOpenPaste, onOpenImport }: DashboardHeaderProps) {
   const { isPrivacyMasked, togglePrivacyMask } = useFinancialDashboardStore();
   const [activeTab, setActiveTab] = React.useState<'grid' | 'pie' | 'card' | 'bag'>('grid');
 
@@ -108,8 +109,21 @@ export function DashboardHeader({ onOpenSecurity, onOpenPaste }: DashboardHeader
         </nav>
       </div>
 
-      {/* Right Controls: Data Paste, Privacy Toggle & Settings Gear */}
+      {/* Right Controls: Smart Import, Data Paste, Privacy Toggle & Settings Gear */}
       <div className="flex items-center gap-2">
+        {/* Smart Multi-Format Import & 3-5Y Fill */}
+        {onOpenImport && (
+          <button
+            type="button"
+            onClick={onOpenImport}
+            title="Smart Import & Multi-Year Fill (PDF, DOCX, MD, JSON)"
+            aria-label="Smart import and multi-year fill"
+            className="p-2 transition-colors duration-200 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 active:scale-95"
+          >
+            <Sparkles className="w-[18px] h-[18px]" strokeWidth={1.8} />
+          </button>
+        )}
+
         {/* Quick Data Paste / Offline Import */}
         {onOpenPaste && (
           <button

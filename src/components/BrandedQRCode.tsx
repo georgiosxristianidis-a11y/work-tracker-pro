@@ -16,6 +16,7 @@ interface BrandedQRCodeProps {
   url: string;
   createdAt: number;
   theme?: 'light' | 'dark' | 'indigo';
+  t?: (key: string) => string;
   onCopied?: () => void;
   onRefresh?: () => void;
 }
@@ -25,9 +26,11 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
   url,
   createdAt,
   theme = 'dark',
+  t,
   onCopied,
   onRefresh
 }) => {
+  const tr = t || ((k: string) => k);
   const containerRef = useRef<HTMLDivElement>(null);
   const qrCodeRef = useRef<QRCodeStyling | null>(null);
   const [copied, setCopied] = useState(false);
@@ -104,9 +107,9 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
       }
     } catch (err) {
       console.warn('QR code generation overflow or error:', err);
-      setRenderError('Слишком большой объем данных для одного QR-кода.');
+      setRenderError(tr('Too many entries'));
     }
-  }, [url, isDark, dotsColor, cornerColor, bgColor]);
+  }, [url, isDark, dotsColor, cornerColor, bgColor, tr]);
 
   const handleCopy = async () => {
     if (isExpired) return;
@@ -125,8 +128,8 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Work Tracker Pro — Синхронизация',
-          text: 'Ссылка для привязки и синхронизации Work Tracker Pro между устройствами',
+          title: `Work Tracker Pro — ${tr('Device Pairing')}`,
+          text: tr('Pairing link for Work Tracker Pro'),
           url
         });
       } catch {
@@ -156,7 +159,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
             {isExpired ? (
               <span className="text-amber-400 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
-                Истёк
+                {tr('Expired')}
               </span>
             ) : (
               <span className="flex items-center gap-1 text-zinc-300">
@@ -197,9 +200,9 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           {renderError && !isExpired && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-zinc-900/90 rounded-2xl text-center">
               <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
-              <p className="text-xs font-bold text-zinc-200 mb-1">Слишком много записей</p>
+              <p className="text-xs font-bold text-zinc-200 mb-1">{tr('Too many entries')}</p>
               <p className="text-[11px] text-zinc-400 max-w-[200px] leading-tight mb-2">
-                Для передачи полной истории используйте «Файл бэкапа» в настройках.
+                {tr('Use "Backup Data" in settings to transfer full history.')}
               </p>
             </div>
           )}
@@ -207,13 +210,13 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           {isExpired && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black/60 rounded-2xl text-center">
               <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
-              <p className="text-xs font-bold text-white mb-3">Срок действия кода истёк</p>
+              <p className="text-xs font-bold text-white mb-3">{tr('Code expired')}</p>
               <button
                 onClick={onRefresh}
                 className="py-2 px-4 rounded-xl text-xs font-bold bg-[#d4af37] text-black hover:bg-[#c29e2f] transition-all flex items-center gap-1.5 shadow"
               >
                 <RotateCw className="w-3.5 h-3.5" />
-                <span>Обновить код</span>
+                <span>{tr('Refresh code')}</span>
               </button>
             </div>
           )}
@@ -232,8 +235,8 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
 
       <p className="mt-3 text-xs text-center text-zinc-400 max-w-[270px]">
         {isExpired
-          ? 'Нажмите «Обновить код», чтобы сгенерировать свежий ключ сопряжения'
-          : 'Наведите камеру смартфона для быстрого сопряжения и общей базы данных'}
+          ? tr('Tap "Refresh code" to generate a fresh pairing key')
+          : tr('Point smartphone camera for instant pairing and shared database')}
       </p>
 
       {/* Action buttons */}
@@ -250,7 +253,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           }`}
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          <span>{copied ? 'Скопировано!' : 'Копировать'}</span>
+          <span>{copied ? tr('Copied!') : tr('Copy')}</span>
         </button>
 
         {typeof navigator !== 'undefined' && 'share' in navigator && (
@@ -262,7 +265,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
                 ? 'bg-zinc-800/80 hover:bg-zinc-800 border-zinc-700 text-zinc-200'
                 : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800'
             }`}
-            title="Поделиться"
+            title={tr('Share')}
           >
             <Share2 className="w-4 h-4" />
           </button>

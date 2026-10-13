@@ -479,6 +479,7 @@ export default function App() {
           localEntriesCount={allEntries.length}
           onApplyPairing={applyPairing}
           addToast={addToast}
+          t={t}
         />
 
         {/* Toasts */}

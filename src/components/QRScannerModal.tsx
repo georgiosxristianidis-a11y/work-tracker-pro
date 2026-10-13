@@ -171,11 +171,11 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         setHasPermission(false);
         const errObj = err as { name?: string; message?: string };
         if (errObj.name === 'NotAllowedError') {
-          setErrorMessage('Доступ к камере заблокирован. Разрешите доступ в настройках браузера.');
+          setErrorMessage(tr('Camera access blocked. Allow access in browser settings.'));
         } else if (errObj.name === 'NotFoundError') {
-          setErrorMessage('Камера на этом устройстве не найдена.');
+          setErrorMessage(tr('Camera not found on this device.'));
         } else {
-          setErrorMessage('Не удалось запустить камеру. Проверьте права доступа.');
+          setErrorMessage(tr('Failed to start camera. Check permissions.'));
         }
       }
     }
@@ -186,7 +186,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
       isMounted = false;
       stopCamera();
     };
-  }, [isOpen, scanFrame, stopCamera]);
+  }, [isOpen, scanFrame, stopCamera, tr]);
 
   const toggleTorch = async () => {
     if (!streamRef.current) return;

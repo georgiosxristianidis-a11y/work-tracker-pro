@@ -176,6 +176,15 @@ const dictRUS: Record<string, string> = {
   'Share database file (.json)': 'Поделиться файлом базы (.json)',
   'Cloud connection required for pairing.': 'Для сопряжения необходима настройка облачного подключения.',
   'Failed to apply pairing': 'Ошибка применения сопряжения',
+  'Camera access blocked. Allow access in browser settings.': 'Доступ к камере заблокирован. Разрешите доступ в настройках браузера.',
+  'Camera not found on this device.': 'Камера на этом устройстве не найдена.',
+  'Failed to start camera. Check permissions.': 'Не удалось запустить камеру. Проверьте права доступа.',
+  'Work Tracker Pro — Database Backup': 'Work Tracker Pro — Резервная копия базы',
+  'Shift database': 'База смен',
+  'entries': 'записей',
+  'Backup file sent': 'Файл бэкапа отправлен',
+  'Backup file downloaded (.json)': 'Файл бэкапа скачан (.json)',
+  'You scanned the code of this same device': 'Вы отсканировали код этого же устройства',
 };
 
 const dictGR: Record<string, string> = {
@@ -300,6 +309,15 @@ const dictGR: Record<string, string> = {
   'Share database file (.json)': 'Κοινοποίηση αρχείου βάσης (.json)',
   'Cloud connection required for pairing.': 'Απαιτείται σύνδεση cloud για σύζευξη.',
   'Failed to apply pairing': 'Αποτυχία εφαρμογής σύζευξης',
+  'Camera access blocked. Allow access in browser settings.': 'Η πρόσβαση στην κάμερα είναι αποκλεισμένη. Επιτρέψτε την πρόσβαση στις ρυθμίσεις του προγράμματος περιήγησης.',
+  'Camera not found on this device.': 'Δεν βρέθηκε κάμερα σε αυτήν τη συσκευή.',
+  'Failed to start camera. Check permissions.': 'Αποτυχία εκκίνησης της κάμερας. Ελέγξτε τα δικαιώματα πρόσβασης.',
+  'Work Tracker Pro — Database Backup': 'Work Tracker Pro — Αντίγραφο ασφαλείας βάσης',
+  'Shift database': 'Βάση βαρδιών',
+  'entries': 'εγγραφές',
+  'Backup file sent': 'Το αρχείο αντιγράφου ασφαλείας εστάλη',
+  'Backup file downloaded (.json)': 'Το αρχείο αντιγράφου ασφαλείας λήφθηκε (.json)',
+  'You scanned the code of this same device': 'Σαρώσατε τον κωδικό αυτής της ίδιας της συσκευής',
 };
 
 export function useTranslation(language: string) {

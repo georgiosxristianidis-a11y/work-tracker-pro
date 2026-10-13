@@ -144,10 +144,10 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'Work Tracker Pro — Резервная копия базы',
-          text: `База смен (${allEntries.length} записей)`
+          title: tr('Work Tracker Pro — Database Backup'),
+          text: `${tr('Shift database')} (${allEntries.length} ${tr('entries')})`
         });
-        addToast('Файл бэкапа отправлен', 'success');
+        addToast(tr('Backup file sent'), 'success');
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -155,7 +155,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
         a.download = 'work-tracker-backup.json';
         a.click();
         URL.revokeObjectURL(url);
-        addToast('Файл бэкапа скачан (.json)', 'success');
+        addToast(tr('Backup file downloaded (.json)'), 'success');
       }
     } catch (err) {
       console.warn('Share backup cancelled or failed:', err);
@@ -165,7 +165,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   const handleScanSuccess = (payload: PairingPayload) => {
     setIsScannerOpen(false);
     if (payload.uid === deviceId) {
-      addToast('Вы отсканировали код этого же устройства', 'info');
+      addToast(tr('You scanned the code of this same device'), 'info');
       return;
     }
 

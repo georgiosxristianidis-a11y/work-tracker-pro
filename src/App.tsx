@@ -476,9 +476,10 @@ export default function App() {
           }}
           theme={settings.theme}
           deviceId={getDeviceId()}
-          localEntriesCount={entries.length}
+          localEntriesCount={allEntries.length}
           onApplyPairing={applyPairing}
           addToast={addToast}
+          t={t}
         />
 
         {/* Toasts */}

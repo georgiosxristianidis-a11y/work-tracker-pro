@@ -23,6 +23,7 @@ interface DevicePairModalProps {
   localEntriesCount: number;
   onApplyPairing: (payload: PairingPayload, mode: 'merge' | 'overwrite') => Promise<void>;
   addToast: (msg: string, type?: 'info' | 'success' | 'error' | 'warning') => void;
+  t?: (key: string) => string;
 }
 
 export const DevicePairModal: React.FC<DevicePairModalProps> = ({
@@ -32,8 +33,10 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   deviceId,
   localEntriesCount,
   onApplyPairing,
-  addToast
+  addToast,
+  t
 }) => {
+  const tr = t || ((k: string) => k);
   const [activeTab, setActiveTab] = useState<'show' | 'scan'>('show');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [pairingUrl, setPairingUrl] = useState<string>('');
@@ -52,28 +55,38 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
       // Case 1: Supabase available (cloud pairing without bloating QR with raw entries)
       if (supabase) {
         try {
-          const userId = await ensureAuth();
-          const { data: { session } } = await supabase.auth.getSession();
+          const cloudAuthPromise = (async () => {
+            const uid = await ensureAuth();
+            if (!uid) return null;
+            const { data: { session } } = await supabase.auth.getSession();
+            return { uid, session };
+          })();
+          const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 2500));
+          const authResult = await Promise.race([cloudAuthPromise, timeoutPromise]);
 
-          if (session) {
+          if (authResult?.session) {
+            // Omit massive ~850-character access_token if refresh_token is present.
+            // Target device exchanges rt via supabase.auth.refreshSession in 1 lightweight request.
+            // This shrinks the QR string from ~1400 chars down to ~200 chars (Version 5 matrix with large chunky dots).
             const payload: PairingPayload = {
               v: 1,
               t: now,
-              uid: session.user.id,
-              at: session.access_token,
-              rt: session.refresh_token,
-              dev: deviceId
+              uid: authResult.session.user.id,
+              dev: deviceId,
+              ...(authResult.session.refresh_token
+                ? { rt: authResult.session.refresh_token }
+                : { at: authResult.session.access_token })
             };
             const encoded = encodePairingPayload(payload);
             setPairingCreatedAt(now);
             setPairingUrl(buildPairingUrl(encoded));
             setIsGenerating(false);
             return;
-          } else if (userId) {
+          } else if (authResult?.uid) {
             const payload: PairingPayload = {
               v: 1,
               t: now,
-              uid: userId,
+              uid: authResult.uid,
               dev: deviceId
             };
             const encoded = encodePairingPayload(payload);
@@ -96,8 +109,8 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
         dev: deviceId
       };
 
-      // Only embed inline entries if count is small (<= 15) to prevent QR code length overflow
-      if (localEntries.length > 0 && localEntries.length <= 15) {
+      // Only embed inline entries if count is small (<= 8) to prevent QR matrix bloat
+      if (localEntries.length > 0 && localEntries.length <= 8) {
         payload.entries = localEntries.map(e => ({
           date: e.date,
           hours: e.hours,
@@ -170,7 +183,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
       setPendingPayload(null);
       onClose();
     } catch {
-      addToast('Ошибка применения сопряжения', 'error');
+      addToast(tr('Failed to apply pairing'), 'error');
     } finally {
       setIsApplying(false);
     }
@@ -190,7 +203,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
           <div className="flex items-center gap-2">
             <Smartphone className="w-5 h-5 text-[#d4af37]" />
             <h3 className={`font-bold text-base ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
-              Синхронизация устройств
+              {tr('Device Pairing')}
             </h3>
           </div>
           <button
@@ -220,7 +233,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
             }`}
           >
             <QrCode className="w-4 h-4" />
-            <span>Показать QR</span>
+            <span>{tr('Show QR')}</span>
           </button>
           <button
             onClick={() => {
@@ -238,7 +251,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
             }`}
           >
             <Scan className="w-4 h-4" />
-            <span>Сканировать</span>
+            <span>{tr('Scan')}</span>
           </button>
         </div>
 
@@ -251,10 +264,10 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                 <CheckCircle className="w-6 h-6" />
               </div>
               <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
-                Обнаружено устройство
+                {tr('Device Detected')}
               </h4>
               <p className="text-xs text-zinc-400 mb-4 max-w-xs">
-                На этом устройстве есть {localEntriesCount} сохраненных записей. Как вы хотите применить синхронизацию?
+                {tr('Local entries detected on this device. Choose how to apply pairing:')}
               </p>
 
               <div className="flex flex-col gap-2.5 w-full">
@@ -264,7 +277,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                   className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#d4af37] hover:bg-[#c29e2f] text-black transition-all flex items-center justify-center gap-2 shadow"
                 >
                   {isApplying ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
-                  <span>Объединить записи (Smart Merge)</span>
+                  <span>{tr('Merge entries (Smart Merge)')}</span>
                 </button>
                 <button
                   disabled={isApplying}
@@ -275,14 +288,14 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                       : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                   }`}
                 >
-                  <span>Заменить локальные данные облачными</span>
+                  <span>{tr('Overwrite local data with cloud')}</span>
                 </button>
                 <button
                   disabled={isApplying}
                   onClick={() => setPendingPayload(null)}
                   className="w-full py-2 px-4 rounded-xl text-xs text-zinc-400 hover:text-zinc-200 transition-all"
                 >
-                  Отмена
+                  {tr('Cancel')}
                 </button>
               </div>
             </div>
@@ -291,7 +304,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
             isGenerating ? (
               <div className="flex flex-col items-center justify-center h-64 gap-3">
                 <RefreshCw className="w-8 h-8 text-[#d4af37] animate-spin" />
-                <span className="text-xs text-zinc-400">Формирование защищенного кода...</span>
+                <span className="text-xs text-zinc-400">{tr('Generating secure code...')}</span>
               </div>
             ) : pairingUrl ? (
               <>
@@ -299,7 +312,8 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                   url={pairingUrl}
                   createdAt={pairingCreatedAt}
                   theme={theme}
-                  onCopied={() => addToast('Ссылка сопряжения скопирована', 'success')}
+                  t={tr}
+                  onCopied={() => addToast(tr('Pairing link copied'), 'success')}
                   onRefresh={generateUrl}
                 />
                 {localEntriesCount > 15 && (
@@ -309,11 +323,11 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Database className="w-4 h-4 text-[#d4af37]" />
                       <span className={`text-xs font-bold ${isDark ? 'text-zinc-200' : 'text-zinc-900'}`}>
-                        Полная база: {localEntriesCount} смен
+                        {tr('Full database')}: {localEntriesCount} {tr('days')}
                       </span>
                     </div>
                     <p className="text-[11px] text-zinc-400 mb-2.5 leading-relaxed">
-                      QR связывает устройства. Для мгновенного переноса всей истории передайте файл базы данных.
+                      {tr('QR pairs devices. To quickly transfer complete history, share database file.')}
                     </p>
                     <button
                       onClick={handleShareBackup}
@@ -322,7 +336,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                       }`}
                     >
                       <Share2 className="w-3.5 h-3.5 text-[#d4af37]" />
-                      <span>Поделиться файлом базы (.json)</span>
+                      <span>{tr('Share database file (.json)')}</span>
                     </button>
                   </div>
                 )}
@@ -330,7 +344,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
             ) : (
               <div className="flex flex-col items-center justify-center h-64 text-center px-4">
                 <p className="text-xs text-zinc-400 mb-2">
-                  Для сопряжения необходима настройка облачного подключения.
+                  {tr('Cloud connection required for pairing.')}
                 </p>
               </div>
             )
@@ -341,14 +355,14 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                 <Scan className="w-8 h-8" />
               </div>
               <p className="text-xs text-zinc-400 max-w-xs">
-                Нажмите кнопку ниже, чтобы включить камеру и отсканировать код со второго экрана
+                {tr('Tap below to start camera and scan QR from the other device')}
               </p>
               <button
                 onClick={() => setIsScannerOpen(true)}
                 className="py-2.5 px-6 rounded-xl text-xs font-bold bg-[#d4af37] hover:bg-[#c29e2f] text-black transition-all shadow active:scale-95 flex items-center gap-2"
               >
                 <Scan className="w-4 h-4" />
-                <span>Открыть сканер</span>
+                <span>{tr('Open Scanner')}</span>
               </button>
             </div>
           )}
@@ -360,6 +374,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScanSuccess={handleScanSuccess}
+        t={tr}
       />
     </div>
   );

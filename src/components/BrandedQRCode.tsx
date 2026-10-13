@@ -16,38 +16,21 @@ interface BrandedQRCodeProps {
   url: string;
   createdAt: number;
   theme?: 'light' | 'dark' | 'indigo';
+  t?: (key: string) => string;
   onCopied?: () => void;
   onRefresh?: () => void;
 }
 
-const BRAND_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <defs>
-    <clipPath id="logo-clip">
-      <rect x="5" y="5" width="90" height="90" rx="20" />
-    </clipPath>
-    <mask id="logo-mask">
-      <rect x="0" y="0" width="100" height="100" fill="white" />
-      <path d="M-10 25 L25 -10" stroke="black" stroke-width="12" />
-      <path d="M75 110 L110 75" stroke="black" stroke-width="12" />
-    </mask>
-  </defs>
-  <rect width="100" height="100" rx="20" fill="#15171e" />
-  <rect x="5" y="5" width="90" height="90" rx="20" stroke="#f4f4f5" stroke-width="8" mask="url(#logo-mask)" />
-  <text x="50" y="54" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="46" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#f4f4f5">27</text>
-  <g clip-path="url(#logo-clip)">
-    <rect x="5" y="90" width="90" height="10" fill="#d4af37"/>
-  </g>
-</svg>`;
-
-const BRAND_LOGO_DATA_URL = `data:image/svg+xml;utf8,${encodeURIComponent(BRAND_LOGO_SVG)}`;
 
 export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
   url,
   createdAt,
   theme = 'dark',
+  t,
   onCopied,
   onRefresh
 }) => {
+  const tr = t || ((k: string) => k);
   const containerRef = useRef<HTMLDivElement>(null);
   const qrCodeRef = useRef<QRCodeStyling | null>(null);
   const [copied, setCopied] = useState(false);
@@ -80,34 +63,27 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
       setRenderError(null);
       if (!qrCodeRef.current) {
         qrCodeRef.current = new QRCodeStyling({
-          width: 250,
-          height: 250,
+          width: 260,
+          height: 260,
           type: 'svg',
           data: url,
-          image: BRAND_LOGO_DATA_URL,
-          margin: 6,
+          margin: 10,
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
-            errorCorrectionLevel: 'M'
-          },
-          imageOptions: {
-            hideBackgroundDots: true,
-            imageSize: 0.28,
-            margin: 4,
-            crossOrigin: 'anonymous'
+            errorCorrectionLevel: 'Q'
           },
           dotsOptions: {
             color: dotsColor,
-            type: 'rounded'
+            type: 'square'
           },
           cornersSquareOptions: {
             color: cornerColor,
             type: 'extra-rounded'
           },
           cornersDotOptions: {
-            color: dotsColor,
-            type: 'dot'
+            color: cornerColor,
+            type: 'extra-rounded'
           },
           backgroundOptions: {
             color: bgColor
@@ -121,19 +97,19 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
-            errorCorrectionLevel: 'M'
+            errorCorrectionLevel: 'Q'
           },
-          dotsOptions: { color: dotsColor, type: 'rounded' },
+          dotsOptions: { color: dotsColor, type: 'square' },
           cornersSquareOptions: { color: cornerColor, type: 'extra-rounded' },
-          cornersDotOptions: { color: dotsColor, type: 'dot' },
+          cornersDotOptions: { color: cornerColor, type: 'extra-rounded' },
           backgroundOptions: { color: bgColor }
         });
       }
     } catch (err) {
       console.warn('QR code generation overflow or error:', err);
-      setRenderError('Слишком большой объем данных для одного QR-кода.');
+      setRenderError(tr('Too many entries'));
     }
-  }, [url, isDark, dotsColor, cornerColor, bgColor]);
+  }, [url, isDark, dotsColor, cornerColor, bgColor, tr]);
 
   const handleCopy = async () => {
     if (isExpired) return;
@@ -152,8 +128,8 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Work Tracker Pro — Синхронизация',
-          text: 'Ссылка для привязки и синхронизации Work Tracker Pro между устройствами',
+          title: `Work Tracker Pro — ${tr('Device Pairing')}`,
+          text: tr('Pairing link for Work Tracker Pro'),
           url
         });
       } catch {
@@ -183,7 +159,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
             {isExpired ? (
               <span className="text-amber-400 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
-                Истёк
+                {tr('Expired')}
               </span>
             ) : (
               <span className="flex items-center gap-1 text-zinc-300">
@@ -195,21 +171,38 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
         </div>
 
         {/* QR Code Container with Expired Overlay */}
-        <div className="relative rounded-2xl overflow-hidden" style={{ minWidth: 250, minHeight: 250 }}>
+        <div className="relative rounded-2xl overflow-hidden" style={{ minWidth: 260, minHeight: 260 }}>
           <div
             ref={containerRef}
+            data-testid="branded-qr-canvas"
             className={`flex items-center justify-center transition-all ${
               isExpired || renderError ? 'opacity-20 blur-[2px]' : 'opacity-100'
             }`}
-            style={{ width: 250, height: 250 }}
+            style={{ width: 260, height: 260 }}
           />
+
+          {/* Centered Brand Logo Badge Overlay (Reference-style Island Badge) */}
+          {!isExpired && !renderError && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className={`w-12 h-12 rounded-2xl p-1 shadow-lg border flex items-center justify-center transition-transform ${
+                isDark ? 'bg-[#15171e] border-[#15171e]' : 'bg-white border-white'
+              }`}>
+                <div className="w-full h-full rounded-xl bg-zinc-900 border border-zinc-700/80 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+                  <span className="text-[13px] font-black text-white tracking-tighter leading-none select-none">
+                    27
+                  </span>
+                  <div className="absolute bottom-0 inset-x-0 h-1 bg-[#d4af37]" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {renderError && !isExpired && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-zinc-900/90 rounded-2xl text-center">
               <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
-              <p className="text-xs font-bold text-zinc-200 mb-1">Слишком много записей</p>
+              <p className="text-xs font-bold text-zinc-200 mb-1">{tr('Too many entries')}</p>
               <p className="text-[11px] text-zinc-400 max-w-[200px] leading-tight mb-2">
-                Для передачи полной истории используйте «Файл бэкапа» в настройках.
+                {tr('Use "Backup Data" in settings to transfer full history.')}
               </p>
             </div>
           )}
@@ -217,13 +210,13 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           {isExpired && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black/60 rounded-2xl text-center">
               <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
-              <p className="text-xs font-bold text-white mb-3">Срок действия кода истёк</p>
+              <p className="text-xs font-bold text-white mb-3">{tr('Code expired')}</p>
               <button
                 onClick={onRefresh}
                 className="py-2 px-4 rounded-xl text-xs font-bold bg-[#d4af37] text-black hover:bg-[#c29e2f] transition-all flex items-center gap-1.5 shadow"
               >
                 <RotateCw className="w-3.5 h-3.5" />
-                <span>Обновить код</span>
+                <span>{tr('Refresh code')}</span>
               </button>
             </div>
           )}
@@ -242,8 +235,8 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
 
       <p className="mt-3 text-xs text-center text-zinc-400 max-w-[270px]">
         {isExpired
-          ? 'Нажмите «Обновить код», чтобы сгенерировать свежий ключ сопряжения'
-          : 'Наведите камеру смартфона для быстрого сопряжения и общей базы данных'}
+          ? tr('Tap "Refresh code" to generate a fresh pairing key')
+          : tr('Point smartphone camera for instant pairing and shared database')}
       </p>
 
       {/* Action buttons */}
@@ -260,7 +253,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           }`}
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          <span>{copied ? 'Скопировано!' : 'Копировать'}</span>
+          <span>{copied ? tr('Copied!') : tr('Copy')}</span>
         </button>
 
         {typeof navigator !== 'undefined' && 'share' in navigator && (
@@ -272,7 +265,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
                 ? 'bg-zinc-800/80 hover:bg-zinc-800 border-zinc-700 text-zinc-200'
                 : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800'
             }`}
-            title="Поделиться"
+            title={tr('Share')}
           >
             <Share2 className="w-4 h-4" />
           </button>

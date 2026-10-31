@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, AppScreen } from '../store/useAppStore';
 
 interface NavigationProps {
   t: (key: string) => string;
 }
 
 export function Navigation({ t }: NavigationProps) {
-  const { screen, setScreen } = useAppStore();
+  const screen = useAppStore(s => s.screen);
+  const setScreen = useAppStore(s => s.setScreen);
   const [navClicks, setNavClicks] = React.useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
 
 
@@ -63,7 +64,7 @@ export function Navigation({ t }: NavigationProps) {
           key={item.id}
           aria-label={item.label}
           onClick={() => {
-            setScreen(item.id);
+            setScreen(item.id as AppScreen);
             setNavClicks(c => ({ ...c, [item.id]: (c[item.id as keyof typeof c] ?? 0) + 1 }));
           }}
           className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 relative"

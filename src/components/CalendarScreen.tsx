@@ -146,7 +146,8 @@ export const CalendarScreen = ({
   defaultEditorHours,
   deleteEntry, saveEntry, smartFillUpToDay, smartFillPreview, calcEarnings, curSym, haptic, openQuickFill
 }: CalendarScreenProps) => {
-  const { setEditorDate, setEditorHours } = useAppStore();
+  const setEditorDate = useAppStore(s => s.setEditorDate);
+  const setEditorHours = useAppStore(s => s.setEditorHours);
   const [isWandHovered, setIsWandHovered] = useState(false);
   const [isWandTapped, setIsWandTapped] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);

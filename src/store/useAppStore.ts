@@ -2,10 +2,12 @@ import { create } from 'zustand';
 import { Entry, db } from '../lib/db';
 import { AppSettings, DEFAULT_SETTINGS } from '../constants';
 
+export type AppScreen = 'home' | 'calendar' | 'chart' | 'total' | 'settings' | 'finance';
+
 interface AppState {
   // UI State
-  screen: string;
-  setScreen: (screen: string) => void;
+  screen: AppScreen;
+  setScreen: (screen: AppScreen | string) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
   editorDate: string | null;
@@ -43,8 +45,8 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  screen: 'home',
-  setScreen: (screen) => set({ screen }),
+  screen: 'home' as AppScreen,
+  setScreen: (screen) => set({ screen: screen as AppScreen }),
   isLoading: true,
   setIsLoading: (isLoading) => set({ isLoading }),
   editorDate: null,

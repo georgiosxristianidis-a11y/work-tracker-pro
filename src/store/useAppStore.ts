@@ -146,7 +146,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       await db.saveMany(entries);
       await get().loadEntries();
     } catch (e) {
-      console.error(e);
+      console.error('saveMany failed:', e);
+      throw e;
     }
   },
 

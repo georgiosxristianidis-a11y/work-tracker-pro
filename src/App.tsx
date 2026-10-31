@@ -112,21 +112,29 @@ export default function App() {
   }, []);
 
   const migrateFromLocalStorage = async () => {
-    const done = await db.getSetting('ls_migrated', false);
-    if (done) return 0;
+    try {
+      const done = await db.getSetting('ls_migrated', false);
+      if (done) return 0;
 
-    const toMigrate: Entry[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && /^\d{4}-\d{2}-\d{2}$/.test(key)) {
-        const hours = parseFloat(localStorage.getItem(key) || '0');
-        if (hours > 0) toMigrate.push({ date: key, hours, month: key.slice(0, 7) });
+      const toMigrate: Entry[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && /^\d{4}-\d{2}-\d{2}$/.test(key)) {
+          const hours = parseFloat(localStorage.getItem(key) || '0');
+          if (hours > 0) toMigrate.push({ date: key, hours, month: key.slice(0, 7) });
+        }
       }
+      const count = toMigrate.length;
+      if (count > 0) {
+        await storeSaveMany(toMigrate);
+      }
+      await db.setSetting('ls_migrated', true);
+      return count;
+    } catch (err) {
+      console.error('Migration from localStorage failed:', err);
+      addToast(t('Migration failed. Data preserved in localStorage.'), 'error');
+      return 0;
     }
-    const count = toMigrate.length;
-    await storeSaveMany(toMigrate);
-    await db.setSetting('ls_migrated', true);
-    return count;
   };
 
   useEffect(() => {
@@ -217,9 +225,13 @@ export default function App() {
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
     h([20, 20]);
-    await storeSaveMany(dates.map(date => ({ date, hours, month: date.slice(0, 7) })));
-    addToast(t('Entries added'), 'success');
-    scheduleBackgroundSync();
+    try {
+      await storeSaveMany(dates.map(date => ({ date, hours, month: date.slice(0, 7) })));
+      addToast(t('Entries added'), 'success');
+      scheduleBackgroundSync();
+    } catch {
+      addToast(t('Failed to save entries'), 'error');
+    }
   }, [h, storeSaveMany, addToast, t, scheduleBackgroundSync]);
 
   const deleteEntry = useCallback(async (date: string) => {

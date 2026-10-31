@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { Entry } from '../lib/db';
+import { calcEarnings as computeEarnings } from '../lib/calculator';
 import { AppSettings, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../constants';
 
 export function useTrends(
@@ -10,11 +11,7 @@ export function useTrends(
   chartPeriod: number
 ) {
   const calcEarnings = useCallback((hours: number) => {
-    const rate = settings.rate || 0;
-    const overtime = settings.overtime || 0;
-    const normal = settings.normal || 0;
-    if (hours <= normal) return hours * rate;
-    return normal * rate + (hours - normal) * rate * overtime;
+    return computeEarnings(hours, settings);
   }, [settings.rate, settings.overtime, settings.normal]);
 
   const totalEarned = useMemo(() => {

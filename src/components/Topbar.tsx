@@ -25,7 +25,10 @@ interface TopbarProps {
 }
 
 export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
-  const { screen, setScreen, settings, setSettings } = useAppStore();
+  const screen = useAppStore(s => s.screen);
+  const setScreen = useAppStore(s => s.setScreen);
+  const settings = useAppStore(s => s.settings);
+  const setSettings = useAppStore(s => s.setSettings);
   const isOnline = navigator.onLine && !strictMode;
 
   return (

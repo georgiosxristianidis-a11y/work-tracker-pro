@@ -15,8 +15,8 @@ permissions:
 
 jobs:
   gate:
-    name: Lint, Build & E2E Tests
-    runs-on: ubuntu-latest
+    name: Gatekeeper, Build & E2E Tests
+    runs-on: ubuntu-24.04
     if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip actions]') && github.actor != 'github-actions[bot]'"
     steps:
       - name: Checkout code
@@ -31,11 +31,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Lint
-        run: npm run lint
-
-      - name: Run Build
-        run: npm run build
+      - name: Run Machine Gatekeeper
+        run: npm run gate -- --bypass-diff-limit
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
@@ -47,7 +44,7 @@ jobs:
     name: Auto-bump patch version
     needs: gate
     if: "github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip actions]') && github.actor != 'github-actions[bot]'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

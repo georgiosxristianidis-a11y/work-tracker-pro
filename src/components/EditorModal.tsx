@@ -8,6 +8,7 @@ import { RollingNumber } from './RollingNumber';
 import { formatMoney } from '../lib/utils';
 import { AppSettings } from '../constants';
 import { useAppStore } from '../store/useAppStore';
+import { useShallow } from 'zustand/react/shallow';
 
 interface EditorModalProps {
   settings: AppSettings;
@@ -28,7 +29,15 @@ export const EditorModal = ({
   t,
   haptic
 }: EditorModalProps) => {
-  const { editorDate, setEditorDate, editorHours, setEditorHours, allEntries } = useAppStore();
+  const { editorDate, setEditorDate, editorHours, setEditorHours, allEntries } = useAppStore(
+    useShallow(s => ({
+      editorDate: s.editorDate,
+      setEditorDate: s.setEditorDate,
+      editorHours: s.editorHours,
+      setEditorHours: s.setEditorHours,
+      allEntries: s.allEntries
+    }))
+  );
   const [showSaveAnim, setShowSaveAnim] = useState(false);
   const [showDeleteAnim, setShowDeleteAnim] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);

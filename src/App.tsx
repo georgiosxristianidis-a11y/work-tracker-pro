@@ -17,6 +17,7 @@ import { useTranslation } from './hooks/useTranslation';
 import { useToast } from './hooks/useToast';
 import { usePowerSave } from './hooks/usePowerSave';
 import { useAppStore } from './store/useAppStore';
+import { useShallow } from 'zustand/react/shallow';
 import { Topbar } from './components/Topbar';
 import { Navigation } from './components/Navigation';
 import { useDoubleTap } from './hooks/useDoubleTap';
@@ -62,13 +63,34 @@ export default function App() {
     settings, setSettings,
     isLoading, setIsLoading,
     editorDate, setEditorDate,
-    editorHours, setEditorHours,
     loadSettings, loadEntries,
     saveEntry: storeSaveEntry,
     saveMany: storeSaveMany,
     deleteEntry: storeDeleteEntry,
     clearAllData: storeClearAll
-  } = useAppStore();
+  } = useAppStore(
+    useShallow(s => ({
+      screen: s.screen,
+      setScreen: s.setScreen,
+      viewDate: s.viewDate,
+      setViewDate: s.setViewDate,
+      entries: s.entries,
+      allEntries: s.allEntries,
+      yearEntries: s.yearEntries,
+      settings: s.settings,
+      setSettings: s.setSettings,
+      isLoading: s.isLoading,
+      setIsLoading: s.setIsLoading,
+      editorDate: s.editorDate,
+      setEditorDate: s.setEditorDate,
+      loadSettings: s.loadSettings,
+      loadEntries: s.loadEntries,
+      saveEntry: s.saveEntry,
+      saveMany: s.saveMany,
+      deleteEntry: s.deleteEntry,
+      clearAllData: s.clearAllData
+    }))
+  );
 
   const [chartPeriod, setChartPeriod] = useState<6 | 12>(6);
   const [isAuthReady, setIsAuthReady] = useState(false);

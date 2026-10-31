@@ -156,8 +156,8 @@ export const AnalyticsScreen = ({
                   <div className="text-micro font-bold text-[var(--t3)]">{t('Hours')}</div>
                 </div>
                 <div className="text-center space-y-1">
-                  <div className="text-lg font-black tabular-nums text-[var(--t1)]">
-                    {settings.privacyMode ? `${curSym}••••` : `${curSym}${settings.goal}`}
+                  <div className={`text-lg font-black tabular-nums text-[var(--t1)] transition-all duration-500 ${settings.privacyMode ? 'blur-md opacity-25 select-none pointer-events-none' : ''}`}>
+                    {curSym}{settings.goal}
                   </div>
                   <div className="text-micro font-bold text-[var(--t3)]">{t('Goal')}</div>
                 </div>
@@ -284,10 +284,10 @@ export const AnalyticsScreen = ({
                   </div>
                 </div>
               </div>
-              <div className={`flex-1 w-full flex items-center min-h-[14rem] transition-all duration-300 ${settings.privacyMode && chartMetric === 'earnings' ? 'blur-md select-none pointer-events-none' : ''}`}>
+              <div className={`flex-1 w-full flex items-center min-h-[14rem] transition-all duration-500 ${settings.privacyMode && chartMetric === 'earnings' ? 'blur-md select-none pointer-events-none' : ''}`}>
                 <div className="w-full h-56">
                   <Suspense fallback={<div className="w-full h-full flex flex-col items-center justify-center animate-pulse"><div className="w-5 h-5 border-2 border-[var(--a)] border-t-transparent rounded-full animate-spin"></div></div>}>
-                    <AnalyticsChart chartData={chartData} curSym={curSym} goal={settings.goal} t={t} chartType={chartType} chartMetric={chartMetric} />
+                    <AnalyticsChart chartData={chartData} curSym={curSym} goal={settings.goal} t={t} chartType={chartType} chartMetric={chartMetric} privacyMode={settings.privacyMode} />
                   </Suspense>
                 </div>
               </div>

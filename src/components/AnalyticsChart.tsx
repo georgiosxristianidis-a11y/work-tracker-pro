@@ -30,6 +30,7 @@ export interface AnalyticsChartProps {
   t: (key: string) => string;
   chartType?: 'area' | 'bar';
   chartMetric?: 'earnings' | 'hours' | 'velocity';
+  privacyMode?: boolean;
 }
 
 interface CustomTooltipProps {
@@ -38,6 +39,7 @@ interface CustomTooltipProps {
   label?: string;
   curSym: string;
   chartMetric: 'earnings' | 'hours' | 'velocity';
+  privacyMode?: boolean;
   t: (key: string) => string;
 }
 
@@ -47,6 +49,7 @@ const CustomChartTooltip: React.FC<CustomTooltipProps> = ({
   label,
   curSym,
   chartMetric,
+  privacyMode,
   t
 }) => {
   if (!active || !payload || !payload.length) return null;
@@ -77,7 +80,7 @@ const CustomChartTooltip: React.FC<CustomTooltipProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--a)] shrink-0 shadow-[0_0_6px_var(--a)]" />
           <span className="text-xs text-[var(--t2)] font-semibold">{labelMetric}:</span>
         </div>
-        <span className="text-sm font-black tabular-nums text-[var(--t1)]">
+        <span className={`text-sm font-black tabular-nums text-[var(--t1)] transition-all duration-300 ${chartMetric === 'earnings' && privacyMode ? 'blur-sm select-none opacity-30' : ''}`}>
           {formattedValue}
         </span>
       </div>
@@ -91,7 +94,8 @@ export default function AnalyticsChart({
   goal,
   t,
   chartType = 'area',
-  chartMetric = 'earnings'
+  chartMetric = 'earnings',
+  privacyMode = false
 }: AnalyticsChartProps) {
   const [zoom, setZoom] = useState(1);
   const touchState = useRef({ distance: 0 });
@@ -197,7 +201,7 @@ export default function AnalyticsChart({
                   tick={{ fontSize: 10, fill: 'var(--t3)', fontWeight: 600 }}
                   tickFormatter={(val) =>
                     chartMetric === 'earnings'
-                      ? `${curSym}${val}`
+                      ? (privacyMode ? '••••' : `${curSym}${val}`)
                       : chartMetric === 'velocity'
                       ? `${val}h/d`
                       : `${val}h`
@@ -205,7 +209,7 @@ export default function AnalyticsChart({
                 />
                 <Tooltip
                   cursor={{ stroke: 'var(--a)', strokeWidth: 1, strokeDasharray: '3 3', opacity: 0.6 }}
-                  content={<CustomChartTooltip curSym={curSym} chartMetric={chartMetric} t={t} />}
+                  content={<CustomChartTooltip curSym={curSym} chartMetric={chartMetric} privacyMode={privacyMode} t={t} />}
                   isAnimationActive={false}
                 />
                 {chartMetric === 'earnings' && (
@@ -249,7 +253,7 @@ export default function AnalyticsChart({
                   tick={{ fontSize: 10, fill: 'var(--t3)', fontWeight: 600 }}
                   tickFormatter={(val) =>
                     chartMetric === 'earnings'
-                      ? `${curSym}${val}`
+                      ? (privacyMode ? '••••' : `${curSym}${val}`)
                       : chartMetric === 'velocity'
                       ? `${val}h/d`
                       : `${val}h`
@@ -257,7 +261,7 @@ export default function AnalyticsChart({
                 />
                 <Tooltip
                   cursor={{ fill: 'var(--b)', opacity: 0.3 }}
-                  content={<CustomChartTooltip curSym={curSym} chartMetric={chartMetric} t={t} />}
+                  content={<CustomChartTooltip curSym={curSym} chartMetric={chartMetric} privacyMode={privacyMode} t={t} />}
                   isAnimationActive={false}
                 />
                 {chartMetric === 'earnings' && (

@@ -123,15 +123,9 @@ export const TotalScreen = ({
                 ? `${t('Projected in')} ${selectedYear}` 
                 : `${t('Total Earned in')} ${selectedYear}`}
           </span>
-          <div className="text-4xl md:text-5xl font-light text-[var(--t1)] pb-2 flex items-baseline justify-center gap-2.5">
-            {settings.privacyMode ? (
-              <span className="text-3xl md:text-4xl font-black tracking-widest text-[var(--t2)] select-none">{curSym} ••••</span>
-            ) : (
-              <>
-                <span className="text-xl text-[var(--t3)]">{curSym}</span>
-                <CountingNumber value={yearTotal} decimals={2} />
-              </>
-            )}
+          <div className={`text-4xl md:text-5xl font-light text-[var(--t1)] pb-2 flex items-baseline justify-center gap-2.5 transition-all duration-500 ${settings.privacyMode ? 'blur-xl opacity-20 select-none pointer-events-none' : ''}`}>
+            <span className="text-xl text-[var(--t3)]">{curSym}</span>
+            <CountingNumber value={yearTotal} decimals={2} />
           </div>
           <div className="text-xs font-medium text-[var(--t2)]">{groups.length} {selectedYear === 'all' ? t('active years') : t('active months')} · {yearHours} {t('total hours')}</div>
         </div>
@@ -192,8 +186,8 @@ export const TotalScreen = ({
                 <div className="text-xs text-[var(--t3)] font-medium">{isYear ? t('Year total') : getMonthName(new Date(parseInt(keyStr.split('-')[0]), parseInt(keyStr.split('-')[1]) - 1))}</div>
               </div>
               <div className="flex flex-col items-end relative z-10">
-                <div className={`text-lg font-black ${isGoalReached ? 'text-[var(--a)]' : 'text-[var(--t1)]'}`}>
-                  {settings.privacyMode ? `${curSym}••••` : `${curSym}${formatMoney(gEarned, 0)}`}
+                <div className={`text-lg font-black transition-all duration-500 ${isGoalReached ? 'text-[var(--a)]' : 'text-[var(--t1)]'} ${settings.privacyMode ? 'blur-md opacity-25 select-none pointer-events-none' : ''}`}>
+                  {curSym}{formatMoney(gEarned, 0)}
                 </div>
                 {isGoalReached && (
                   <span className="text-micro font-black uppercase tracking-widest text-[var(--a)] opacity-80 mt-0.5">{t('Goal Reached')}</span>

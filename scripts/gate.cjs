@@ -137,7 +137,15 @@ function main() {
     process.exit(1);
   }
 
-  // 4. Diff Check
+  // 4. Supabase Passport Check — ref в keep-alive и ссылках = supabase/project.json
+  const passportRes = runCommand(`node "${path.join(projectRoot, 'scripts/supabase-passport.mjs')}" --check`);
+  if (!passportRes.success) {
+    console.error('[GATE] FAIL: Supabase passport mismatch (exit 1)');
+    console.error(filterNoise(passportRes.output));
+    process.exit(1);
+  }
+
+  // 5. Diff Check
   const diffCheck = checkDiff();
   if (!diffCheck.ok) {
     console.error(`[GATE] FAIL: ${diffCheck.message}`);

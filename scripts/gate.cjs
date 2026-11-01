@@ -125,7 +125,15 @@ function main() {
     process.exit(1);
   }
 
-  // 3. Vite Build Check
+  // 3. Unit Tests
+  const unitRes = runCommand('npm run test:unit');
+  if (!unitRes.success) {
+    console.error('[GATE] FAIL: Unit tests failed (exit 1)');
+    console.error(filterNoise(unitRes.output));
+    process.exit(1);
+  }
+
+  // 4. Vite Build Check
   const vitePath = path.join(projectRoot, 'node_modules/vite/bin/vite.js');
   const viteCmd = fs.existsSync(vitePath)
     ? `node "${vitePath}" build "${projectRoot}"`
@@ -137,7 +145,7 @@ function main() {
     process.exit(1);
   }
 
-  // 4. Supabase Passport Check — ref в keep-alive и ссылках = supabase/project.json
+  // 5. Supabase Passport Check — ref в keep-alive и ссылках = supabase/project.json
   const passportRes = runCommand(`node "${path.join(projectRoot, 'scripts/supabase-passport.mjs')}" --check`);
   if (!passportRes.success) {
     console.error('[GATE] FAIL: Supabase passport mismatch (exit 1)');
@@ -145,7 +153,7 @@ function main() {
     process.exit(1);
   }
 
-  // 5. Diff Check
+  // 6. Diff Check
   const diffCheck = checkDiff();
   if (!diffCheck.ok) {
     console.error(`[GATE] FAIL: ${diffCheck.message}`);

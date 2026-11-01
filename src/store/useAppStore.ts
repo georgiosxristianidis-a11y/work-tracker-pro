@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Entry, db } from '../lib/db';
+import { sanitizeEntries } from '../lib/utils';
 import { AppSettings, DEFAULT_SETTINGS } from '../constants';
 
 export type AppScreen = 'home' | 'calendar' | 'chart' | 'total' | 'settings' | 'finance';
@@ -107,23 +108,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         db.getAllEntries()
       ]);
       
-      // Defensive sanitization: rows read from IndexedDB may have missing or
-      // non-numeric fields (e.g. after a partial write); normalize them.
-      const sanitize = (list: any[]): Entry[] => {
-        return (list || []).filter(e => e && typeof e.date === 'string').map(e => {
-          const rawHours = parseFloat(e.hours);
-          // Fallback to 0 if NaN, string "cat", or undefined, preserving integrity
-          const cleanHours = isNaN(rawHours) || typeof rawHours !== 'number' ? 0 : rawHours;
-          return {
-            date: e.date,
-            hours: cleanHours,
-            month: e.month || e.date.slice(0, 7)
-          };
-        });
-      };
-
-      const mEntries = sanitize(mEntriesRaw);
-      const allEntries = sanitize(allEntriesRaw);
+      const mEntries = sanitizeEntries(mEntriesRaw);
+      const allEntries = sanitizeEntries(allEntriesRaw);
       const yEntries = allEntries.filter(e => e.date.startsWith(yearStr));
       
       set({ entries: mEntries, yearEntries: yEntries, allEntries });

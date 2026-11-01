@@ -117,7 +117,15 @@ function main() {
     process.exit(1);
   }
 
-  // 2. Vite Build Check
+  // 2. Unit Tests
+  const unitRes = runCommand('npm run test:unit');
+  if (!unitRes.success) {
+    console.error('[GATE] FAIL: Unit tests failed (exit 1)');
+    console.error(filterNoise(unitRes.output));
+    process.exit(1);
+  }
+
+  // 3. Vite Build Check
   const vitePath = path.join(projectRoot, 'node_modules/vite/bin/vite.js');
   const viteCmd = fs.existsSync(vitePath)
     ? `node "${vitePath}" build "${projectRoot}"`
@@ -129,7 +137,7 @@ function main() {
     process.exit(1);
   }
 
-  // 3. Diff Check
+  // 4. Diff Check
   const diffCheck = checkDiff();
   if (!diffCheck.ok) {
     console.error(`[GATE] FAIL: ${diffCheck.message}`);

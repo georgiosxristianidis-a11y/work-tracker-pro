@@ -35,8 +35,12 @@
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-#frame { height: 100dvh; max-height: 852px; }
-@media (min-width: 640px) { #frame { height: min(100vh, 852px); } }
+#frame { height: 100dvh; }
+@media (min-width: 640px) { #frame { height: min(100vh, 852px); max-height: 852px; } }
+
+html {
+  background-color: var(--bg, #0a0a0f);
+}
 
 /* Google AI Studio / Gemini Premium Gradient Effect */
 @keyframes ai-gradient {

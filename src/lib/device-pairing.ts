@@ -11,6 +11,7 @@ export interface PairingPayload {
   v: number;
   t: number;
   uid: string;
+  code?: string;
   at?: string;
   rt?: string;
   dev?: string;
@@ -84,6 +85,12 @@ export function decodePairingPayload(raw: string): PairingPayload | null {
       typeof parsed.uid === 'string' &&
       parsed.uid.length > 0
     ) {
+      if (!parsed.code && raw.includes('code=')) {
+        const codeMatch = raw.match(/[?&]code=([^&#]+)/);
+        if (codeMatch) {
+          parsed.code = decodeURIComponent(codeMatch[1]);
+        }
+      }
       return parsed as PairingPayload;
     }
     return null;
@@ -93,12 +100,37 @@ export function decodePairingPayload(raw: string): PairingPayload | null {
 }
 
 /**
+ * Generates an 8-character human-readable pairing code (e.g. "6Q9E-VUBT").
+ * Excludes ambiguous characters (0, O, 1, I, L) for error-free manual typing.
+ */
+export function generatePairingCode(): string {
+  const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  let p1 = '';
+  let p2 = '';
+  for (let i = 0; i < 4; i++) {
+    p1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `${p1}-${p2}`;
+}
+
+/**
+ * Normalizes user-typed pairing code by trimming, uppercasing, and standardizing hyphenation.
+ */
+export function normalizePairingCode(input: string): string {
+  const cleaned = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (cleaned.length <= 4) return cleaned;
+  return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}`;
+}
+
+/**
  * Builds the full pairing URL that can be scanned by any smartphone camera.
  */
-export function buildPairingUrl(encodedPayload: string): string {
-  const origin = window.location.origin;
-  const pathname = window.location.pathname;
-  return `${origin}${pathname}?pair=${encodeURIComponent(encodedPayload)}`;
+export function buildPairingUrl(encodedPayload: string, code?: string): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const codeParam = code ? `&code=${encodeURIComponent(code)}` : '';
+  return `${origin}${pathname}?pair=${encodeURIComponent(encodedPayload)}${codeParam}`;
 }
 
 /**

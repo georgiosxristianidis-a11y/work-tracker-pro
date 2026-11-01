@@ -108,7 +108,9 @@ export default defineConfig(() => {
             (dep) =>
               !dep.includes('vendor-pdf') &&
               !dep.includes('vendor-charts') &&
-              !dep.includes('html2canvas')
+              !dep.includes('html2canvas') &&
+              !dep.includes('DevicePairModal') &&
+              !dep.includes('jsQR')
           );
         },
       },

@@ -15,6 +15,9 @@ import {
 interface BrandedQRCodeProps {
   url: string;
   createdAt: number;
+  code?: string;
+  statusText?: string;
+  isSuccess?: boolean;
   theme?: 'light' | 'dark' | 'indigo';
   t?: (key: string) => string;
   onCopied?: () => void;
@@ -25,6 +28,9 @@ interface BrandedQRCodeProps {
 export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
   url,
   createdAt,
+  code,
+  statusText,
+  isSuccess = false,
   theme = 'dark',
   t,
   onCopied,
@@ -34,6 +40,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const qrCodeRef = useRef<QRCodeStyling | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   const [remainingSec, setRemainingSec] = useState(() => getPairingRemainingSeconds(createdAt));
   const [renderError, setRenderError] = useState<string | null>(null);
 
@@ -67,7 +74,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           height: 260,
           type: 'svg',
           data: url,
-          margin: 10,
+          margin: 6,
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
@@ -75,15 +82,16 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           },
           dotsOptions: {
             color: dotsColor,
-            type: 'square'
+            type: 'dots',
+            roundSize: true
           },
           cornersSquareOptions: {
-            color: cornerColor,
+            color: dotsColor,
             type: 'extra-rounded'
           },
           cornersDotOptions: {
-            color: cornerColor,
-            type: 'extra-rounded'
+            color: dotsColor,
+            type: 'dot'
           },
           backgroundOptions: {
             color: bgColor
@@ -99,9 +107,9 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
             mode: 'Byte',
             errorCorrectionLevel: 'Q'
           },
-          dotsOptions: { color: dotsColor, type: 'square' },
-          cornersSquareOptions: { color: cornerColor, type: 'extra-rounded' },
-          cornersDotOptions: { color: cornerColor, type: 'extra-rounded' },
+          dotsOptions: { color: dotsColor, type: 'dots', roundSize: true },
+          cornersSquareOptions: { color: dotsColor, type: 'extra-rounded' },
+          cornersDotOptions: { color: dotsColor, type: 'dot' },
           backgroundOptions: { color: bgColor }
         });
       }
@@ -109,7 +117,18 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
       console.warn('QR code generation overflow or error:', err);
       setRenderError(tr('Too many entries'));
     }
-  }, [url, isDark, dotsColor, cornerColor, bgColor, tr]);
+  }, [url, isDark, dotsColor, bgColor, tr]);
+
+  const handleCopyCode = async () => {
+    if (!code || isExpired) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      // Ignored
+    }
+  };
 
   const handleCopy = async () => {
     if (isExpired) return;
@@ -231,7 +250,52 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
             />
           </div>
         )}
+
+        {/* Bottom Status Indicator Pill (Reference photo: "Extension Installed" style) */}
+        <div className={`mt-3.5 pt-3 border-t flex items-center justify-between w-full text-[11px] ${
+          isDark ? 'border-zinc-800 text-zinc-400' : 'border-zinc-100 text-zinc-500'
+        }`}>
+          <span className="font-semibold text-xs tracking-tight">
+            {statusText || (isSuccess ? tr('Connected') : tr('Windows 11 Pairing'))}
+          </span>
+          <div className="flex items-center gap-1.5">
+            {isSuccess ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <Check className="w-3.5 h-3.5" />
+                <span>{tr('Linked')}</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                <span>{tr('Ready to scan')}</span>
+              </span>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* 8-Character Fallback Code Display (Elara pattern: 6Q9E VUBT) */}
+      {code && !isExpired && (
+        <div className={`mt-3.5 w-full max-w-[280px] p-3 rounded-2xl border text-center transition-all ${
+          isDark ? 'bg-zinc-900/90 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+        }`}>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">
+            {tr('Or enter code on other device')}
+          </span>
+          <div className="flex items-center justify-between gap-2 bg-black/30 dark:bg-zinc-950 px-3 py-1.5 rounded-xl border border-white/5">
+            <span className="font-mono text-base font-black tracking-widest text-[#d4af37] select-all">
+              {code}
+            </span>
+            <button
+              onClick={handleCopyCode}
+              className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors"
+              title={tr('Copy')}
+            >
+              {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      )}
 
       <p className="mt-3 text-xs text-center text-zinc-400 max-w-[270px]">
         {isExpired

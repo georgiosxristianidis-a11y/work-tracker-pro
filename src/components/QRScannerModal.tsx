@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import jsQR from 'jsqr';
-import { Camera, X, Zap, ZapOff, Upload, AlertCircle, Clock } from 'lucide-react';
+import { Camera, X, Zap, ZapOff, Upload, AlertCircle, Keyboard } from 'lucide-react';
 import {
   decodePairingPayload,
   isPairingPayloadExpired,
@@ -16,6 +16,7 @@ interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScanSuccess: (payload: PairingPayload) => void;
+  onSwitchToManualCode?: () => void;
   t?: (key: string) => string;
 }
 
@@ -26,6 +27,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   isOpen,
   onClose,
   onScanSuccess,
+  onSwitchToManualCode,
   t
 }) => {
   const tr = t || ((k: string) => k);
@@ -307,10 +309,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         </div>
 
         {/* Controls Bar */}
-        <div className="flex items-center justify-between p-4 bg-zinc-900 border-t border-zinc-800 text-xs">
+        <div className="flex items-center justify-between p-4 bg-zinc-900 border-t border-zinc-800 text-xs gap-2">
           <label className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200 cursor-pointer">
             <Upload className="w-4 h-4" />
-            <span>{tr('Upload photo')}</span>
+            <span>{tr('Upload')}</span>
             <input
               type="file"
               accept="image/*"
@@ -318,6 +320,19 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
               className="hidden"
             />
           </label>
+
+          {onSwitchToManualCode && (
+            <button
+              onClick={() => {
+                stopCamera();
+                onSwitchToManualCode();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-all font-medium"
+            >
+              <Keyboard className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>{tr('Enter code')}</span>
+            </button>
+          )}
 
           {canTorch && (
             <button

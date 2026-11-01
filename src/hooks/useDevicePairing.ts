@@ -28,6 +28,51 @@ export const useDevicePairing = ({
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [incomingPayload, setIncomingPayload] = useState<PairingPayload | null>(null);
 
+  const [pairSuccess, setPairSuccess] = useState(false);
+  const [connectedDeviceName, setConnectedDeviceName] = useState<string | null>(null);
+
+  const broadcastPairSuccess = useCallback(async (code: string, deviceName = 'Windows 11') => {
+    // 1. BroadcastChannel (Local browser tabs on same machine)
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel(`pairing_${code}`);
+        bc.postMessage({ type: 'device_paired', deviceName, timestamp: Date.now() });
+        setTimeout(() => bc.close(), 1000);
+      } catch {
+        // Ignored
+      }
+    }
+
+    // 2. Supabase Realtime (Cross-device, e.g. Phone <-> Windows 11)
+    if (supabase) {
+      try {
+        const channel = supabase.channel(`pairing:${code}`);
+        channel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            channel.send({
+              type: 'broadcast',
+              event: 'device_paired',
+              payload: { deviceName, timestamp: Date.now() }
+            });
+            // Repeat after 350ms to defeat WebSocket subscription race conditions (#devil)
+            setTimeout(() => {
+              channel.send({
+                type: 'broadcast',
+                event: 'device_paired',
+                payload: { deviceName, timestamp: Date.now() }
+              });
+              setTimeout(() => {
+                supabase?.removeChannel(channel);
+              }, 2000);
+            }, 350);
+          }
+        });
+      } catch (err) {
+        console.warn('Realtime broadcast error:', err);
+      }
+    }
+  }, []);
+
   const applyPairing = useCallback(
     async (payload: PairingPayload, mode: 'merge' | 'overwrite') => {
       // Offline P2P direct sync fallback (works without Supabase / when cloud is sleeping)
@@ -63,10 +108,14 @@ export const useDevicePairing = ({
                 'success'
               );
             }
+            if (payload.code) {
+              broadcastPairSuccess(payload.code, 'Mobile Device');
+            }
+            setConnectedDeviceName('Windows 11');
+            setPairSuccess(true);
             await loadEntries();
             haptic(25, true);
             setIncomingPayload(null);
-            setIsPairModalOpen(false);
             return;
           } catch (p2pErr) {
             console.error('P2P merge failed:', p2pErr);
@@ -153,6 +202,11 @@ export const useDevicePairing = ({
           );
         }
 
+        if (payload.code) {
+          broadcastPairSuccess(payload.code, 'Mobile Device');
+        }
+        setConnectedDeviceName('Windows 11');
+        setPairSuccess(true);
         haptic([40, 60, 40]);
         await loadEntries();
       } catch (err: unknown) {
@@ -162,8 +216,43 @@ export const useDevicePairing = ({
         throw err;
       }
     },
-    [addToast, getDeviceId, haptic, loadEntries]
+    [addToast, broadcastPairSuccess, getDeviceId, haptic, loadEntries]
   );
+
+  const resolvePairingCode = useCallback(async (code: string): Promise<PairingPayload> => {
+    const client = supabase;
+    if (!client) {
+      throw new Error('Для ручного ввода требуется подключение к интернету. Отсканируйте QR камерой.');
+    }
+
+    return new Promise((resolve, reject) => {
+      const channel = client.channel(`pairing:${code}`);
+      const timeout = setTimeout(() => {
+        client.removeChannel(channel);
+        reject(new Error('Время ожидания истекло или код не найден'));
+      }, 7000);
+
+      channel
+        .on('broadcast', { event: 'provide_payload' }, (msg: { payload?: { payload?: PairingPayload } }) => {
+          clearTimeout(timeout);
+          client.removeChannel(channel);
+          if (msg.payload?.payload) {
+            resolve(msg.payload.payload);
+          } else {
+            reject(new Error('Некорректный ответ от устройства'));
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            channel.send({
+              type: 'broadcast',
+              event: 'request_pairing',
+              payload: { clientDeviceId: getDeviceId() }
+            });
+          }
+        });
+    });
+  }, [getDeviceId]);
 
   // Check URL query parameters for ?pair=... upon initial boot
   useEffect(() => {
@@ -186,6 +275,12 @@ export const useDevicePairing = ({
     setIsPairModalOpen,
     incomingPayload,
     setIncomingPayload,
-    applyPairing
+    applyPairing,
+    pairSuccess,
+    setPairSuccess,
+    connectedDeviceName,
+    setConnectedDeviceName,
+    broadcastPairSuccess,
+    resolvePairingCode
   };
 };

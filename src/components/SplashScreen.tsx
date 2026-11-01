@@ -6,6 +6,7 @@ export function SplashScreen() {
     <motion.div 
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
       className="absolute inset-0 z-[1000] bg-[var(--bg)] flex flex-col items-center justify-center gap-8"
     >
       <motion.div

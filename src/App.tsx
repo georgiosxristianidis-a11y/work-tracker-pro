@@ -22,10 +22,6 @@ import { Topbar } from './components/Topbar';
 import { Navigation } from './components/Navigation';
 import { useDoubleTap } from './hooks/useDoubleTap';
 import { Toasts, ToastMessage } from './components/Toasts';
-import { QuickFillModal } from './components/QuickFillModal';
-import { EditorModal } from './components/EditorModal';
-import { BulkAddModal } from './components/BulkAddModal';
-import { DevicePairModal } from './components/DevicePairModal';
 import { useDevicePairing } from './hooks/useDevicePairing';
 import { OfflineFallbackBoundary } from './components/OfflineFallbackBoundary';
 import { MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR, AppSettings } from './constants';
@@ -35,6 +31,9 @@ const TotalScreen = lazy(() => import('./components/TotalScreen').then(m => ({ d
 const CalendarScreen = lazy(() => import('./components/CalendarScreen').then(m => ({ default: m.CalendarScreen })));
 const SettingsScreen = lazy(() => import('./components/SettingsScreen').then(m => ({ default: m.SettingsScreen })));
 const FinancialDashboardView = lazy(() => import('./components/financial-dashboard/FinancialDashboardView').then(m => ({ default: m.FinancialDashboardView })));
+const QuickFillModal = lazy(() => import('./components/QuickFillModal').then(m => ({ default: m.QuickFillModal })));
+const EditorModal = lazy(() => import('./components/EditorModal').then(m => ({ default: m.EditorModal })));
+const DevicePairModal = lazy(() => import('./components/DevicePairModal').then(m => ({ default: m.DevicePairModal })));
 
 // --- Utilities ---
 const haptic = (pattern: number | number[] = 30, enabled = true) => {
@@ -99,7 +98,6 @@ export default function App() {
 
   const { toasts, addToast, removeToast } = useToast();
   const [excludeSundays, setExcludeSundays] = useState(true);
-  const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
 
   const curSym = settings.currency === 'RUB' ? '₽' : '€';
   
@@ -119,8 +117,7 @@ export default function App() {
           addToast(`Migrated ${migratedCount} entries`, 'success');
         }
 
-        await loadSettings();
-        await loadEntries();
+        await Promise.all([loadSettings(), loadEntries()]);
 
         setIsAuthReady(true);
       } catch (err) {
@@ -135,6 +132,9 @@ export default function App() {
 
   const migrateFromLocalStorage = async () => {
     try {
+      if (typeof window !== 'undefined' && localStorage.getItem('ls_migrated') === 'true') {
+        return 0;
+      }
       const done = await db.getSetting('ls_migrated', false);
       if (done) return 0;
 
@@ -150,6 +150,7 @@ export default function App() {
       if (count > 0) {
         await storeSaveMany(toMigrate);
       }
+      localStorage.setItem('ls_migrated', 'true');
       await db.setSetting('ls_migrated', true);
       return count;
     } catch (err) {
@@ -164,6 +165,15 @@ export default function App() {
     if (document.documentElement.className !== theme) {
       document.documentElement.className = theme;
     }
+    const themeColors: Record<'light' | 'dark' | 'indigo', string> = {
+      light: '#f4f1ea',
+      dark: '#0a0a0f',
+      indigo: '#0d0f1e',
+    };
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeColors[theme] || '#0a0a0f');
+    }
   }, [settings.theme]);
 
   useEffect(() => {
@@ -175,6 +185,9 @@ export default function App() {
     if (!isAuthReady || typeof window === 'undefined') return;
     const timer = setTimeout(() => {
       if (navigator.onLine) {
+        import('./components/QuickFillModal').catch(() => {});
+        import('./components/EditorModal').catch(() => {});
+        import('./components/DevicePairModal').catch(() => {});
         import('./components/AnalyticsScreen').catch(() => {});
       }
     }, 4000);
@@ -347,18 +360,18 @@ export default function App() {
       ) : (
         <div className="flex items-center justify-center min-h-screen bg-[#111] font-['Epilogue_Variable']">
           <AnimatePresence>
-            {isLoading && <SplashScreen />}
+            {false && <SplashScreen />}
           </AnimatePresence>
 
-        <div id="frame" className="relative w-full max-w-[393px] h-[100dvh] sm:h-[min(100vh,852px)] bg-[var(--bg)] overflow-hidden flex flex-col shadow-2xl sm:rounded-[52px] sm:border-[11px] sm:border-[#1c1c1e]">
+        <div id="frame" className="relative w-full sm:max-w-[393px] h-[100dvh] sm:h-[min(100vh,852px)] bg-[var(--bg)] overflow-hidden flex flex-col shadow-2xl sm:rounded-[52px] sm:border-[11px] sm:border-[#1c1c1e]">
         <Topbar haptic={h} syncStatus={syncStatus} strictMode={settings.strictOfflineMode} t={t} />
 
         {/* Main Content */}
         <div className="absolute inset-0 overflow-y-auto px-6 pt-[calc(64px+env(safe-area-inset-top))] pb-[calc(128px+env(safe-area-inset-bottom))] scrollbar-hide overscroll-y-none">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={screen}
-              initial={{ opacity: 0, y: 15 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -383,7 +396,7 @@ export default function App() {
                     deleteEntry={deleteEntry}
                     haptic={h}
                     chartData={chartData}
-                    openBulkAdd={() => setIsBulkAddOpen(true)}
+                    openQuickFill={() => setIsQuickFillOpen(true)}
                   />
                 )}
                 {screen === 'calendar' && (
@@ -462,6 +475,7 @@ export default function App() {
         <Navigation t={t} />
 
         {/* Quick Fill Sheet */}
+        <Suspense fallback={null}>
         <QuickFillModal
           isOpen={isQuickFillOpen}
           setIsOpen={setIsQuickFillOpen}
@@ -480,8 +494,10 @@ export default function App() {
           smartFillPreview={smartFillPreview}
           onSmartFill={smartFillUpToDay}
         />
+        </Suspense>
 
         {/* Editor Sheet */}
+        <Suspense fallback={null}>
         <EditorModal
           settings={settings}
           curSym={curSym}
@@ -491,17 +507,10 @@ export default function App() {
           t={t}
           haptic={h}
         />
-        
-        <BulkAddModal
-          isOpen={isBulkAddOpen}
-          setIsOpen={setIsBulkAddOpen}
-          t={t}
-          haptic={h}
-          saveMultipleEntries={saveMultipleEntries}
-          settings={settings}
-        />
+        </Suspense>
 
         {/* Device Pair & QR Sync Modal */}
+        <Suspense fallback={null}>
         <DevicePairModal
           isOpen={isPairModalOpen || incomingPayload !== null}
           onClose={() => {
@@ -515,6 +524,7 @@ export default function App() {
           addToast={addToast}
           t={t}
         />
+        </Suspense>
 
         {/* Toasts */}
         <Toasts toasts={toasts} removeToast={removeToast} />

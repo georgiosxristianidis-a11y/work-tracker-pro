@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Play, CalendarPlus, TrendingUp, FileText } f
 interface ShowcaseHeroCardProps {
   onStartShift?: () => void;
   onOpenAnalytics: () => void;
-  onOpenBulkAdd: () => void;
+  onOpenQuickFill: () => void;
   onOpenTimesheet: () => void;
   t: (key: string) => string;
   haptic?: (pattern: number | number[]) => void;
@@ -25,7 +25,7 @@ interface SlideItem {
 export const ShowcaseHeroCard: React.FC<ShowcaseHeroCardProps> = ({
   onStartShift,
   onOpenAnalytics,
-  onOpenBulkAdd,
+  onOpenQuickFill,
   onOpenTimesheet,
   t,
   haptic
@@ -57,7 +57,7 @@ export const ShowcaseHeroCard: React.FC<ShowcaseHeroCardProps> = ({
       title: 'Smart Schedule',
       actionLabel: 'Quick Fill',
       actionIcon: CalendarPlus,
-      onAction: onOpenBulkAdd,
+      onAction: onOpenQuickFill,
       accentHue: 'var(--a)'
     },
     {

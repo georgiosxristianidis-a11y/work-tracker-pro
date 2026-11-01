@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, Clock, TrendingUp, Calendar, CalendarPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, TrendingUp, Calendar } from 'lucide-react';
 import { AppSettings } from '../constants';
 import { Entry } from '../lib/db';
 import { formatMoney } from '../lib/utils';
@@ -31,7 +31,7 @@ interface HomeScreenProps {
   deleteEntry?: (date: string) => Promise<void>;
   haptic?: (pattern: number | number[]) => void;
   chartData?: ChartDataItem[];
-  openBulkAdd: () => void;
+  openQuickFill?: () => void;
 }
 
 export const HomeScreen = ({
@@ -51,7 +51,7 @@ export const HomeScreen = ({
   deleteEntry,
   haptic,
   chartData,
-  openBulkAdd
+  openQuickFill
 }: HomeScreenProps) => {
 
   const overtime = React.useMemo(() => entries.reduce((s, e) => s + Math.max(0, e.hours - settings.normal), 0), [entries, settings.normal]);
@@ -126,7 +126,7 @@ export const HomeScreen = ({
         <ShowcaseHeroCard
           onStartShift={() => { if (haptic) haptic(10); setScreen('calendar'); }}
           onOpenAnalytics={() => { if (haptic) haptic(10); setScreen('chart'); }}
-          onOpenBulkAdd={openBulkAdd}
+          onOpenQuickFill={openQuickFill || (() => {})}
           onOpenTimesheet={() => { if (haptic) haptic(10); setScreen('total'); }}
           t={t}
           haptic={haptic}
@@ -228,21 +228,6 @@ export const HomeScreen = ({
         haptic={haptic}
       />
 
-      <div className="px-1">
-        <motion.button 
-          initial={{ opacity: 0, scale: 0.9, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 350, damping: 20, delay: 0.4 }}
-          onClick={openBulkAdd}
-          whileHover={{ scale: 0.98 }}
-          whileTap={{ scale: 0.96 }}
-          className="relative group w-full h-14 rounded-2xl border border-[var(--b)] bg-[var(--bg-1)] font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 text-[var(--t1)] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-[var(--a)]/30 overflow-hidden outline-none"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--a)]/0 via-[var(--a)]/5 to-[var(--a)]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CalendarPlus size={18} className="text-[var(--a)] relative z-10 transition-transform duration-300 group-hover:scale-110" strokeWidth={2} />
-          <span className="relative z-10">{t('Bulk Add Hours')}</span>
-        </motion.button>
-      </div>
     </div>
   );
 };

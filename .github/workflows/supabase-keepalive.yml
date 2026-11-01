@@ -19,7 +19,7 @@ jobs:
       - name: Heartbeat RPC ping
         id: ping
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ablpnwoounkfumesqrph.supabase.co' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           set -euo pipefail
@@ -28,6 +28,43 @@ jobs:
             echo "::error::Секрет SUPABASE_ANON_KEY не задан в Settings → Secrets and variables → Actions."
             exit 1
           fi
+
+          if [ -z "${SUPABASE_URL:-}" ]; then
+            echo "::error::Секрет SUPABASE_URL не задан. Команды — node scripts/supabase-passport.mjs."
+            exit 2
+          fi
+
+          # Ref сверяется с паспортом supabase/project.json (равенство сторожит
+          # node scripts/supabase-passport.mjs --check в gate): у владельца два
+          # Free-проекта с keepalive_ping (Work_tracker и Athlete-PRO-V7), URL
+          # одной длины, и секрет от чужого дал бы зелёный прогон, пока этот
+          # засыпает. Ref не секрет, печатать можно.
+          expected_ref=ablpnwoounkfumesqrph
+          SUPABASE_URL=$(printf '%s' "$SUPABASE_URL" | tr -cd 'A-Za-z0-9.:/_-')
+          SUPABASE_ANON_KEY=$(printf '%s' "$SUPABASE_ANON_KEY" | tr -cd 'A-Za-z0-9._-')
+          url_ref=${SUPABASE_URL#https://}
+          url_ref=${url_ref%.supabase.co}
+          if [ "$url_ref" != "$expected_ref" ]; then
+            echo "::error::SUPABASE_URL ведёт не на проект Work_tracker ($expected_ref), а на ref длиной ${#url_ref} — пересоздать секрет командой из node scripts/supabase-passport.mjs."
+            exit 2
+          fi
+          echo "SUPABASE_URL: ref $url_ref совпадает"
+
+          # Legacy JWT несёт claim ref: ключ от чужого проекта иначе дал бы
+          # невнятный 401. У sb_publishable_ ref в ключе нет — проверка пропускается.
+          case "$SUPABASE_ANON_KEY" in
+            sb_*) : ;;
+            *.*.*)
+              payload=$(printf '%s' "$SUPABASE_ANON_KEY" | cut -d. -f2 | tr '_-' '/+')
+              while [ $(( ${#payload} % 4 )) -ne 0 ]; do payload="$payload="; done
+              key_ref=$(printf '%s' "$payload" | base64 -d 2>/dev/null | grep -o '"ref": *"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/') || true
+              if [ -n "$key_ref" ] && [ "$key_ref" != "$expected_ref" ]; then
+                echo "::error::SUPABASE_ANON_KEY выдан другому проекту (ref $key_ref) — взять anon-ключ из Dashboard проекта $expected_ref."
+                exit 2
+              fi
+              [ -z "$key_ref" ] || echo "SUPABASE_ANON_KEY: ref $key_ref совпадает"
+              ;;
+          esac
 
           resp=$(mktemp)
           for i in 1 2 3; do

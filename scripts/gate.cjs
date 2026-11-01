@@ -117,7 +117,15 @@ function main() {
     process.exit(1);
   }
 
-  // 2. Unit Tests
+  // 2. ESLint Check
+  const eslintRes = runCommand('npm run lint:eslint');
+  if (!eslintRes.success) {
+    console.error('[GATE] FAIL: ESLint failed (exit 1)');
+    console.error(filterNoise(eslintRes.output));
+    process.exit(1);
+  }
+
+  // 3. Unit Tests
   const unitRes = runCommand('npm run test:unit');
   if (!unitRes.success) {
     console.error('[GATE] FAIL: Unit tests failed (exit 1)');
@@ -125,7 +133,7 @@ function main() {
     process.exit(1);
   }
 
-  // 3. Vite Build Check
+  // 4. Vite Build Check
   const vitePath = path.join(projectRoot, 'node_modules/vite/bin/vite.js');
   const viteCmd = fs.existsSync(vitePath)
     ? `node "${vitePath}" build "${projectRoot}"`
@@ -137,7 +145,7 @@ function main() {
     process.exit(1);
   }
 
-  // 4. Diff Check
+  // 5. Diff Check
   const diffCheck = checkDiff();
   if (!diffCheck.ok) {
     console.error(`[GATE] FAIL: ${diffCheck.message}`);
@@ -145,7 +153,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`[GATE] PASS: TypeScript OK | Build OK | Diff: ${diffCheck.message} (exit 0)`);
+  console.log(`[GATE] PASS: TypeScript OK | ESLint OK | Build OK | Diff: ${diffCheck.message} (exit 0)`);
   process.exit(0);
 }
 

@@ -150,4 +150,80 @@ test.describe('Live Verification: New Features & Tasks', () => {
     expect(oct2?.hours).toBe(7.5);
   });
 
+  test('6. Strict Language Isolation & Device Pairing E2E (ENG vs RUS) (#devil)', async ({ page }) => {
+    await page.goto('/');
+
+    // 6.1 Navigate to Settings
+    const settingsTab = page.locator('nav button').nth(3);
+    await settingsTab.click();
+
+    // 6.2 Switch to ENG
+    const engButton = page.locator('button:has-text("ENG")');
+    await expect(engButton).toBeVisible();
+    await engButton.click();
+
+    // 6.3 Open Device Pairing modal
+    const pairButtonEng = page.locator('button:has-text("Pair Device")').first();
+    await pairButtonEng.scrollIntoViewIfNeeded();
+    await pairButtonEng.click();
+
+    // 6.4 Assert modal is open
+    const modal = page.locator('div.fixed.z-50');
+    await expect(modal).toBeVisible();
+
+    // Wait for generation to complete and QR to be visible
+    await expect(modal.locator('text=SECURE SYNC')).toBeVisible({ timeout: 5000 });
+
+    // Assert NO Cyrillic in English mode
+    const engModalText = await modal.innerText();
+    const cyrillicRegex = /[\u0400-\u04FF]/;
+    expect(cyrillicRegex.test(engModalText), `Unexpected Cyrillic in English mode: ${engModalText}`).toBe(false);
+
+    // Assert 8-character fallback code exists and matches XXXX-XXXX
+    const codeBox = modal.locator('span.font-mono').first();
+    await expect(codeBox).toBeVisible();
+    const codeText = (await codeBox.innerText()).trim();
+    expect(codeText).toMatch(/[A-Z0-9]{4}-[A-Z0-9]{4}/);
+
+    // 6.5 Switch to "Have a code?" tab
+    const haveCodeTab = modal.locator('button:has-text("Have a code?")');
+    await expect(haveCodeTab).toBeVisible();
+    await haveCodeTab.click();
+
+    // Assert tab content is English without Cyrillic
+    const haveCodeText = await modal.innerText();
+    expect(cyrillicRegex.test(haveCodeText), `Unexpected Cyrillic in Have a code tab: ${haveCodeText}`).toBe(false);
+    await expect(modal.locator('button:has-text("Open Scanner")')).toBeVisible();
+
+    // Test input formatting
+    const codeInput = modal.locator('input[placeholder="6Q9E-VUBT"]');
+    await expect(codeInput).toBeVisible();
+    await codeInput.fill('abcd1234');
+    await expect(codeInput).toHaveValue('ABCD-1234');
+
+    // 6.6 Close modal
+    const closeButton = modal.locator('button:has(svg)').first();
+    await closeButton.click();
+    await expect(modal).toHaveCount(0);
+
+    // 6.7 Switch to RUS
+    const rusButton = page.locator('button:has-text("RUS")');
+    await rusButton.click();
+
+    // Open Pair Device in Russian
+    const pairButtonRus = page.locator('button:has-text("Привязать устройство")').first();
+    await pairButtonRus.scrollIntoViewIfNeeded();
+    await pairButtonRus.click();
+
+    // Assert Russian modal is open and has Cyrillic text
+    await expect(modal).toBeVisible();
+    const rusModalText = await modal.innerText();
+    expect(cyrillicRegex.test(rusModalText), 'Expected Russian text in RUS mode').toBe(true);
+    await expect(modal.locator('text=Синхронизация устройств')).toBeVisible();
+    await expect(modal.locator('text=У меня есть код')).toBeVisible();
+
+    // Clean up
+    await closeButton.click();
+  });
+
 });

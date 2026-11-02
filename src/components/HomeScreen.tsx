@@ -4,14 +4,12 @@ import { ChevronLeft, ChevronRight, Clock, TrendingUp, Calendar } from 'lucide-r
 import { AppSettings } from '../constants';
 import { Entry } from '../lib/db';
 import { formatMoney } from '../lib/utils';
-import { DashboardWidgets } from './DashboardWidgets';
 import { AnimatedZero } from './AnimatedZero';
 import { AnimatedClock } from './AnimatedClock';
 import { SuccessSparkles } from './SuccessSparkles';
 import { useCelebration } from '../hooks/useCelebration';
 import { RollingNumber } from './RollingNumber';
-import { ShowcaseHeroCard } from './ShowcaseHeroCard';
-import { CalendarDaysBadge } from './CalendarDaysBadge';
+import { DynamicHeroCapsule } from './DynamicHeroCapsule';
 import type { ChartDataItem } from './AnalyticsChart';
 
 interface HomeScreenProps {
@@ -103,13 +101,6 @@ export const HomeScreen = ({
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* Days KPI Badge (Core metric: count of worked days in month with 3D calendar flip animation) */}
-          <CalendarDaysBadge
-            count={selectedDaysCount}
-            label={t('Days')}
-            onClick={() => setScreen('calendar')}
-            haptic={haptic}
-          />
 
           <div className="flex gap-1.5">
             <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
@@ -123,7 +114,7 @@ export const HomeScreen = ({
       </div>
 
       <div className="px-1">
-        <ShowcaseHeroCard
+        <DynamicHeroCapsule
           onStartShift={() => { if (haptic) haptic(10); setScreen('calendar'); }}
           onOpenAnalytics={() => { if (haptic) haptic(10); setScreen('chart'); }}
           onOpenQuickFill={openQuickFill || (() => {})}
@@ -134,7 +125,7 @@ export const HomeScreen = ({
       </div>
 
       <div className="px-1">
-        <div className="p-6 rounded-card border border-[var(--b)] bg-[var(--bg-1)] shadow-[0_8px_32px_rgba(0,0,0,0.03)] flex flex-col gap-4 relative overflow-hidden">
+        <div className="p-6 rounded-card apple-glass-panel flex flex-col gap-4 relative overflow-hidden">
           {/* Subtle accent gradient for premium feel without breaking the solid style */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--a)]/5 rounded-full blur-3xl pointer-events-none" />
           
@@ -211,23 +202,28 @@ export const HomeScreen = ({
               </div>
             )}
           </div>
+
+          {/* Integrated Goal Progress Bar */}
+          <div className="pt-3 border-t border-[var(--b)]/60 space-y-2">
+            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-[var(--t3)] tabular-nums transition-all duration-500">
+                {t('Goal:')} {settings.privacyMode ? `${curSym}••••` : `${curSym}${settings.goal}`}
+              </span>
+              <span className="text-[var(--a)] font-mono font-bold tabular-nums">{goalPct}%</span>
+            </div>
+            <div className="h-1.5 bg-[var(--b)] rounded-full overflow-hidden">
+              <motion.div 
+                initial={false}
+                animate={{ width: `${Math.min(100, Math.max(0, goalPct))}%` }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="h-full bg-[var(--a)] rounded-full"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <DashboardWidgets 
-        totalEarned={totalEarned}
-        goalPct={goalPct}
-        entries={entries}
-        settings={settings}
-        setSettings={setSettings}
-        setScreen={setScreen}
-        calcEarnings={calcEarnings}
-        curSym={curSym}
-        t={t}
-        deleteEntry={deleteEntry}
-        haptic={haptic}
-      />
-
+      
     </div>
   );
 };

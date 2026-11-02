@@ -263,7 +263,7 @@ export const CalendarScreen = ({
       </div>
 
       {/* Calendar Card: High Breathing Room, Radar Pulse Hint, Saturday Dimmed, Sunday Accent */}
-      <div className="p-5 sm:p-6 bg-[var(--bg-1)] border border-[var(--b)] rounded-[1.75rem] shadow-sm relative">
+      <div className="p-5 sm:p-6 apple-glass-panel rounded-[1.75rem] relative">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -365,7 +365,7 @@ export const CalendarScreen = ({
       <div className="flex items-center gap-2.5 pt-1">
         {canSmartFill && smartFillUpToDay && (
           emptyDaysCount === 0 ? (
-            <div className="flex-1 h-14 px-4 rounded-2xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t3)] text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 select-none opacity-80 shadow-sm">
+            <div className="flex-1 h-14 px-4 rounded-2xl apple-glass-pill text-[var(--t3)] text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 select-none opacity-80">
               <Check size={16} className="text-[var(--green)] shrink-0" strokeWidth={2.5} />
               <Zap size={15} className="shrink-0 text-[var(--a)]" strokeWidth={2.2} />
               <span className="truncate">{smartFillPreview?.dateRangeLabel || `1–${smartFillTargetDay}`} {t('complete')}</span>
@@ -398,7 +398,7 @@ export const CalendarScreen = ({
             setIsWandTapped(false);
           }}
           onClick={() => { haptic([10, 20]); openQuickFill(); }} 
-          className={`h-14 rounded-2xl border border-[var(--b)] bg-[var(--bg-1)] font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 text-[var(--t2)] transition-colors hover:bg-[var(--b)] hover:text-[var(--t1)] active:scale-[0.98] shadow-sm ${
+          className={`h-14 rounded-2xl apple-glass-pill font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 text-[var(--t2)] transition-colors hover:text-[var(--t1)] active:scale-[0.98] ${
             canSmartFill && smartFillUpToDay ? 'px-5 shrink-0' : 'w-full'
           }`}
         >
@@ -431,7 +431,7 @@ export const CalendarScreen = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] bg-black/60 flex items-end sm:items-center sm:justify-center"
+            className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-md flex items-end sm:items-center sm:justify-center"
             onClick={() => setIsHistoryOpen(false)}
           >
             <motion.div
@@ -440,10 +440,10 @@ export const CalendarScreen = ({
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 280 }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-[393px] max-h-[80vh] bg-[var(--bg)] rounded-t-[2rem] sm:rounded-2xl border border-[var(--b)] p-6 space-y-4 flex flex-col shadow-2xl overflow-hidden"
+              className="w-full max-w-[393px] max-h-[80vh] apple-glass-panel rounded-t-[2rem] sm:rounded-2xl p-6 space-y-4 flex flex-col shadow-2xl overflow-hidden"
             >
               {/* Drawer Drag Pill */}
-              <div className="w-12 h-1 bg-[var(--b)] rounded-full mx-auto shrink-0" />
+              <div className="w-12 h-1 bg-[var(--t3)]/30 rounded-full mx-auto shrink-0" />
 
               {/* Drawer Header */}
               <div className="flex items-center justify-between shrink-0">

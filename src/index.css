@@ -35,6 +35,39 @@
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+/* Apple Frosted Glass Tokens */
+.apple-glass-panel {
+  background: color-mix(in srgb, var(--bg-1) 85%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--b);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.04);
+}
+
+.apple-glass-pill {
+  background: color-mix(in srgb, var(--bg-1) 88%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--b);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.dark .apple-glass-panel {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.dark .apple-glass-pill {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.indigo .apple-glass-panel {
+  box-shadow: inset 0 1px 0 0 rgba(79, 109, 247, 0.25), 0 8px 32px rgba(13, 15, 30, 0.4);
+}
+
+.indigo .apple-glass-pill {
+  box-shadow: inset 0 1px 0 0 rgba(79, 109, 247, 0.3), 0 4px 16px rgba(13, 15, 30, 0.3);
+}
+
 #frame { height: 100dvh; }
 @media (min-width: 640px) { #frame { height: min(100vh, 852px); max-height: 852px; } }
 
@@ -42,29 +75,6 @@ html {
   background-color: var(--bg, #0a0a0f);
 }
 
-/* Google AI Studio / Gemini Premium Gradient Effect */
-@keyframes ai-gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.gemini-text-gradient {
-  background: linear-gradient(
-    to right,
-    var(--t1) 0%,
-    var(--a) 25%,
-    var(--t2) 50%,
-    var(--a) 75%,
-    var(--t1) 100%
-  );
-  background-size: 200% auto;
-  color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
-  animation: ai-gradient 6s linear infinite;
-  display: inline-block;
-}
 
 body {
   background: #111;

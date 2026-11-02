@@ -311,7 +311,8 @@ export default function App() {
     getDeviceId,
     loadEntries,
     addToast,
-    haptic: h
+    haptic: h,
+    t
   });
 
   const applyTap = useDoubleTap(handleApplyTemplate);

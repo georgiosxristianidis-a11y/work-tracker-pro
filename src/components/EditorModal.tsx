@@ -115,10 +115,10 @@ export const EditorModal = ({
                   closeEditor();
                 }
               }}
-              className="w-full bg-[var(--bg)] rounded-t-[2.5rem] p-8 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8 shadow-[0_-20px_40px_rgba(0,0,0,0.1)]"
+              className="w-full apple-glass-panel rounded-t-[2.5rem] p-8 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8 shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-12 h-1.5 bg-[var(--b)] rounded-full mx-auto" />
+              <div className="w-12 h-1 bg-[var(--t3)]/30 rounded-full mx-auto" />
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <h2 className="text-xl font-black text-[var(--t1)] tracking-tight">
@@ -164,7 +164,7 @@ export const EditorModal = ({
                 </div>
               </div>
               
-              <div className="p-6 mt-6 rounded-3xl bg-[var(--bg-1)] border border-[var(--b)] flex flex-col items-center gap-4 relative overflow-hidden group">
+              <div className="p-6 mt-6 rounded-3xl apple-glass-pill flex flex-col items-center gap-4 relative overflow-hidden group">
                 <div className="absolute inset-0 bg-[var(--a)] opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none" />
                 
                 {/* Header display with step buttons and RollingNumber */}

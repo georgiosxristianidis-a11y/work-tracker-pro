@@ -198,6 +198,21 @@ const dictRUS: Record<string, string> = {
   'Backup file sent': 'Файл бэкапа отправлен',
   'Backup file downloaded (.json)': 'Файл бэкапа скачан (.json)',
   'You scanned the code of this same device': 'Вы отсканировали код этого же устройства',
+  'Cloud sync unavailable and no local entries in QR': 'Облачная синхронизация недоступна и нет локальных записей в QR',
+  'P2P: Data replaced': 'P2P: Данные заменены',
+  'P2P: Synchronized': 'P2P: Синхронизировано',
+  'P2P sync error': 'Ошибка P2P синхронизации',
+  'Data replaced': 'Данные заменены',
+  'from cloud': 'из облака',
+  'from device': 'с устройства',
+  'Sync error': 'Ошибка при синхронизации',
+  'Manual code entry requires cloud connection. Please scan QR with camera.': 'Для ручного ввода требуется подключение к интернету. Отсканируйте QR камерой.',
+  'Pairing code not found or timed out.': 'Время ожидания истекло или код не найден',
+  'Invalid response from device': 'Некорректный ответ от устройства',
+  'Database paused?': 'База данных на паузе?',
+  'Wake in Supabase': 'Разбудить в Supabase',
+  'Fullscreen': 'Полный экран',
+  'Dribbble Mockup': 'Режим презентации',
 };
 
 const dictGR: Record<string, string> = {
@@ -344,6 +359,21 @@ const dictGR: Record<string, string> = {
   'Backup file sent': 'Το αρχείο αντιγράφου ασφαλείας εστάλη',
   'Backup file downloaded (.json)': 'Το αρχείο αντιγράφου ασφαλείας λήφθηκε (.json)',
   'You scanned the code of this same device': 'Σαρώσατε τον κωδικό αυτής της ίδιας της συσκευής',
+  'Cloud sync unavailable and no local entries in QR': 'Ο συγχρονισμός cloud δεν είναι διαθέσιμος και δεν υπάρχουν τοπικές εγγραφές',
+  'P2P: Data replaced': 'P2P: Τα δεδομένα αντικαταστάθηκαν',
+  'P2P: Synchronized': 'P2P: Συγχρονίστηκαν',
+  'P2P sync error': 'Σφάλμα συγχρονισμού P2P',
+  'Data replaced': 'Τα δεδομένα αντικαταστάθηκαν',
+  'from cloud': 'από το cloud',
+  'from device': 'από τη συσκευή',
+  'Sync error': 'Σφάλμα συγχρονισμού',
+  'Manual code entry requires cloud connection. Please scan QR with camera.': 'Η χειροκίνητη εισαγωγή απαιτεί σύνδεση στο internet. Σαρώστε το QR με κάμερα.',
+  'Pairing code not found or timed out.': 'Ο κωδικός σύζευξης δεν βρέθηκε ή έληξε το χρονικό όριο',
+  'Invalid response from device': 'Μη έγκυρη απόκριση από τη συσκευή',
+  'Database paused?': 'Η βάση δεδομένων είναι σε παύση;',
+  'Wake in Supabase': 'Αφύπνιση στο Supabase',
+  'Fullscreen': 'Πλήρης οθόνη',
+  'Dribbble Mockup': 'Προβολή παρουσίασης',
 };
 
 export function useTranslation(language: string) {

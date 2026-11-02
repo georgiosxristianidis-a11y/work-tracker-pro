@@ -522,7 +522,7 @@ export const SettingsScreen = ({
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                 <span className="text-[10px] font-semibold text-amber-300">
-                  База данных на паузе?
+                  {t('Database paused?')}
                 </span>
               </div>
               <a
@@ -531,7 +531,7 @@ export const SettingsScreen = ({
                 rel="noreferrer"
                 className="text-[10px] font-bold text-amber-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1"
               >
-                <span>Разбудить в Supabase</span>
+                <span>{t('Wake in Supabase')}</span>
                 <ExternalLink size={10} />
               </a>
             </div>

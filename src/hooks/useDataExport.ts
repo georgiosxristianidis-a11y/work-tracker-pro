@@ -62,7 +62,7 @@ export const useDataExport = ({
     });
     
     txt += `\n══════════════════════════════════════\n`;
-    txt += `Создано Work Tracker Pro\n`;
+    txt += settings.language === 'RUS' ? `Создано Work Tracker Pro\n` : `Created by Work Tracker Pro\n`;
 
     const blob = new Blob([txt], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -117,7 +117,7 @@ export const useDataExport = ({
           txt += `[EARNED]:   ${curSym}${formatMoney(calcEarnings(e.hours))}\n`;
         });
         txt += `\n══════════════════════════════════════\n`;
-        txt += `Создано Work Tracker Pro\n`;
+        txt += settings.language === 'RUS' ? `Создано Work Tracker Pro\n` : `Created by Work Tracker Pro\n`;
         const blob = new Blob([txt], { type: 'text/plain' });
         file = new File([blob], 'work-tracker-report.txt', { type: 'text/plain' });
       } else if (format === 'csv') {

@@ -359,22 +359,22 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
       <div className={`relative w-full max-w-md rounded-3xl border shadow-2xl overflow-hidden flex flex-col ${
-        isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-200'
+        'apple-glass-panel border-[var(--b)] text-[var(--t1)]'
       }`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-4 border-b ${
-          isDark ? 'border-zinc-800/80' : 'border-zinc-200'
+          'border-[var(--b)]'
         }`}>
           <div className="flex items-center gap-2">
-            <Smartphone className="w-5 h-5 text-[#d4af37]" />
-            <h3 className={`font-bold text-base ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+            <Smartphone className="w-5 h-5 text-[var(--a)]" />
+            <h3 className={`font-bold text-base ${'text-[var(--t1)]'}`}>
               {tr('Device Pairing')}
             </h3>
           </div>
           <button
             onClick={handleClose}
             className={`p-1.5 rounded-full transition-colors ${
-              isDark ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+              'text-[var(--t3)] hover:text-[var(--t1)] hover:bg-[var(--b)]'
             }`}
           >
             <X className="w-5 h-5" />
@@ -388,10 +388,10 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
               <div className="absolute inset-0 rounded-full bg-emerald-400/10 animate-ping" />
               <Check className="w-10 h-10 relative z-10 stroke-[2.5]" />
             </div>
-            <h4 className={`text-xl font-black tracking-tight mb-2 ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+            <h4 className={`text-xl font-black tracking-tight mb-2 ${isDark ? 'text-[var(--t1)]' : 'text-[var(--t1)]'}`}>
               {tr('Device Connected')}
             </h4>
-            <p className="text-xs text-zinc-400 max-w-xs mb-6 leading-relaxed">
+            <p className="text-xs text-[var(--t3)] max-w-xs mb-6 leading-relaxed">
               {tr('Connected to')} <span className="font-bold text-emerald-400">{connectedDeviceName || tr('other device')}</span>. {tr('Your work shifts and database are now synchronized.')}
             </p>
             <button
@@ -405,18 +405,18 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
           <>
             {/* Tab switch */}
             <div className={`flex p-1.5 mx-4 mt-4 rounded-xl border ${
-              isDark ? 'bg-zinc-900/80 border-zinc-800' : 'bg-zinc-100 border-zinc-200'
+              'bg-[var(--bg)] border-[var(--b)]'
             }`}>
               <button
                 onClick={() => setActiveTab('show')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'show'
                     ? isDark
-                      ? 'bg-zinc-800 text-[#d4af37] shadow'
-                      : 'bg-white text-zinc-900 shadow'
+                      ? 'bg-[var(--bg-1)] text-[var(--a)] shadow'
+                      : 'bg-white text-[var(--t1)] shadow'
                     : isDark
-                      ? 'text-zinc-400 hover:text-zinc-200'
-                      : 'text-zinc-600 hover:text-zinc-900'
+                      ? 'text-[var(--t3)] hover:text-[var(--t1)]'
+                      : 'text-zinc-600 hover:text-[var(--t1)]'
                 }`}
               >
                 <QrCode className="w-4 h-4" />
@@ -427,11 +427,11 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'code'
                     ? isDark
-                      ? 'bg-zinc-800 text-[#d4af37] shadow'
-                      : 'bg-white text-zinc-900 shadow'
+                      ? 'bg-[var(--bg-1)] text-[var(--a)] shadow'
+                      : 'bg-white text-[var(--t1)] shadow'
                     : isDark
-                      ? 'text-zinc-400 hover:text-zinc-200'
-                      : 'text-zinc-600 hover:text-zinc-900'
+                      ? 'text-[var(--t3)] hover:text-[var(--t1)]'
+                      : 'text-zinc-600 hover:text-[var(--t1)]'
                 }`}
               >
                 <Keyboard className="w-4 h-4" />
@@ -444,13 +444,13 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
               {pendingPayload ? (
                 /* Confirmation Dialog for existing local entries */
                 <div className="w-full flex flex-col items-center py-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-[#d4af37]/10 flex items-center justify-center text-[#d4af37] mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--a)] text-[var(--bg)]/10 flex items-center justify-center text-[var(--a)] mb-3">
                     <CheckCircle className="w-6 h-6" />
                   </div>
-                  <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                  <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-[var(--t1)]' : 'text-[var(--t1)]'}`}>
                     {tr('Device Detected')}
                   </h4>
-                  <p className="text-xs text-zinc-400 mb-4 max-w-xs">
+                  <p className="text-xs text-[var(--t3)] mb-4 max-w-xs">
                     {tr('Local entries detected on this device. Choose how to apply pairing:')}
                   </p>
 
@@ -458,7 +458,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                     <button
                       disabled={isApplying}
                       onClick={() => executePairing(pendingPayload, 'merge')}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#d4af37] hover:bg-[#c29e2f] text-black transition-all flex items-center justify-center gap-2 shadow"
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[var(--a)] text-[var(--bg)] hover:bg-[#c29e2f] text-black transition-all flex items-center justify-center gap-2 shadow"
                     >
                       {isApplying ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
                       <span>{tr('Merge entries (Smart Merge)')}</span>
@@ -468,8 +468,8 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                       onClick={() => executePairing(pendingPayload, 'overwrite')}
                       className={`w-full py-2 px-4 rounded-xl text-xs font-semibold border transition-all ${
                         isDark
-                          ? 'border-zinc-800 text-zinc-300 hover:bg-zinc-900'
-                          : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                          ? 'border-[var(--b)] text-[var(--t2)] hover:bg-zinc-900'
+                          : 'border-[var(--b)] text-zinc-700 hover:bg-zinc-50'
                       }`}
                     >
                       <span>{tr('Overwrite local data with cloud')}</span>
@@ -477,7 +477,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                     <button
                       disabled={isApplying}
                       onClick={() => setPendingPayload(null)}
-                      className="w-full py-2 px-4 rounded-xl text-xs text-zinc-400 hover:text-zinc-200 transition-all"
+                      className="w-full py-2 px-4 rounded-xl text-xs text-[var(--t3)] hover:text-[var(--t1)] transition-all"
                     >
                       {tr('Cancel')}
                     </button>
@@ -487,8 +487,8 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                 /* Show QR Tab */
                 isGenerating ? (
                   <div className="flex flex-col items-center justify-center h-64 gap-3">
-                    <RefreshCw className="w-8 h-8 text-[#d4af37] animate-spin" />
-                    <span className="text-xs text-zinc-400">{tr('Generating secure code...')}</span>
+                    <RefreshCw className="w-8 h-8 text-[var(--a)] animate-spin" />
+                    <span className="text-xs text-[var(--t3)]">{tr('Generating secure code...')}</span>
                   </div>
                 ) : pairingUrl ? (
                   <>
@@ -505,24 +505,24 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                     />
                     {localEntriesCount > 15 && (
                       <div className={`mt-4 w-full p-3.5 rounded-2xl border text-center transition-all ${
-                        isDark ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                        isDark ? 'bg-zinc-900/60 border-[var(--b)]' : 'bg-zinc-50 border-[var(--b)]'
                       }`}>
                         <div className="flex items-center justify-center gap-2 mb-1">
-                          <Database className="w-4 h-4 text-[#d4af37]" />
-                          <span className={`text-xs font-bold ${isDark ? 'text-zinc-200' : 'text-zinc-900'}`}>
+                          <Database className="w-4 h-4 text-[var(--a)]" />
+                          <span className={`text-xs font-bold ${isDark ? 'text-[var(--t1)]' : 'text-[var(--t1)]'}`}>
                             {tr('Full database')}: {localEntriesCount} {tr('days')}
                           </span>
                         </div>
-                        <p className="text-[11px] text-zinc-400 mb-2.5 leading-relaxed">
+                        <p className="text-[11px] text-[var(--t3)] mb-2.5 leading-relaxed">
                           {tr('QR pairs devices. To quickly transfer complete history, share database file.')}
                         </p>
                         <button
                           onClick={handleShareBackup}
                           className={`w-full py-2 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center gap-2 shadow-sm ${
-                            isDark ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border-zinc-700' : 'bg-white hover:bg-zinc-100 text-zinc-900 border-zinc-300'
+                            isDark ? 'bg-[var(--bg-1)] hover:bg-zinc-700 text-[var(--t1)] border-[var(--b)]' : 'bg-white hover:bg-zinc-100 text-[var(--t1)] border-zinc-300'
                           }`}
                         >
-                          <Share2 className="w-3.5 h-3.5 text-[#d4af37]" />
+                          <Share2 className="w-3.5 h-3.5 text-[var(--a)]" />
                           <span>{tr('Share database file (.json)')}</span>
                         </button>
                       </div>
@@ -530,7 +530,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-                    <p className="text-xs text-zinc-400 mb-2">
+                    <p className="text-xs text-[var(--t3)] mb-2">
                       {tr('Cloud connection required for pairing.')}
                     </p>
                   </div>
@@ -538,30 +538,30 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
               ) : (
                 /* Have a Code Tab (Scan Camera or Manual Typing) */
                 <div className="w-full flex flex-col items-center py-4 px-2 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center text-[#d4af37] mb-3">
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--a)] text-[var(--bg)]/10 border border-[var(--a-b)] flex items-center justify-center text-[var(--a)] mb-3">
                     <Smartphone className="w-7 h-7" />
                   </div>
-                  <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                  <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-[var(--t1)]' : 'text-[var(--t1)]'}`}>
                     {tr('Connect Device')}
                   </h4>
-                  <p className="text-xs text-zinc-400 mb-4 max-w-xs leading-relaxed">
+                  <p className="text-xs text-[var(--t3)] mb-4 max-w-xs leading-relaxed">
                     {tr('Scan the QR code from Windows 11 with your camera, or enter the 8-character code displayed under it.')}
                   </p>
 
                   <button
                     onClick={() => setIsScannerOpen(true)}
-                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#d4af37] hover:bg-[#c29e2f] text-black transition-all flex items-center justify-center gap-2 shadow active:scale-98 mb-4"
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[var(--a)] text-[var(--bg)] hover:bg-[#c29e2f] text-black transition-all flex items-center justify-center gap-2 shadow active:scale-98 mb-4"
                   >
                     <Scan className="w-4 h-4" />
                     <span>{tr('Open Scanner')}</span>
                   </button>
 
                   <div className="w-full flex items-center gap-3 my-1">
-                    <div className={`flex-1 h-px ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
+                    <div className={`flex-1 h-px ${isDark ? 'bg-[var(--bg-1)]' : 'bg-zinc-200'}`} />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                       {tr('Or enter code')}
                     </span>
-                    <div className={`flex-1 h-px ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
+                    <div className={`flex-1 h-px ${isDark ? 'bg-[var(--bg-1)]' : 'bg-zinc-200'}`} />
                   </div>
 
                   <form onSubmit={handleManualCodeSubmit} className="w-full flex flex-col gap-2 mt-2">
@@ -571,14 +571,14 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                       placeholder="6Q9E-VUBT"
                       value={manualCodeInput}
                       onChange={(e) => setManualCodeInput(normalizePairingCode(e.target.value))}
-                      className={`w-full py-2.5 px-3 rounded-xl text-center font-mono text-base font-bold tracking-widest border transition-all uppercase outline-none focus:ring-2 focus:ring-[#d4af37] ${
-                        isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100' : 'bg-zinc-100 border-zinc-200 text-zinc-900'
+                      className={`w-full py-2.5 px-3 rounded-xl text-center font-mono text-base font-bold tracking-widest border transition-all uppercase outline-none focus:ring-2 focus:border-[var(--a)] ${
+                        isDark ? 'bg-zinc-900 border-[var(--b)] text-[var(--t1)]' : 'bg-zinc-100 border-[var(--b)] text-[var(--t1)]'
                       }`}
                     />
                     <button
                       type="submit"
                       disabled={manualCodeInput.replace(/-/g, '').length < 8 || isResolvingCode}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none active:scale-98"
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[var(--bg-1)] hover:bg-zinc-700 text-[var(--t1)] border border-[var(--b)] transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none active:scale-98"
                     >
                       {isResolvingCode ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
                       <span>{isResolvingCode ? tr('Connecting...') : tr('Link with code')}</span>

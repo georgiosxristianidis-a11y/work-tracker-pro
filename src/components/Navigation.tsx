@@ -11,9 +11,8 @@ export function Navigation({ t }: NavigationProps) {
   const setScreen = useAppStore(s => s.setScreen);
   const [navClicks, setNavClicks] = React.useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
 
-
   return (
-    <nav className="absolute bottom-0 left-0 right-0 h-[calc(80px+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-[var(--bg)] sm:rounded-b-[41px] flex items-center px-2 z-[50] border-t border-[var(--b)] shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
+    <nav className="absolute bottom-0 left-0 right-0 h-[calc(76px+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] apple-glass-panel sm:rounded-b-[41px] flex items-center px-2 z-[50] border-t border-[var(--b)] shadow-sm">
       {[
         { 
           id: 'home', 
@@ -67,12 +66,12 @@ export function Navigation({ t }: NavigationProps) {
             setScreen(item.id as AppScreen);
             setNavClicks(c => ({ ...c, [item.id]: (c[item.id as keyof typeof c] ?? 0) + 1 }));
           }}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 relative"
+          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 relative select-none"
         >
           {screen === item.id && (
-            <motion.div layoutId="nav-indicator" className="absolute top-0 w-8 h-[3px] bg-[var(--t1)] rounded-b-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />
+            <motion.div layoutId="nav-indicator" className="absolute top-0 w-8 h-[3px] bg-[var(--a)] rounded-b-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />
           )}
-          <div className={`transition-all duration-500 ${screen === item.id ? 'text-[var(--t1)] scale-110' : 'text-[var(--t3)] hover:text-[var(--t2)]'}`}>
+          <div className={`transition-all duration-300 ${screen === item.id ? 'text-[var(--a)] scale-110' : 'text-[var(--t3)] hover:text-[var(--t2)]'}`}>
             {item.icon}
           </div>
         </button>

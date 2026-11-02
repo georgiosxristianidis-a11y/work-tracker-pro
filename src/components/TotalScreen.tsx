@@ -113,7 +113,7 @@ export const TotalScreen = ({
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="p-8 rounded-card bg-[var(--bg-1)] border border-[var(--b)] relative overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.03)]"
+        className="p-8 rounded-card apple-glass-panel relative overflow-hidden shadow-sm"
       >
         <div className="space-y-4">
           <span className="text-xs font-black uppercase tracking-[0.2em] text-[var(--t3)] block">

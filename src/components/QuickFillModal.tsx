@@ -55,7 +55,7 @@ export const QuickFillModal = ({
             <h2 className="text-2xl font-black">{t('Quick Fill')}</h2>
             <button 
               onClick={() => setIsOpen(false)}
-              className="w-10 h-10 rounded-full bg-[var(--bg-1)] border border-[var(--b)] flex items-center justify-center text-[var(--t2)]"
+              className="w-10 h-10 rounded-full apple-glass-pill flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
@@ -64,7 +64,7 @@ export const QuickFillModal = ({
           <div className="flex-1 overflow-y-auto px-6 pt-4 pb-[calc(64px+env(safe-area-inset-bottom))] space-y-6">
             {/* Smart Fill Preset: 1st to Today */}
             {smartFillPreview && smartFillPreview.canSmartFill && (
-              <div className="p-4 rounded-3xl border border-[var(--b)] bg-[var(--bg-1)] space-y-3">
+              <div className="p-4 rounded-3xl apple-glass-panel space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-[var(--a-bg)] border border-[var(--a-b)] flex items-center justify-center text-[var(--a)] shrink-0">

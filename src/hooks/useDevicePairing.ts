@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { db, Entry } from '../lib/db';
 import {
@@ -17,14 +17,17 @@ interface UseDevicePairingProps {
   loadEntries: () => Promise<void>;
   addToast: (msg: string, type?: 'info' | 'success' | 'error' | 'warning') => void;
   haptic: (pattern?: number | number[], enabled?: boolean) => void;
+  t?: (key: string) => string;
 }
 
 export const useDevicePairing = ({
   getDeviceId,
   loadEntries,
   addToast,
-  haptic
+  haptic,
+  t
 }: UseDevicePairingProps) => {
+  const tr = useMemo(() => t || ((k: string) => k), [t]);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [incomingPayload, setIncomingPayload] = useState<PairingPayload | null>(null);
 
@@ -79,7 +82,7 @@ export const useDevicePairing = ({
       if (!supabase || (!payload.at && !payload.rt && payload.entries)) {
         if (!payload.entries || payload.entries.length === 0) {
           if (!supabase) {
-            addToast('Облачная синхронизация недоступна и нет локальных записей в QR', 'error');
+            addToast(tr('Cloud sync unavailable and no local entries in QR'), 'error');
             return;
           }
         } else {
@@ -97,14 +100,14 @@ export const useDevicePairing = ({
               if (p2pEntries.length > 0) {
                 await db.saveMany(p2pEntries);
               }
-              addToast(`P2P: Данные заменены (${p2pEntries.length} записей)`, 'success');
+              addToast(`${tr('P2P: Data replaced')} (${p2pEntries.length} ${tr('entries')})`, 'success');
             } else {
               const mergeResult = mergeEntries(localEntries, p2pEntries);
               if (mergeResult.merged.length > 0) {
                 await db.saveMany(mergeResult.merged);
               }
               addToast(
-                `P2P: Синхронизировано +${mergeResult.newFromCloud} записей`,
+                `${tr('P2P: Synchronized')} +${mergeResult.newFromCloud} ${tr('entries')}`,
                 'success'
               );
             }
@@ -119,7 +122,7 @@ export const useDevicePairing = ({
             return;
           } catch (p2pErr) {
             console.error('P2P merge failed:', p2pErr);
-            addToast('Ошибка P2P синхронизации', 'error');
+            addToast(tr('P2P sync error'), 'error');
             return;
           }
         }
@@ -174,7 +177,7 @@ export const useDevicePairing = ({
           if (cloudEntries.length > 0) {
             await db.saveMany(cloudEntries);
           }
-          addToast(`Данные заменены: ${cloudEntries.length} записей`, 'success');
+          addToast(`${tr('Data replaced')}: ${cloudEntries.length} ${tr('entries')}`, 'success');
         } else {
           // Smart Merge
           const mergeResult = mergeEntries(localEntries, cloudEntries);
@@ -197,7 +200,7 @@ export const useDevicePairing = ({
           }
 
           addToast(
-            `Синхронизировано: +${mergeResult.newFromCloud} из облака, +${mergeResult.newFromLocal} с устройства`,
+            `${tr('Synchronized')}: +${mergeResult.newFromCloud} ${tr('from cloud')}, +${mergeResult.newFromLocal} ${tr('from device')}`,
             'success'
           );
         }
@@ -211,25 +214,25 @@ export const useDevicePairing = ({
         await loadEntries();
       } catch (err: unknown) {
         console.error('Pairing application error:', err);
-        const msg = err instanceof Error ? err.message : 'Ошибка при синхронизации';
+        const msg = err instanceof Error ? err.message : tr('Sync error');
         addToast(msg, 'error');
         throw err;
       }
     },
-    [addToast, broadcastPairSuccess, getDeviceId, haptic, loadEntries]
+    [addToast, broadcastPairSuccess, getDeviceId, haptic, loadEntries, tr]
   );
 
   const resolvePairingCode = useCallback(async (code: string): Promise<PairingPayload> => {
     const client = supabase;
     if (!client) {
-      throw new Error('Для ручного ввода требуется подключение к интернету. Отсканируйте QR камерой.');
+      throw new Error(tr('Manual code entry requires cloud connection. Please scan QR with camera.'));
     }
 
     return new Promise((resolve, reject) => {
       const channel = client.channel(`pairing:${code}`);
       const timeout = setTimeout(() => {
         client.removeChannel(channel);
-        reject(new Error('Время ожидания истекло или код не найден'));
+        reject(new Error(tr('Pairing code not found or timed out.')));
       }, 7000);
 
       channel
@@ -239,7 +242,7 @@ export const useDevicePairing = ({
           if (msg.payload?.payload) {
             resolve(msg.payload.payload);
           } else {
-            reject(new Error('Некорректный ответ от устройства'));
+            reject(new Error(tr('Invalid response from device')));
           }
         })
         .subscribe((status) => {
@@ -252,7 +255,7 @@ export const useDevicePairing = ({
           }
         });
     });
-  }, [getDeviceId]);
+  }, [getDeviceId, tr]);
 
   // Check URL query parameters for ?pair=... upon initial boot
   useEffect(() => {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import jsQR from 'jsqr';
 import { Camera, X, Zap, ZapOff, Upload, AlertCircle, Keyboard } from 'lucide-react';
 import {
@@ -30,7 +30,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   onSwitchToManualCode,
   t
 }) => {
-  const tr = t || ((k: string) => k);
+  const tr = useMemo(() => t || ((k: string) => k), [t]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);

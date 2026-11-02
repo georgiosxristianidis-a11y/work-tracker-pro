@@ -72,7 +72,7 @@ export function FinancialDashboardView({ onBackToTracker }: FinancialDashboardVi
         <button
           type="button"
           onClick={toggleViewMode}
-          title={isMockupMode ? 'Развернуть на весь экран (Fullscreen)' : 'Переключить в режим презентации (Dribbble Mockup)'}
+          title={isMockupMode ? 'Fullscreen' : 'Dribbble Mockup'}
           aria-label="Toggle Fullscreen View"
           className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/90 hover:bg-white text-slate-800 text-xs font-bold shadow-lg backdrop-blur-md transition-all active:scale-95 border border-white/60"
         >

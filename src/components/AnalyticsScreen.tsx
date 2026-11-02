@@ -127,7 +127,7 @@ export const AnalyticsScreen = ({
         >
           {/* Slide 0: Goal Widget */}
           <div className="w-full flex-shrink-0 px-1">
-            <div className="h-full p-8 rounded-card border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-between gap-6 relative overflow-hidden">
+            <div className="h-full p-8 rounded-card apple-glass-panel flex flex-col items-center justify-between gap-6 relative overflow-hidden">
               
               <div className="relative w-48 h-48 flex items-center justify-center shrink-0">
                 <svg className="absolute inset-0 w-full h-full -rotate-90">
@@ -200,7 +200,7 @@ export const AnalyticsScreen = ({
 
           {/* Slide 1: Earnings */}
           <div className="w-full flex-shrink-0 px-1">
-            <div className="h-full p-8 rounded-card border border-[var(--b)] bg-[var(--bg-1)] flex flex-col gap-6">
+            <div className="h-full p-8 rounded-card apple-glass-panel flex flex-col gap-6">
               <div className="flex flex-col mb-4 gap-3">
                 <span className="text-micro font-bold uppercase tracking-[0.2em] text-[var(--t3)]">{t('Monthly Activity')}</span>
                 
@@ -296,7 +296,7 @@ export const AnalyticsScreen = ({
 
           {/* Slide 2: Activity Map (Detailed) */}
           <div className="w-full flex-shrink-0 px-1">
-            <div className="h-full p-6 rounded-card border border-[var(--b)] bg-[var(--bg-1)] flex flex-col gap-4">
+            <div className="h-full p-6 rounded-card apple-glass-panel flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="text-[var(--t3)]" />
                 <span className="text-xs font-black text-[var(--t3)]">{t('Activity Map')}</span>
@@ -344,7 +344,7 @@ export const AnalyticsScreen = ({
 
           {/* Slide 3: Work Velocity */}
           <div className="w-full flex-shrink-0 px-1">
-            <div className="h-full p-8 rounded-card border border-[var(--b)] bg-[var(--bg-1)] flex flex-col items-center justify-center gap-6 relative overflow-hidden">
+            <div className="h-full p-8 rounded-card apple-glass-panel flex flex-col items-center justify-center gap-6 relative overflow-hidden">
               <div className="flex flex-col items-center gap-2 relative z-10">
                 <span className="text-micro font-bold uppercase tracking-[0.2em] text-[var(--t3)]">{t('Work Velocity')}</span>
                 <div className="flex items-baseline gap-1">

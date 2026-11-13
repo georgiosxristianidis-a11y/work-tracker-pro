@@ -210,7 +210,7 @@ export const useDataExport = ({
     try {
       const { jsPDF } = await import("jspdf");
       const autoTableModule = await import("jspdf-autotable");
-      const autoTable = (autoTableModule.default || autoTableModule) as any;
+      const autoTable = (autoTableModule.default || autoTableModule) as (doc: unknown, options: Record<string, unknown>) => void;
 
       if (!returnFile) addToast('Generating PDF Report...', 'info');
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });

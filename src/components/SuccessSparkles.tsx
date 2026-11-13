@@ -63,7 +63,7 @@ export const SuccessSparkles = ({
       handleRef.current?.dispose();
       handleRef.current = null;
     };
-  }, [active]);
+  }, [active, count, duration, glyph]);
 
   return (
     <canvas

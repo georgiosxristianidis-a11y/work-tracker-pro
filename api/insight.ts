@@ -6,7 +6,7 @@ const ALLOWED_LANGS = ['English', 'Russian', 'Greek'];
 const MAX_BODY_BYTES = 10_000;
 const MAX_HISTORY_CHARS = 4000;
 
-const PROD_ORIGIN = 'https://work-tracker-pro-kohl.vercel.app';
+const PROD_ORIGIN = process.env.APP_ORIGIN || 'https://work-tracker-pro-kohl.vercel.app';
 
 function isAllowedOrigin(req: Request): boolean {
   // Origin on fetch POSTs; fall back to Referer. Absent both -> reject
@@ -15,7 +15,15 @@ function isAllowedOrigin(req: Request): boolean {
   if (!source) return false;
   try {
     const url = new URL(source);
+
+    // Allow same-origin requests dynamically (custom domain / preview host)
+    const hostHeader = req.headers.get('host');
+    if (hostHeader && (url.host === hostHeader || url.hostname === hostHeader.split(':')[0])) {
+      return true;
+    }
+
     if (url.origin === PROD_ORIGIN) return true;
+
     // Non-production deployments (vercel dev / preview): allow localhost and preview URLs
     if (process.env.VERCEL_ENV !== 'production') {
       const host = url.hostname;
@@ -76,7 +84,8 @@ CRITICAL RULES:
 6. Do NOT use any markdown formatting like bolding or stars.
 History: ${history}`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`, {
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

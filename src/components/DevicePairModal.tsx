@@ -503,7 +503,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                       onCopied={() => addToast(tr('Pairing link copied'), 'success')}
                       onRefresh={generateUrl}
                     />
-                    {localEntriesCount > 15 && (
+                    {localEntriesCount > 8 && (
                       <div className={`mt-4 w-full p-3.5 rounded-2xl border text-center transition-all ${
                         isDark ? 'bg-zinc-900/60 border-[var(--b)]' : 'bg-zinc-50 border-[var(--b)]'
                       }`}>

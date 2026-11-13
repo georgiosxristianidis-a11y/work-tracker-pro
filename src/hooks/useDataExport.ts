@@ -154,8 +154,8 @@ export const useDataExport = ({
         triggerBlobDownload(file as Blob, file.name);
         addToast('File downloaded', 'success');
       }
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
+    } catch (e: unknown) {
+      if ((e as Error)?.name !== 'AbortError') {
         addToast('Sharing failed', 'error');
         console.error(e);
       }
@@ -327,7 +327,7 @@ export const useDataExport = ({
         doc.setTextColor(C.gold[0], C.gold[1], C.gold[2]);
         doc.text('DAILY WORK LOG', 15, 13);
         
-        const dayRows: any[] = [];
+        const dayRows: (string | number)[][] = [];
         stats.forEach(s => {
           s.entries.sort((a, b) => a.date.localeCompare(b.date)).forEach(e => {
             const isOT = e.hours > normal;

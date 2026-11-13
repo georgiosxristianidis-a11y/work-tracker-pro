@@ -74,7 +74,7 @@ const EntryItem = memo(({ e, calcEarnings, settings, curSym, deleteEntry, haptic
 EntryItem.displayName = 'EntryItem';
 
 interface EmptyStateBtnProps {
-  setScreen: (screen: any) => void;
+  setScreen: DashboardWidgetsProps['setScreen'];
   t: (key: string) => string;
   haptic?: (pattern: number | number[]) => void;
 }

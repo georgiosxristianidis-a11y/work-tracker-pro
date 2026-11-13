@@ -110,7 +110,7 @@ export const EditorModal = ({
               drag="y"
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.8 }}
-              onDragEnd={(e: any, { offset, velocity }: any) => {
+              onDragEnd={(_event, { offset, velocity }) => {
                 if (offset.y > 50 || velocity.y > 200) {
                   closeEditor();
                 }

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { db } from '../lib/db';
+import { AppSettings } from '../constants';
 
 export function useAiInsight(
-  settings: any,
+  settings: AppSettings,
   addToast: (msg: string, type: 'info' | 'success' | 'warning' | 'error') => void
 ) {
   const [aiInsight, setAiInsight] = useState<string | null>(null);

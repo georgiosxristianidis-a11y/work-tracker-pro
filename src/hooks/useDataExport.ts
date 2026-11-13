@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { db } from '../lib/db';
+import { db, Entry } from '../lib/db';
 import { AppSettings, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../constants';
 import { formatMoney } from '../lib/utils';
 
@@ -23,6 +23,63 @@ const triggerBlobDownload = (blob: Blob, filename: string) => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
+const generateReportText = (
+  allEntries: Entry[],
+  viewDate: Date,
+  settings: AppSettings,
+  curSym: string,
+  calcEarnings: (hours: number) => number
+): string => {
+  const mStr = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
+  const mNames = settings.language === 'RUS' ? MONTH_NAMES_RUS : settings.language === 'GR' ? MONTH_NAMES_GR : MONTH_NAMES;
+  const currentMonthName = mNames[viewDate.getMonth()];
+
+  const monthEntries = allEntries.filter(e => e.date.startsWith(mStr));
+  let monthH = 0;
+  let monthE = 0;
+  monthEntries.forEach(e => {
+    monthH += e.hours;
+    monthE += calcEarnings(e.hours);
+  });
+
+  let totalH = 0;
+  let totalE = 0;
+  allEntries.forEach(e => {
+    totalH += e.hours;
+    totalE += calcEarnings(e.hours);
+  });
+
+  let txt = `╔══════════════════════════════════════╗\n`;
+  txt += `║        WORK TRACKER — REPORT         ║\n`;
+  txt += `╚══════════════════════════════════════╝\n\n`;
+  txt += `[USER]:     Professional\n`;
+  txt += `[RATE]:     ${curSym}${settings.rate}/h\n`;
+  txt += `[OVERTIME]: ${curSym}${settings.overtime}/h\n`;
+  txt += `[PERIOD]:   ${currentMonthName} ${viewDate.getFullYear()}\n\n`;
+  txt += `────────── MONTH SUMMARY ──────────\n`;
+  txt += `[MONTH HOURS]:  ${monthH}h (${monthEntries.length} days)\n`;
+  txt += `[MONTH EARNED]: ${curSym}${formatMoney(monthE)}\n\n`;
+  txt += `────────── ALL-TIME TOTALS ──────────\n`;
+  txt += `[TOTAL HOURS]:  ${totalH}h (${allEntries.length} days)\n`;
+  txt += `[TOTAL EARNED]: ${curSym}${formatMoney(totalE)}\n\n`;
+
+  txt += `────────── DAILY ENTRIES ──────────\n`;
+  allEntries
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .forEach(e => {
+      txt += `──────────────────────────────────────\n`;
+      txt += `[DATE]:     ${e.date}\n`;
+      txt += `[STATUS]:   Work Day\n`;
+      txt += `[HOURS]:    ${e.hours}h\n`;
+      txt += `[EARNED]:   ${curSym}${formatMoney(calcEarnings(e.hours))}\n`;
+    });
+
+  txt += `\n══════════════════════════════════════\n`;
+  txt += settings.language === 'RUS' ? `Создано Work Tracker Pro\n` : `Created by Work Tracker Pro\n`;
+  return txt;
+};
+
 export const useDataExport = ({
   settings, curSym, viewDate, calcEarnings, addToast, haptic
 }: UseDataExportProps) => {
@@ -40,39 +97,7 @@ export const useDataExport = ({
 
   const exportTXT = async () => {
     const allEntries = await db.getAllEntries();
-    
-    let totalH = 0;
-    let totalE = 0;
-    allEntries.forEach(e => {
-      totalH += e.hours;
-      totalE += calcEarnings(e.hours);
-    });
-
-    const mNames = settings.language === 'RUS' ? MONTH_NAMES_RUS : settings.language === 'GR' ? MONTH_NAMES_GR : MONTH_NAMES;
-    const currentMonthName = mNames[viewDate.getMonth()];
-
-    let txt = `╔══════════════════════════════════════╗\n`;
-    txt += `║        WORK TRACKER — REPORT         ║\n`;
-    txt += `╚══════════════════════════════════════╝\n\n`;
-    txt += `[USER]:     Professional\n`;
-    txt += `[RATE]:     ${curSym}${settings.rate}/h\n`;
-    txt += `[OVERTIME]: ${curSym}${settings.overtime}/h\n`;
-    txt += `[PERIOD]:   ${currentMonthName} ${viewDate.getFullYear()}\n\n`;
-    txt += `────────── PERFORMANCE ──────────\n`;
-    txt += `[HOURS]:    ${totalH}h\n`;
-    txt += `[EARNED]:   ${curSym}${formatMoney(totalE)}\n\n`;
-
-    allEntries.sort((a,b) => b.date.localeCompare(a.date)).forEach(e => {
-      txt += `──────────────────────────────────────\n`;
-      txt += `[DATE]:     ${e.date}\n`;
-      txt += `[STATUS]:   Work Day\n`;
-      txt += `[HOURS]:    ${e.hours}h\n`;
-      txt += `[EARNED]:   ${curSym}${formatMoney(calcEarnings(e.hours))}\n`;
-    });
-    
-    txt += `\n══════════════════════════════════════\n`;
-    txt += settings.language === 'RUS' ? `Создано Work Tracker Pro\n` : `Created by Work Tracker Pro\n`;
-
+    const txt = generateReportText(allEntries, viewDate, settings, curSym, calcEarnings);
     const blob = new Blob([txt], { type: 'text/plain' });
     triggerBlobDownload(blob, 'work-tracker-report.txt');
     addToast('TXT Exported', 'success');
@@ -98,33 +123,7 @@ export const useDataExport = ({
         const pdfFile = await exportPDF('6months', true);
         if (pdfFile) file = pdfFile;
       } else if (format === 'txt') {
-        let totalH = 0;
-        let totalE = 0;
-        allEntries.forEach(e => {
-          totalH += e.hours;
-          totalE += calcEarnings(e.hours);
-        });
-        const mNames = settings.language === 'RUS' ? MONTH_NAMES_RUS : settings.language === 'GR' ? MONTH_NAMES_GR : MONTH_NAMES;
-        const currentMonthName = mNames[viewDate.getMonth()];
-        let txt = `╔══════════════════════════════════════╗\n`;
-        txt += `║        WORK TRACKER — REPORT         ║\n`;
-        txt += `╚══════════════════════════════════════╝\n\n`;
-        txt += `[USER]:     Professional\n`;
-        txt += `[RATE]:     ${curSym}${settings.rate}/h\n`;
-        txt += `[OVERTIME]: ${curSym}${settings.overtime}/h\n`;
-        txt += `[PERIOD]:   ${currentMonthName} ${viewDate.getFullYear()}\n\n`;
-        txt += `────────── PERFORMANCE ──────────\n`;
-        txt += `[HOURS]:    ${totalH}h\n`;
-        txt += `[EARNED]:   ${curSym}${formatMoney(totalE)}\n\n`;
-        allEntries.sort((a,b) => b.date.localeCompare(a.date)).forEach(e => {
-          txt += `──────────────────────────────────────\n`;
-          txt += `[DATE]:     ${e.date}\n`;
-          txt += `[STATUS]:   Work Day\n`;
-          txt += `[HOURS]:    ${e.hours}h\n`;
-          txt += `[EARNED]:   ${curSym}${formatMoney(calcEarnings(e.hours))}\n`;
-        });
-        txt += `\n══════════════════════════════════════\n`;
-        txt += settings.language === 'RUS' ? `Создано Work Tracker Pro\n` : `Created by Work Tracker Pro\n`;
+        const txt = generateReportText(allEntries, viewDate, settings, curSym, calcEarnings);
         const blob = new Blob([txt], { type: 'text/plain' });
         file = new File([blob], 'work-tracker-report.txt', { type: 'text/plain' });
       } else if (format === 'csv') {

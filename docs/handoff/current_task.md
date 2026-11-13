@@ -1,11 +1,13 @@
 # TASK HANDOFF: main
-- **Timestamp**: 2026-11-13T17:51:18.109Z
+- **Timestamp**: 2026-11-13T18:38:35.399Z
 - **Branch**: main
-- **Last Commit**: 8ceb700 feat(core): fix storage persistence, store error propagation, and memory leaks
+- **Last Commit**: 9ed922b docs: update handoff state after core fixes
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
+M src/hooks/useDataExport.ts
+ M src/lib/db.ts
 ?? NEXT_SESSION.md
 ```
 

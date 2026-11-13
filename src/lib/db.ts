@@ -19,8 +19,8 @@ export class WorkDB {
   async init() {
     return new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VER);
-      request.onupgradeneeded = (e: any) => {
-        const db = e.target.result;
+      request.onupgradeneeded = () => {
+        const db = request.result;
         if (!db.objectStoreNames.contains('entries')) {
           const s = db.createObjectStore('entries', { keyPath: 'date' });
           s.createIndex('by_month', 'month', { unique: false });
@@ -29,11 +29,11 @@ export class WorkDB {
           db.createObjectStore('settings', { keyPath: 'key' });
         }
       };
-      request.onsuccess = (e: any) => {
-        this.db = e.target.result;
+      request.onsuccess = () => {
+        this.db = request.result;
         resolve();
       };
-      request.onerror = (e: any) => reject(e.target.error);
+      request.onerror = () => reject(request.error);
     });
   }
 
@@ -119,7 +119,7 @@ export class WorkDB {
     });
   }
 
-  async setSetting(key: string, value: any) {
+  async setSetting(key: string, value: unknown) {
     return new Promise((res, rej) => {
       const req = this.tx('settings', 'readwrite').put({ key, value });
       req.onsuccess = () => res(true);

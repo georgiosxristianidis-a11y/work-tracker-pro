@@ -28,9 +28,23 @@ interface TopbarProps {
 export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
   const screen = useAppStore(s => s.screen);
   const setScreen = useAppStore(s => s.setScreen);
-  const settings = useAppStore(s => s.settings);
+  const privacyMode = useAppStore(s => s.settings.privacyMode);
   const setSettings = useAppStore(s => s.setSettings);
-  const isOnline = navigator.onLine && !strictMode;
+
+  const [isOnlineState, setIsOnlineState] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnlineState(true);
+    const handleOffline = () => setIsOnlineState(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const isOnline = isOnlineState && !strictMode;
 
   return (
     <div className="absolute top-0 left-0 right-0 h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-5 flex items-center justify-between shrink-0 z-[100] apple-glass-panel border-b border-[var(--b)] shadow-xs">
@@ -76,10 +90,10 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
             setSettings(s => ({ ...s, privacyMode: !s.privacyMode }));
           }}
           className="w-9 h-9 flex items-center justify-center rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] transition-all active:scale-92"
-          aria-label={settings.privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
-          title={settings.privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
+          aria-label={privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
+          title={privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
         >
-          {settings.privacyMode ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
+          {privacyMode ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
         </button>
 
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold apple-glass-pill text-[var(--t2)] shrink-0 transition-all">

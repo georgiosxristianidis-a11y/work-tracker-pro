@@ -111,6 +111,12 @@ export default function App() {
       try {
         await db.init();
 
+        // Request persistent storage to prevent iOS Safari / WebKit from
+        // evicting IndexedDB after 7 days of inactivity (ITP policy).
+        // The call is fire-and-forget: a rejection or `false` is harmless —
+        // the app continues in best-effort storage mode.
+        navigator.storage?.persist().catch(() => {});
+
         // Migrate from old version
         const migratedCount = await migrateFromLocalStorage();
         if (migratedCount > 0) {
@@ -254,9 +260,13 @@ export default function App() {
   // --- Actions ---
   const saveEntry = useCallback(async (date: string, hours: number) => {
     h(20);
-    await storeSaveEntry(date, hours);
-    scheduleBackgroundSync();
-  }, [h, storeSaveEntry, scheduleBackgroundSync]);
+    try {
+      await storeSaveEntry(date, hours);
+      scheduleBackgroundSync();
+    } catch {
+      addToast(t('Failed to save entry'), 'error');
+    }
+  }, [h, storeSaveEntry, scheduleBackgroundSync, addToast, t]);
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
     h([20, 20]);
@@ -271,18 +281,22 @@ export default function App() {
 
   const deleteEntry = useCallback(async (date: string) => {
     h([30, 50]);
-    const existing = useAppStore.getState().allEntries.find(e => e.date === date);
-    await storeDeleteEntry(date);
-    deleteEntryFromCloud(date);
-    const msg = existing ? `${t('Entry deleted')} (${existing.hours}h)` : t('Entry deleted');
-    addToast(msg, 'warning', {
-      label: t('Undo'),
-      onClick: async () => {
-        const store = useAppStore.getState();
-        await store.undoDelete();
-        scheduleBackgroundSync();
-      }
-    });
+    try {
+      const existing = useAppStore.getState().allEntries.find(e => e.date === date);
+      await storeDeleteEntry(date);
+      deleteEntryFromCloud(date);
+      const msg = existing ? `${t('Entry deleted')} (${existing.hours}h)` : t('Entry deleted');
+      addToast(msg, 'warning', {
+        label: t('Undo'),
+        onClick: async () => {
+          const store = useAppStore.getState();
+          await store.undoDelete();
+          scheduleBackgroundSync();
+        }
+      });
+    } catch {
+      addToast(t('Failed to delete entry'), 'error');
+    }
   }, [h, storeDeleteEntry, deleteEntryFromCloud, addToast, t, scheduleBackgroundSync]);
 
   const {

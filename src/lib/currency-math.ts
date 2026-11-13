@@ -38,7 +38,8 @@ export class CurrencyMath {
       }
     }
 
-    const clean = trimmed.replace(/,/g, '').trim();
+    const clean = trimmed.replace(/[^0-9.-]/g, '');
+    if (!clean || clean === '-' || clean === '.') return 0n;
     const isNegative = clean.startsWith('-');
     const absStr = isNegative ? clean.slice(1) : clean;
     const parts = absStr.split('.');

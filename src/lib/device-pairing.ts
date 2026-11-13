@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Entry } from './db';
+import type { Entry } from './db.ts';
 
 export const PAIRING_QR_TTL_MS = 10 * 60 * 1000; // 10 minutes TTL
 

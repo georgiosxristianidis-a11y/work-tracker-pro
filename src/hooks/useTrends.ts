@@ -10,9 +10,10 @@ export function useTrends(
   viewDate: Date,
   chartPeriod: number
 ) {
+  const { rate, overtime, normal } = settings;
   const calcEarnings = useCallback((hours: number) => {
-    return computeEarnings(hours, settings);
-  }, [settings.rate, settings.overtime, settings.normal]);
+    return computeEarnings(hours, { rate, overtime, normal });
+  }, [rate, overtime, normal]);
 
   const totalEarned = useMemo(() => {
     const base = entries.reduce((s, e) => s + calcEarnings(e.hours), 0);

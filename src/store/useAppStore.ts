@@ -119,13 +119,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   saveEntry: async (date: string, hours: number) => {
-    try {
-      const entry = { date, hours, month: date.slice(0, 7) };
-      await db.saveEntry(entry);
-      await get().loadEntries();
-    } catch (e) {
-      console.error(e);
-    }
+    const entry = { date, hours, month: date.slice(0, 7) };
+    await db.saveEntry(entry);
+    await get().loadEntries();
   },
 
   saveMany: async (entries: Entry[]) => {
@@ -140,38 +136,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   deleteEntry: async (date: string) => {
-    try {
-      const existing = get().allEntries.find(e => e.date === date);
-      if (existing) {
-        // If we are deleting a single entry, add it to the buffer (but maybe don't overwrite if we are batch deleting, though we don't have batch delete here)
-        set({ undoBuffer: [existing] });
-      }
-
-      await db.deleteEntry(date);
-      await get().loadEntries();
-    } catch (e) {
-      console.error(e);
+    const existing = get().allEntries.find(e => e.date === date);
+    if (existing) {
+      set({ undoBuffer: [existing] });
     }
+    await db.deleteEntry(date);
+    await get().loadEntries();
   },
 
   clearAllData: async () => {
-    try {
-      set({ undoBuffer: [...get().allEntries] });
-      await db.clearAll();
-      set({ entries: [], yearEntries: [], allEntries: [] });
-    } catch (e) {
-      console.error(e);
-    }
+    set({ undoBuffer: [...get().allEntries] });
+    await db.clearAll();
+    set({ entries: [], yearEntries: [], allEntries: [] });
   },
 
   undoDelete: async () => {
-    try {
-      const buffer = get().undoBuffer;
-      await db.saveMany(buffer);
-      set({ undoBuffer: [] });
-      await get().loadEntries();
-    } catch (e) {
-      console.error(e);
-    }
+    const buffer = get().undoBuffer;
+    await db.saveMany(buffer);
+    set({ undoBuffer: [] });
+    await get().loadEntries();
   }
 }));

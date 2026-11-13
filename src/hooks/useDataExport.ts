@@ -12,6 +12,17 @@ interface UseDataExportProps {
   haptic: (pattern?: number | number[]) => void;
 }
 
+const triggerBlobDownload = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 export const useDataExport = ({
   settings, curSym, viewDate, calcEarnings, addToast, haptic
 }: UseDataExportProps) => {
@@ -23,9 +34,7 @@ export const useDataExport = ({
     allEntries.forEach(e => rows.push([e.date, e.hours.toString(), formatMoney(calcEarnings(e.hours))]));
     const csv = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'work-tracker.csv'; a.click();
+    triggerBlobDownload(blob, 'work-tracker.csv');
     addToast('CSV Exported', 'success');
   };
 
@@ -65,9 +74,7 @@ export const useDataExport = ({
     txt += settings.language === 'RUS' ? `Создано Work Tracker Pro\n` : `Created by Work Tracker Pro\n`;
 
     const blob = new Blob([txt], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'work-tracker-report.txt'; a.click();
+    triggerBlobDownload(blob, 'work-tracker-report.txt');
     addToast('TXT Exported', 'success');
   };
 
@@ -145,11 +152,7 @@ export const useDataExport = ({
         });
         addToast('Shared successfully', 'success');
       } else if (file) {
-        const url = URL.createObjectURL(file as Blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file.name;
-        a.click();
+        triggerBlobDownload(file as Blob, file.name);
         addToast('File downloaded', 'success');
       }
     } catch (e: any) {
@@ -185,11 +188,7 @@ export const useDataExport = ({
     ics += `END:VCALENDAR`;
     
     const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; 
-    a.download = 'work-shifts.ics'; 
-    a.click();
+    triggerBlobDownload(blob, 'work-shifts.ics');
     addToast('Calendar (.ics) Exported', 'success');
   };
 
@@ -197,9 +196,7 @@ export const useDataExport = ({
     const allEntries = await db.getAllEntries();
     const data = { entries: allEntries, settings };
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'work-tracker-backup.json'; a.click();
+    triggerBlobDownload(blob, 'work-tracker-backup.json');
     addToast('Backup Downloaded', 'success');
   };
 

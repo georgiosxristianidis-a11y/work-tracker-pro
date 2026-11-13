@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { CELEBRATION_PRESETS } from '../lib/particle-celebration';
 
@@ -48,7 +48,7 @@ export function useCelebration({
   const prevEarnedRef = useRef(totalEarned);
   const isInitialMount = useRef(true);
 
-  const triggerHaptic = (pattern: number | number[]) => {
+  const triggerHaptic = useCallback((pattern: number | number[]) => {
     if (typeof window === 'undefined' || !('vibrate' in navigator)) return;
     if (settings.hapticEnabled === false) return;
     try {
@@ -56,7 +56,7 @@ export function useCelebration({
     } catch (_) {
       // Ignore if vibration is restricted by browser context
     }
-  };
+  }, [settings.hapticEnabled]);
 
   useEffect(() => {
     // If month view changed, re-sync baseline without celebration
@@ -147,7 +147,7 @@ export function useCelebration({
       });
       return;
     }
-  }, [totalEarned, goal, currentMonthKey, allEntries, curSym, calcEarnings, settings.hapticEnabled]);
+  }, [totalEarned, goal, currentMonthKey, allEntries, curSym, calcEarnings, triggerHaptic]);
 
   // Auto-dismiss active state after animation completes
   useEffect(() => {

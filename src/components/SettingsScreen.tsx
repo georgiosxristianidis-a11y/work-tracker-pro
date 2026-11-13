@@ -45,19 +45,27 @@ export const SettingsScreen = ({
   });
   const { isInstallable, promptInstall } = usePWAInstall();
 
+  const supabaseDashboardUrl = React.useMemo(() => {
+    const rawUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    const match = rawUrl.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/);
+    return match ? `https://supabase.com/dashboard/project/${match[1]}` : 'https://supabase.com/dashboard';
+  }, []);
+
   const [localRate, setLocalRate] = React.useState(settings.rate === 0 ? '' : settings.rate.toString());
   const [localGoal, setLocalGoal] = React.useState(settings.goal === 0 ? '' : settings.goal.toString());
 
   React.useEffect(() => {
-    if (parseFloat(localRate || '0') !== settings.rate) {
-      setLocalRate(settings.rate === 0 ? '' : settings.rate.toString());
-    }
+    setLocalRate(prev => {
+      const current = parseFloat(prev || '0');
+      return current !== settings.rate ? (settings.rate === 0 ? '' : settings.rate.toString()) : prev;
+    });
   }, [settings.rate]);
 
   React.useEffect(() => {
-    if (parseFloat(localGoal || '0') !== settings.goal) {
-      setLocalGoal(settings.goal === 0 ? '' : settings.goal.toString());
-    }
+    setLocalGoal(prev => {
+      const current = parseFloat(prev || '0');
+      return current !== settings.goal ? (settings.goal === 0 ? '' : settings.goal.toString()) : prev;
+    });
   }, [settings.goal]);
 
   const [devTapCount, setDevTapCount] = React.useState(0);
@@ -526,7 +534,7 @@ export const SettingsScreen = ({
                 </span>
               </div>
               <a
-                href="https://supabase.com/dashboard/project/ablpnwoounkfumesqrph"
+                href={supabaseDashboardUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="text-[10px] font-bold text-amber-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1"

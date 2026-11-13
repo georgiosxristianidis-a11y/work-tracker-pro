@@ -4,9 +4,11 @@ export function useDoubleTap(action: () => void, timeout = 3000) {
   const [isConfirming, setIsConfirming] = useState(false);
   
   useEffect(() => {
-    let t: any;
+    let t: ReturnType<typeof setTimeout> | undefined;
     if (isConfirming) t = setTimeout(() => setIsConfirming(false), timeout);
-    return () => clearTimeout(t);
+    return () => {
+      if (t) clearTimeout(t);
+    };
   }, [isConfirming, timeout]);
   
   return {

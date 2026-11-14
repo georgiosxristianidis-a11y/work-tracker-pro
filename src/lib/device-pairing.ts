@@ -140,9 +140,10 @@ export function buildPairingUrl(encodedPayload: string, code?: string): string {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const codeParam = code ? `&code=${encodeURIComponent(code)}` : '';
 
-  // In local development (localhost / 127.0.0.1), use the production domain so phone cameras open the live web app
+  // In local development (localhost / 127.0.0.1), use the configured production origin so phone cameras open the live web app
   const isLocal = !origin || origin.includes('localhost') || origin.includes('127.0.0.1');
-  const baseOrigin = isLocal ? 'https://work-tracker-pro-kohl.vercel.app' : origin;
+  const envOrigin = (import.meta as { env?: { VITE_APP_ORIGIN?: string } }).env?.VITE_APP_ORIGIN;
+  const baseOrigin = isLocal ? (envOrigin || 'https://work-tracker-pro-kohl.vercel.app') : origin;
 
   return `${baseOrigin}${pathname}?pair=${encodeURIComponent(encodedPayload)}${codeParam}`;
 }

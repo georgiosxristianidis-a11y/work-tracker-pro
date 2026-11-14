@@ -46,8 +46,8 @@ export function SmartImportModal() {
           isError: false
         });
       }
-    } catch (err: any) {
-      setFeedback({ text: `Upload failed: ${err?.message || 'Unknown error'}`, isError: true });
+    } catch (err: unknown) {
+      setFeedback({ text: `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`, isError: true });
     } finally {
       setIsProcessing(false);
     }

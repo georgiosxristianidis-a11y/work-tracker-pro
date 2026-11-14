@@ -12,6 +12,11 @@ interface UseDataExportProps {
   haptic: (pattern?: number | number[]) => void;
 }
 
+const escapeCsvCell = (val: string): string => {
+  const safe = /^[=+\-@\t\r]/.test(val) ? `'${val}` : val;
+  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+};
+
 const triggerBlobDownload = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -89,7 +94,7 @@ export const useDataExport = ({
     const allEntries = await db.getAllEntries();
     const rows = [['Date', 'Hours', 'Earned']];
     allEntries.forEach(e => rows.push([e.date, e.hours.toString(), formatMoney(calcEarnings(e.hours))]));
-    const csv = rows.map(r => r.join(',')).join('\n');
+    const csv = rows.map(r => r.map(escapeCsvCell).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     triggerBlobDownload(blob, 'work-tracker.csv');
     addToast('CSV Exported', 'success');
@@ -129,7 +134,7 @@ export const useDataExport = ({
       } else if (format === 'csv') {
         const rows = [['Date', 'Hours', 'Earned']];
         allEntries.forEach(e => rows.push([e.date, e.hours.toString(), formatMoney(calcEarnings(e.hours))]));
-        const csv = rows.map(r => r.join(',')).join('\n');
+        const csv = rows.map(r => r.map(escapeCsvCell).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         file = new File([blob], 'work-tracker.csv', { type: 'text/csv' });
       } else if (format === 'json') {
@@ -170,7 +175,7 @@ export const useDataExport = ({
     allEntries.forEach((e, idx) => {
       const d = new Date(e.date);
       const start = e.date.replace(/-/g, '');
-      d.setDate(d.getDate() + 1);
+      d.setUTCDate(d.getUTCDate() + 1);
       const end = d.toISOString().split('T')[0].replace(/-/g, '');
       const earned = formatMoney(calcEarnings(e.hours));
       

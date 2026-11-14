@@ -30,7 +30,7 @@ function isAllowedOrigin(req: Request): boolean {
       return (
         host === 'localhost' ||
         host === '127.0.0.1' ||
-        host.endsWith('.vercel.app')
+        (host.startsWith('work-tracker-pro') && host.endsWith('.vercel.app'))
       );
     }
   } catch {
@@ -67,7 +67,7 @@ export default async function handler(req: Request) {
     if (typeof body.history !== 'string' || body.history.length === 0) {
       return new Response(JSON.stringify({ error: 'Invalid history' }), { status: 400 });
     }
-    const history = body.history.slice(0, MAX_HISTORY_CHARS);
+    const history = body.history.replace(/[\u0000-\u001F<>]/g, ' ').slice(0, MAX_HISTORY_CHARS);
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -82,7 +82,7 @@ CRITICAL RULES:
 4. Be extremely concise, no fluff, just 3 specific actionable points.
 5. ABSOLUTELY NO EMOJIS. Use strict, corporate typographic symbols for list items (e.g., "▪" or "—").
 6. Do NOT use any markdown formatting like bolding or stars.
-History: ${history}`;
+History: <history>${history}</history>`;
 
     const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
@@ -92,6 +92,7 @@ History: ${history}`;
       },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 300, temperature: 0.3 },
       }),
     });
 

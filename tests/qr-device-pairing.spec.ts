@@ -41,4 +41,51 @@ test.describe('QR Device Pairing E2E', () => {
     await expect(page).not.toHaveURL(/pair=/);
     await expect(page.locator('h4', { hasText: 'Device Detected' })).toHaveCount(0);
   });
+
+  test('4. Dual-device handshake: Guest scans Host QR screenshot & both reach Device Connected', async ({ context }) => {
+    const hostPage = await context.newPage();
+    await hostPage.goto('/');
+
+    // Add 1 work shift entry on Host so offline QR embeds payload.entries
+    await hostPage.locator('nav button').nth(1).click();
+    await hostPage.locator('button', { hasText: /^15$/ }).first().click({ button: 'right' });
+    const saveBtn = hostPage.locator('button', { hasText: 'Save' });
+    await expect(saveBtn).toBeVisible();
+    await saveBtn.click();
+    await expect(saveBtn).not.toBeVisible();
+
+    // Open Host pairing modal and capture real rendered QR plate PNG
+    await hostPage.locator('nav button').nth(3).click();
+    await hostPage.locator('button', { hasText: /Pair Device \(QR Code\)/i }).click();
+    const qrCanvas = hostPage.locator('[data-testid="branded-qr-canvas"]');
+    await expect(qrCanvas.locator('svg')).toBeVisible({ timeout: 5000 });
+    await hostPage.waitForTimeout(400);
+    const qrBuffer = await qrCanvas.locator('xpath=..').screenshot();
+
+    // Open Guest in same context (shares BroadcastChannel) with distinct device_id
+    const guestPage = await context.newPage();
+    await guestPage.addInitScript(() => {
+      const origGetItem = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (key: string) {
+        if (key === 'device_id') return 'guest-device-e2e';
+        return origGetItem.call(this, key);
+      };
+    });
+    await guestPage.goto('/');
+    await guestPage.locator('nav button').nth(3).click();
+    await guestPage.locator('button', { hasText: /Pair Device \(QR Code\)/i }).click();
+    await guestPage.locator('button', { hasText: 'Have a code?' }).click();
+    await guestPage.locator('button', { hasText: 'Open Scanner' }).click();
+
+    // Upload Host's rendered QR screenshot directly into Guest scanner
+    const fileInput = guestPage.locator('input[type="file"][accept="image/*"]').last();
+    await fileInput.setInputFiles({ name: 'host-qr.png', mimeType: 'image/png', buffer: qrBuffer });
+
+    await expect(guestPage.locator('h4', { hasText: 'Device Detected' })).toBeVisible({ timeout: 5000 });
+    await guestPage.locator('button', { hasText: 'Merge entries (Smart Merge)' }).click();
+
+    // Verify dual-screen live confirmation (Elara pattern)
+    await expect(guestPage.locator('h4', { hasText: 'Device Connected' })).toBeVisible({ timeout: 5000 });
+    await expect(hostPage.locator('h4', { hasText: 'Device Connected' })).toBeVisible({ timeout: 5000 });
+  });
 });

@@ -36,6 +36,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const lastScanTimeRef = useRef<number>(0);
+  const hasScannedRef = useRef<boolean>(false);
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -56,6 +57,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
   const handleDetectedCode = useCallback(
     (rawValue: string) => {
+      if (hasScannedRef.current) return;
       const payload = decodePairingPayload(rawValue);
       if (payload) {
         if (isPairingPayloadExpired(payload)) {
@@ -64,6 +66,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           );
           return;
         }
+        hasScannedRef.current = true;
         stopCamera();
         onScanSuccess(payload);
       }
@@ -119,7 +122,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
         const imageData = ctx.getImageData(0, 0, CROP_CANVAS_DIM, CROP_CANVAS_DIM);
         const code = jsQR(imageData.data, CROP_CANVAS_DIM, CROP_CANVAS_DIM, {
-          inversionAttempts: 'dontInvert'
+          inversionAttempts: 'attemptBoth'
         });
 
         if (code && code.data) {
@@ -139,6 +142,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     }
 
     let isMounted = true;
+    hasScannedRef.current = false;
 
     async function initCamera() {
       try {
@@ -227,6 +231,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           setErrorMessage(tr('No QR code detected in image'));
         }
       }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      setErrorMessage(tr('Failed to load image file'));
     };
     img.src = url;
   };

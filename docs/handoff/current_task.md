@@ -1,14 +1,14 @@
-# TASK HANDOFF: chore/zero-eslint-warnings
-- **Timestamp**: 2026-11-14T17:55:38.790Z
-- **Branch**: chore/zero-eslint-warnings
-- **Last Commit**: 430672a chore(lint): resolve final 5 eslint warnings and enforce max-warnings 0
+# TASK HANDOFF: feat/phase4-store-idb-hygiene
+- **Timestamp**: 2026-11-14T20:00:16.414Z
+- **Branch**: feat/phase4-store-idb-hygiene
+- **Last Commit**: fd6a4e9 refactor(core): isolate zustand settings persistence and add idb migration guard
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M src/components/BrandedQRCode.tsx
- M src/lib/device-pairing.ts
-?? NEXT_SESSION.md
+M src/components/DevicePairModal.tsx
+ M src/components/QRScannerModal.tsx
+ M tests/qr-device-pairing.spec.ts
 ```
 
 ## Next Action

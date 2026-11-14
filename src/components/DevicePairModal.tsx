@@ -269,7 +269,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
 
   const handleScanSuccess = (payload: PairingPayload) => {
     setIsScannerOpen(false);
-    if (payload.uid === deviceId) {
+    if ((payload.dev ?? payload.uid) === deviceId) {
       addToast(tr('You scanned the code of this same device'), 'info');
       return;
     }

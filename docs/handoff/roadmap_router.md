@@ -1,14 +1,14 @@
 # WORK TRACKER PRO — ACTIVE ROADMAP ROUTER
-- **Active Phase**: Post-Calendar Polish & System Alignment
+- **Active Phase**: Phase 4 — Core Store & IndexedDB Hygiene
 - **Protocol**: 1 Session = 1 Card | Machine Gate = Exit Code 0
 
 ## Execution Queue
 1. [Card 01: Analytics & Charts Elite Redesign](01_analytics_charts_redesign.md)
-   - Priority: #1 | Files: `AnalyticsScreen.tsx`, `AnalyticsChart.tsx`
+   - Priority: #1 | Files: `AnalyticsScreen.tsx`, `AnalyticsChart.tsx` | Status: Complete
 2. [Card 02: Home Dashboard Elite Rhythm & Metrics Sync](02_home_dashboard_sync.md)
-   - Priority: #2 | Files: `HomeScreen.tsx`, `MetricCard.tsx`
+   - Priority: #2 | Files: `HomeScreen.tsx`, `MetricCard.tsx` | Status: Complete
 3. [Card 03: Dark & Indigo Palette Deep Polish](03_dark_indigo_theme_polish.md)
-   - Priority: #3 | Files: `index.css`, `CalendarScreen.tsx`, `HomeScreen.tsx`
+   - Priority: #3 | Files: `index.css`, `CalendarScreen.tsx`, `HomeScreen.tsx` | Status: Complete
 4. [Card 04: Smart Fill to Today Preset](04_smart_fill_today.md)
    - Priority: #4 | Files: `useQuickFill.ts`, `QuickFillModal.tsx`, `CalendarScreen.tsx` | Status: Complete
 5. [Card 05: Calendar Days 3D Flip Badge](05_calendar_flip_badge.md)
@@ -19,6 +19,10 @@
    - Priority: #7 | Files: `vite.config.ts`, `.github/workflows/ci.yml` | Status: Complete
 8. Card 08: QR Cross-Device Pairing & Offline P2P Transfer
    - Priority: #8 | Files: `device-pairing.ts`, `DevicePairModal.tsx`, `useDevicePairing.ts` | Status: Complete
+9. Card 09: QR Protocol Hardening, E2E Suite & Zero ESLint Warnings
+   - Priority: #9 | Files: `device-pairing.ts`, `qr-device-pairing.spec.ts`, `package.json` | Status: Complete
+10. Card 10: Pure Zustand Settings Action & IDB Migration Guard (R2, R9)
+   - Priority: #10 | Files: `useAppStore.ts`, `db.ts` | Status: Complete
 
 ## Session Protocol
 - Take strictly ONE task card per agent session.

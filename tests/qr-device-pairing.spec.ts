@@ -88,4 +88,35 @@ test.describe('QR Device Pairing E2E', () => {
     await expect(guestPage.locator('h4', { hasText: 'Device Connected' })).toBeVisible({ timeout: 5000 });
     await expect(hostPage.locator('h4', { hasText: 'Device Connected' })).toBeVisible({ timeout: 5000 });
   });
+
+  test('5. Manual 8-char code dual-device handshake: Guest enters Host code & both reach Device Connected', async ({ context }) => {
+    const hostPage = await context.newPage();
+    await hostPage.goto('/');
+    await hostPage.locator('nav button').nth(3).click();
+    await hostPage.locator('button', { hasText: /Pair Device \(QR Code\)/i }).click();
+
+    const codeEl = hostPage.locator('span.font-mono.tracking-widest').first();
+    await expect(codeEl).toBeVisible({ timeout: 5000 });
+    const hostCode = (await codeEl.textContent())?.trim() ?? '';
+    expect(hostCode).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/);
+
+    const guestPage = await context.newPage();
+    await guestPage.addInitScript(() => {
+      const origGetItem = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (key: string) {
+        if (key === 'device_id') return 'guest-device-code-e2e';
+        return origGetItem.call(this, key);
+      };
+    });
+    await guestPage.goto('/');
+    await guestPage.locator('nav button').nth(3).click();
+    await guestPage.locator('button', { hasText: /Pair Device \(QR Code\)/i }).click();
+    await guestPage.locator('button', { hasText: 'Have a code?' }).click();
+
+    await guestPage.locator('input[placeholder="6Q9E-VUBT"]').fill(hostCode);
+    await guestPage.locator('button', { hasText: 'Link with code' }).click();
+
+    await expect(guestPage.locator('h4', { hasText: 'Device Connected' })).toBeVisible({ timeout: 5000 });
+    await expect(hostPage.locator('h4', { hasText: 'Device Connected' })).toBeVisible({ timeout: 5000 });
+  });
 });

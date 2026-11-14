@@ -48,8 +48,12 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   const [pairingCode, setPairingCode] = useState<string>('');
   const [pairingCreatedAt, setPairingCreatedAt] = useState<number>(Date.now());
   const [isGenerating, setIsGenerating] = useState(false);
-  const [pendingPayload, setPendingPayload] = useState<PairingPayload | null>(incomingPayload ?? null);
-  useEffect(() => { if (incomingPayload) setPendingPayload(incomingPayload); }, [incomingPayload]);
+  const [pendingPayload, setPendingPayload] = useState<PairingPayload | null>(
+    incomingPayload && !isPairingPayloadExpired(incomingPayload) ? incomingPayload : null
+  );
+  useEffect(() => {
+    if (incomingPayload && !isPairingPayloadExpired(incomingPayload)) setPendingPayload(incomingPayload);
+  }, [incomingPayload]);
   const [isApplying, setIsApplying] = useState(false);
   const [manualCodeInput, setManualCodeInput] = useState<string>('');
   const [isResolvingCode, setIsResolvingCode] = useState(false);
@@ -182,6 +186,8 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
           if (ev.data?.type === 'device_paired') {
             setConnectedDeviceName(ev.data?.deviceName || 'Mobile Device');
             setIsPairedSuccess(true);
+          } else if (ev.data?.type === 'request_pairing' && activePayloadRef.current) {
+            bc?.postMessage({ type: 'provide_payload', payload: activePayloadRef.current });
           }
         };
       } catch {
@@ -309,6 +315,45 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
     if (cleanCode.replace(/-/g, '').length < 8) return;
 
     if (!supabase) {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        setIsResolvingCode(true);
+        let settled = false;
+        let bc: BroadcastChannel | null = null;
+        try {
+          bc = new BroadcastChannel(`pairing_${cleanCode}`);
+          const timeout = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            bc?.close();
+            setIsResolvingCode(false);
+            addToast(tr('Manual code entry requires cloud connection. Please scan QR with camera.'), 'warning');
+          }, 1200);
+          bc.onmessage = (ev) => {
+            if (settled || ev.data?.type !== 'provide_payload') return;
+            settled = true;
+            clearTimeout(timeout);
+            bc?.close();
+            const resolvedPayload = ev.data?.payload as PairingPayload | undefined;
+            if (!resolvedPayload) {
+              setIsResolvingCode(false);
+              addToast(tr('Invalid payload received'), 'error');
+              return;
+            }
+            try {
+              handleScanSuccess(resolvedPayload);
+            } catch {
+              addToast(tr('Failed to apply pairing'), 'error');
+            } finally {
+              setIsResolvingCode(false);
+            }
+          };
+          bc.postMessage({ type: 'request_pairing', clientDeviceId: deviceId });
+          return;
+        } catch {
+          bc?.close();
+          setIsResolvingCode(false);
+        }
+      }
       addToast(tr('Manual code entry requires cloud connection. Please scan QR with camera.'), 'warning');
       return;
     }

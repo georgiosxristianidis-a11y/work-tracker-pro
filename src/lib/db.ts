@@ -19,7 +19,8 @@ export class WorkDB {
   async init() {
     return new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VER);
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        if (event.oldVersion >= DB_VER) return;
         const db = request.result;
         if (!db.objectStoreNames.contains('entries')) {
           const s = db.createObjectStore('entries', { keyPath: 'date' });

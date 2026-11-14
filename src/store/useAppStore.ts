@@ -71,13 +71,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   setUndoBuffer: (undoBuffer) => set({ undoBuffer }),
   
   settings: DEFAULT_SETTINGS,
-  setSettings: (updater) => set((state) => {
-    const newSettings = typeof updater === 'function' ? updater(state.settings) : updater;
-    // Persist gracefully, not blocking
+  setSettings: (updater) => {
+    const newSettings = typeof updater === 'function' ? updater(get().settings) : updater;
+    set({ settings: newSettings });
     db.setSetting('settings', newSettings).catch(console.error);
-    
-    return { settings: newSettings };
-  }),
+  },
 
   loadSettings: async () => {
     try {

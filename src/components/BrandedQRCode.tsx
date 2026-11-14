@@ -61,14 +61,14 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
     try {
       setRenderError(null);
 
-      // A physical QR code MUST be high-contrast dark modules on pure white background
-      // to be recognized by iOS Camera (AVFoundation) and Android Camera (Lens/MLKit).
-      // Inverted QR codes (white-on-black) fail completely in native smartphone camera apps.
+      // Dark modules on a white plate in every theme. Theme-coloured codes were inverted in dark
+      // mode and had low-contrast gold finder patterns in light mode; strict decoders rejected both.
+      // Level M keeps the matrix sparse: H/Q made the code too dense to read at a distance
+      // (verified with jsQR at 30% scale), and the 36px logo covers far less than 15% of the area.
       const qrDotsColor = '#0b0f19';
       const qrCornersColor = '#0b0f19';
       const qrBgColor = '#ffffff';
 
-      // Initialize qr-code-styling with high-contrast scan tokens and Error Correction Level H
       if (!qrCodeRef.current) {
         qrCodeRef.current = new QRCodeStyling({
           width: 250,
@@ -79,7 +79,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
-            errorCorrectionLevel: 'H'
+            errorCorrectionLevel: 'M'
           },
           dotsOptions: {
             color: qrDotsColor,
@@ -104,7 +104,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
         qrCodeRef.current.update({
           data: url,
           qrOptions: {
-            errorCorrectionLevel: 'H'
+            errorCorrectionLevel: 'M'
           },
           dotsOptions: {
             color: qrDotsColor,

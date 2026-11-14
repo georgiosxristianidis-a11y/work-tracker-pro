@@ -66,14 +66,15 @@ export function Navigation({ t }: NavigationProps) {
             setScreen(item.id as AppScreen);
             setNavClicks(c => ({ ...c, [item.id]: (c[item.id as keyof typeof c] ?? 0) + 1 }));
           }}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 relative select-none"
+          className="flex-1 h-full flex flex-col items-center justify-center gap-1 relative select-none min-w-0 px-1"
         >
           {screen === item.id && (
-            <motion.div layoutId="nav-indicator" className="absolute top-0 w-8 h-[3px] bg-[var(--a)] rounded-b-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />
+            <motion.div layoutId="nav-indicator" className="absolute inset-x-1 inset-y-2 rounded-full bg-[var(--a-bg)] border border-[var(--a-b)] pointer-events-none" transition={{ type: "spring", stiffness: 300, damping: 20 }} />
           )}
-          <div className={`transition-all duration-300 ${screen === item.id ? 'text-[var(--a)] scale-110' : 'text-[var(--t3)] hover:text-[var(--t2)]'}`}>
+          <div className={`relative z-10 transition-all duration-300 ${screen === item.id ? 'text-[var(--a)] scale-105' : 'text-[var(--t3)] hover:text-[var(--t2)]'}`}>
             {item.icon}
           </div>
+          <span className={`relative z-10 text-[10px] font-bold leading-none tracking-tight truncate max-w-full px-1 transition-colors duration-300 ${screen === item.id ? 'text-[var(--a)]' : 'text-[var(--t3)]'}`}>{item.label}</span>
         </button>
       ))}
     </nav>

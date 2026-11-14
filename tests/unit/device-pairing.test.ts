@@ -44,17 +44,39 @@ test('device-pairing - decode accepts raw URL with query param', () => {
   assert.equal(decoded?.code, 'ABCD-EFGH');
 });
 
-test('device-pairing - decode returns null for corrupted payload', () => {
+test('device-pairing - decode rejects invalid schema, version, and poisoned entries', () => {
   assert.equal(decodePairingPayload('invalid-base64-???'), null);
   assert.equal(decodePairingPayload(''), null);
+  assert.equal(decodePairingPayload(encodePairingPayload({ v: 2, t: Date.now(), uid: 'u1' })), null);
+  assert.equal(decodePairingPayload(encodePairingPayload({ v: 1, t: Date.now(), uid: '   ' })), null);
+  assert.equal(
+    decodePairingPayload(encodePairingPayload({ v: 1, t: Date.now(), uid: 'u1', entries: [{ date: 'bad', hours: -5 }] })),
+    null
+  );
+  const mixed = decodePairingPayload(
+    encodePairingPayload({
+      v: 1,
+      t: Date.now(),
+      uid: 'u1',
+      entries: [
+        { date: '2026-11-01', hours: 8 },
+        { date: 'bad-date', hours: 8 },
+        { date: '2026-11-02', hours: 99 }
+      ]
+    })
+  );
+  assert.equal(mixed?.entries?.length, 1);
+  assert.equal(mixed?.entries?.[0]?.date, '2026-11-01');
 });
 
-test('device-pairing - expiration check', () => {
+test('device-pairing - expiration check rejects stale, future, and NaN timestamps', () => {
   const recent: PairingPayload = { v: 1, t: Date.now() - 1000, uid: 'u1' };
   assert.equal(isPairingPayloadExpired(recent), false);
 
   const expired: PairingPayload = { v: 1, t: Date.now() - (11 * 60 * 1000), uid: 'u1' };
   assert.equal(isPairingPayloadExpired(expired), true);
+  assert.equal(isPairingPayloadExpired({ v: 1, t: Date.now() + 120_000, uid: 'u1' }), true);
+  assert.equal(isPairingPayloadExpired({ v: 1, t: Number.NaN, uid: 'u1' }), true);
 });
 
 test('device-pairing - pairing code normalization', () => {

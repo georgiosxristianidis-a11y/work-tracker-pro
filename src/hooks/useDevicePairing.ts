@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { db, Entry } from '../lib/db';
 import {
   decodePairingPayload,
+  isPairingPayloadExpired,
   mergeEntries,
   PairingPayload
 } from '../lib/device-pairing';
@@ -78,6 +79,12 @@ export const useDevicePairing = ({
 
   const applyPairing = useCallback(
     async (payload: PairingPayload, mode: 'merge' | 'overwrite') => {
+      if (isPairingPayloadExpired(payload)) {
+        addToast(tr('QR code expired. Refresh code on the other device.'), 'error');
+        setIncomingPayload(null);
+        return;
+      }
+
       // Offline P2P direct sync fallback (works without Supabase / when cloud is sleeping)
       if (!supabase || (!payload.at && !payload.rt && payload.entries)) {
         if (!payload.entries || payload.entries.length === 0) {
@@ -263,12 +270,12 @@ export const useDevicePairing = ({
     const search = window.location.search;
     if (search.includes('pair=')) {
       const payload = decodePairingPayload(search);
-      if (payload) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('pair');
+      url.searchParams.delete('code');
+      window.history.replaceState({}, document.title, url.toString());
+      if (payload && !isPairingPayloadExpired(payload)) {
         setIncomingPayload(payload);
-        // Clean URL without reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete('pair');
-        window.history.replaceState({}, document.title, url.toString());
       }
     }
   }, []);

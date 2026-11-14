@@ -28,7 +28,8 @@ export interface MergeResult {
  * Checks whether a pairing payload has exceeded its 10-minute lifespan.
  */
 export function isPairingPayloadExpired(payload: PairingPayload): boolean {
-  return Date.now() - payload.t > PAIRING_QR_TTL_MS;
+  const delta = Date.now() - payload.t;
+  return !Number.isFinite(delta) || delta > PAIRING_QR_TTL_MS || delta < -60_000;
 }
 
 /**
@@ -80,11 +81,19 @@ export function decodePairingPayload(raw: string): PairingPayload | null {
 
     if (
       parsed &&
-      typeof parsed.v === 'number' &&
-      typeof parsed.t === 'number' &&
-      typeof parsed.uid === 'string' &&
-      parsed.uid.length > 0
+      parsed.v === 1 &&
+      typeof parsed.t === 'number' && Number.isFinite(parsed.t) && parsed.t > 0 &&
+      typeof parsed.uid === 'string' && parsed.uid.trim().length > 0 && parsed.uid.length <= 128
     ) {
+      if (parsed.entries !== undefined) {
+        if (!Array.isArray(parsed.entries)) return null;
+        const valid = parsed.entries.slice(0, 64).filter((e) =>
+          Boolean(e && typeof e.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
+          typeof e.hours === 'number' && Number.isFinite(e.hours) && e.hours > 0 && e.hours <= 24)
+        );
+        if (parsed.entries.length > 0 && valid.length === 0) return null;
+        parsed.entries = valid;
+      }
       if (!parsed.code && raw.includes('code=')) {
         const codeMatch = raw.match(/[?&]code=([^&#]+)/);
         if (codeMatch) {

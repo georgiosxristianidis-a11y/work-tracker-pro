@@ -12,6 +12,7 @@ import {
   buildPairingUrl,
   generatePairingCode,
   normalizePairingCode,
+  isPairingPayloadExpired,
   PairingPayload
 } from '../lib/device-pairing';
 import { supabase, ensureAuth } from '../lib/supabase';
@@ -23,6 +24,7 @@ interface DevicePairModalProps {
   theme?: 'light' | 'dark' | 'indigo';
   deviceId: string;
   localEntriesCount: number;
+  incomingPayload?: PairingPayload | null;
   onApplyPairing: (payload: PairingPayload, mode: 'merge' | 'overwrite') => Promise<void>;
   addToast: (msg: string, type?: 'info' | 'success' | 'error' | 'warning') => void;
   t?: (key: string) => string;
@@ -34,6 +36,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   theme = 'dark',
   deviceId,
   localEntriesCount,
+  incomingPayload,
   onApplyPairing,
   addToast,
   t
@@ -45,7 +48,8 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   const [pairingCode, setPairingCode] = useState<string>('');
   const [pairingCreatedAt, setPairingCreatedAt] = useState<number>(Date.now());
   const [isGenerating, setIsGenerating] = useState(false);
-  const [pendingPayload, setPendingPayload] = useState<PairingPayload | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<PairingPayload | null>(incomingPayload ?? null);
+  useEffect(() => { if (incomingPayload) setPendingPayload(incomingPayload); }, [incomingPayload]);
   const [isApplying, setIsApplying] = useState(false);
   const [manualCodeInput, setManualCodeInput] = useState<string>('');
   const [isResolvingCode, setIsResolvingCode] = useState(false);
@@ -270,8 +274,9 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
       return;
     }
 
-    if (payload.code) {
-      broadcastSuccessToHost(payload.code);
+    if (isPairingPayloadExpired(payload)) {
+      addToast(tr('QR code expired. Refresh code on the other device.'), 'error');
+      return;
     }
 
     if (localEntriesCount > 0) {
@@ -330,7 +335,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
         }
 
         try {
-          broadcastSuccessToHost(cleanCode);
+          client.removeChannel(channel);
           handleScanSuccess(resolvedPayload);
         } catch {
           addToast(tr('Failed to apply pairing'), 'error');

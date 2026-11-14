@@ -533,9 +533,10 @@ export default function App() {
             setIncomingPayload(null);
           }}
           theme={settings.theme}
+          incomingPayload={incomingPayload}
           deviceId={getDeviceId()}
           localEntriesCount={allEntries.length}
-          onApplyPairing={applyPairing}
+          onApplyPairing={async (p, m) => { setIsPairModalOpen(true); await applyPairing(p, m); }}
           addToast={addToast}
           t={t}
         />

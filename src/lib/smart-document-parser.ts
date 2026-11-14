@@ -59,12 +59,12 @@ export class SmartDocumentParser {
       // Fallback: try reading as plain text
       const fallbackText = await file.text();
       return this.parsePlainText(fallbackText);
-    } catch (err: any) {
+    } catch (err: unknown) {
       return {
         records: [],
         totalHours: 0,
         detectedFormat: 'unknown',
-        warnings: [`Failed to parse ${file.name}: ${err?.message || 'Unknown error'}`]
+        warnings: [`Failed to parse ${file.name}: ${err instanceof Error ? err.message : 'Unknown error'}`]
       };
     }
   }
@@ -309,12 +309,12 @@ export class SmartDocumentParser {
               warnings: ['No valid QR data detected in image. Use mobile keyboard Live-Text for OCR scanning.']
             });
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
           resolve({
             records: [],
             totalHours: 0,
             detectedFormat: 'qr',
-            warnings: [e?.message || 'Image processing error']
+            warnings: [e instanceof Error ? e.message : 'Image processing error']
           });
         }
       };

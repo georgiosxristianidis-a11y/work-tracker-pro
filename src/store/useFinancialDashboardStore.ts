@@ -429,8 +429,8 @@ export const useFinancialDashboardStore = create<FinancialDashboardState>((set, 
         success: true,
         message: `Synchronized ${entries.length} records (${Math.round(totalHours)}h, $${CurrencyMath.format(totalEarnedScaled, '')}).`
       };
-    } catch (err: any) {
-      return { success: false, message: `Sync failed: ${err?.message || 'Unknown error'}` };
+    } catch (err: unknown) {
+      return { success: false, message: `Sync failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
     }
   },
 

@@ -61,40 +61,40 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
     try {
       setRenderError(null);
 
-      // Read design tokens dynamically from CSS
-      const el = containerRef.current || document.documentElement;
-      const cs = getComputedStyle(el);
-      const accent = cs.getPropertyValue('--a').trim() || '#d4af37';
-      const t1 = cs.getPropertyValue('--t1').trim() || (isDark ? '#f0ece0' : '#1a1a1a');
-      const bg1 = cs.getPropertyValue('--bg-1').trim() || (isDark ? '#0f0f14' : '#ffffff');
+      // A physical QR code MUST be high-contrast dark modules on pure white background
+      // to be recognized by iOS Camera (AVFoundation) and Android Camera (Lens/MLKit).
+      // Inverted QR codes (white-on-black) fail completely in native smartphone camera apps.
+      const qrDotsColor = '#0b0f19';
+      const qrCornersColor = '#0b0f19';
+      const qrBgColor = '#ffffff';
 
-      // Initialize qr-code-styling with theme tokens
+      // Initialize qr-code-styling with high-contrast scan tokens and Error Correction Level H
       if (!qrCodeRef.current) {
         qrCodeRef.current = new QRCodeStyling({
-          width: 260,
-          height: 260,
+          width: 250,
+          height: 250,
           type: 'svg',
           data: url,
-          margin: 10,
+          margin: 12,
           qrOptions: {
             typeNumber: 0,
             mode: 'Byte',
-            errorCorrectionLevel: 'M'
+            errorCorrectionLevel: 'H'
           },
           dotsOptions: {
-            color: t1,
+            color: qrDotsColor,
             type: 'rounded'
           },
           cornersSquareOptions: {
-            color: accent,
+            color: qrCornersColor,
             type: 'extra-rounded'
           },
           cornersDotOptions: {
-            color: accent,
+            color: qrCornersColor,
             type: 'dot'
           },
           backgroundOptions: {
-            color: bg1
+            color: qrBgColor
           }
         });
 
@@ -103,20 +103,23 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
       } else {
         qrCodeRef.current.update({
           data: url,
+          qrOptions: {
+            errorCorrectionLevel: 'H'
+          },
           dotsOptions: {
-            color: t1,
+            color: qrDotsColor,
             type: 'rounded'
           },
           cornersSquareOptions: {
-            color: accent,
+            color: qrCornersColor,
             type: 'extra-rounded'
           },
           cornersDotOptions: {
-            color: accent,
+            color: qrCornersColor,
             type: 'dot'
           },
           backgroundOptions: {
-            color: bg1
+            color: qrBgColor
           }
         });
       }
@@ -178,26 +181,26 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           </div>
         </div>
 
-        {/* QR Code Container with Expired Overlay */}
-        <div className="relative rounded-2xl overflow-hidden" style={{ minWidth: 260, minHeight: 260 }}>
+        {/* QR Code Container with White Quiet Zone Plate and Expired Overlay */}
+        <div className="relative rounded-2xl overflow-hidden p-2.5 bg-white shadow-md flex items-center justify-center" style={{ minWidth: 260, minHeight: 260 }}>
           <div
             ref={containerRef}
             data-testid="branded-qr-canvas"
-            className={`flex items-center justify-center transition-all ${
+            className={`flex items-center justify-center transition-all bg-white rounded-xl ${
               isExpired || renderError ? 'opacity-20 blur-[2px]' : 'opacity-100'
             }`}
-            style={{ width: 260, height: 260 }}
+            style={{ width: 250, height: 250 }}
           />
 
-          {/* Centered Brand Logo Badge Overlay */}
+          {/* Centered Brand Logo Badge Overlay (compact 36x36 with white border) */}
           {!isExpired && !renderError && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-12 h-12 rounded-2xl p-1 shadow-lg border border-[var(--b)] bg-[var(--bg-1)] flex items-center justify-center transition-transform">
-                <div className="w-full h-full rounded-xl bg-[var(--bg)] border border-[var(--b)] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
-                  <span className="text-[13px] font-black text-[var(--t1)] tracking-tighter leading-none select-none">
+              <div className="w-9 h-9 rounded-xl p-0.5 shadow-md border-2 border-white bg-[#0b0f19] flex items-center justify-center">
+                <div className="w-full h-full rounded-lg bg-[#141824] border border-[#232938] flex flex-col items-center justify-center relative overflow-hidden">
+                  <span className="text-[11px] font-black text-white tracking-tighter leading-none select-none">
                     27
                   </span>
-                  <div className="absolute bottom-0 inset-x-0 h-1 bg-[var(--a)]" />
+                  <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[var(--a)]" />
                 </div>
               </div>
             </div>

@@ -109,16 +109,17 @@ export const useSupabaseSync = ({
 
       resetStatusLater(2000);
 
-    } catch (err: any) {
-      const errStr = err ? JSON.stringify(err) : 'Unknown error';
-      console.warn('Sync warning:', err?.message || errStr);
+    } catch (rawErr: unknown) {
+      const err = (rawErr && typeof rawErr === 'object' ? rawErr : {}) as { message?: string; error_description?: string; code?: string };
+      const errStr = rawErr ? JSON.stringify(rawErr) : 'Unknown error';
+      console.warn('Sync warning:', err.message || errStr);
       setSyncStatus('error');
-      let errorMsg = err?.message || err?.error_description || (typeof err === 'string' ? err : 'Sync failed');
+      let errorMsg = err.message || err.error_description || (typeof rawErr === 'string' ? rawErr : 'Sync failed');
       
       if (errorMsg === 'Failed to fetch' || errorMsg.includes('fetch')) {
         errorMsg = 'Check your Supabase URL and network connection.';
       }
-      if (err?.code === '42P01') {
+      if (err.code === '42P01') {
         errorMsg = 'Supabase table "work_entries" does not exist.';
       }
       
@@ -182,16 +183,17 @@ export const useSupabaseSync = ({
       resetStatusLater(2000);
       return restored;
 
-    } catch (err: any) {
-      const errStr = err ? JSON.stringify(err) : 'Unknown error';
-      console.warn('Restore warning:', err?.message || errStr);
+    } catch (rawErr: unknown) {
+      const err = (rawErr && typeof rawErr === 'object' ? rawErr : {}) as { message?: string; error_description?: string; code?: string };
+      const errStr = rawErr ? JSON.stringify(rawErr) : 'Unknown error';
+      console.warn('Restore warning:', err.message || errStr);
       setSyncStatus('error');
-      let errorMsg = err?.message || err?.error_description || (typeof err === 'string' ? err : 'Restore failed');
+      let errorMsg = err.message || err.error_description || (typeof rawErr === 'string' ? rawErr : 'Restore failed');
 
       if (errorMsg === 'Failed to fetch' || errorMsg.includes('fetch')) {
         errorMsg = 'Check your Supabase URL and network connection.';
       }
-      if (err?.code === '42P01') {
+      if (err.code === '42P01') {
         errorMsg = 'Supabase table "work_entries" does not exist.';
       }
 
@@ -217,8 +219,8 @@ export const useSupabaseSync = ({
         .eq('user_id', userId)
         .eq('date', date);
       if (error) throw error;
-    } catch (err: any) {
-      console.warn('Cloud delete failed:', err?.message || err);
+    } catch (err: unknown) {
+      console.warn('Cloud delete failed:', err instanceof Error ? err.message : err);
     }
   }, [settings.strictOfflineMode]);
 
@@ -232,8 +234,8 @@ export const useSupabaseSync = ({
         .delete()
         .eq('user_id', userId);
       if (error) throw error;
-    } catch (err: any) {
-      console.warn('Cloud clear failed:', err?.message || err);
+    } catch (err: unknown) {
+      console.warn('Cloud clear failed:', err instanceof Error ? err.message : err);
     }
   }, [settings.strictOfflineMode]);
 

@@ -133,8 +133,6 @@ export default function App() {
         setIsLoading(false);
       }
     };
-    init();
-  }, []);
 
   const migrateFromLocalStorage = async () => {
     try {
@@ -161,10 +159,13 @@ export default function App() {
       return count;
     } catch (err) {
       console.error('Migration from localStorage failed:', err);
-      addToast(t('Migration failed. Data preserved in localStorage.'), 'error');
+      addToast('Migration failed. Data preserved in localStorage.', 'error');
       return 0;
     }
   };
+
+    init();
+  }, [addToast, loadEntries, loadSettings, setIsLoading, storeSaveMany]);
 
   useEffect(() => {
     const theme = settings.theme || 'dark';

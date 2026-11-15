@@ -603,7 +603,7 @@ export const SettingsScreen = ({
           </div>
           <button 
             onClick={() => { haptic(10); deleteAllTap.trigger(); }}
-            className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--danger)]/5 border border-[var(--danger)]/30 hover:bg-[var(--b)] transition-all text-[var(--danger)] relative overflow-hidden group shadow-[0_8px_16px_rgba(255,59,48,0.05)]"
+            className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--danger)]/5 border border-[var(--danger)]/30 hover:bg-[var(--b)] active:scale-[0.98] transition-all text-[var(--danger)] relative overflow-hidden group shadow-xs"
           >
             <div className="flex items-center gap-3.5 relative">
               <AnimatedTrash size={16} isConfirming={deleteAllTap.isConfirming} className="group-hover:scale-110 transition-transform" /> 
@@ -625,9 +625,9 @@ export const SettingsScreen = ({
         {/* Share Data Choice Modal */}
         {showTgConfirm && (
           <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-[var(--bg)] w-full max-w-sm rounded-[24px] border border-[var(--b)] shadow-2xl p-6 space-y-6 animate-in zoom-in-95 duration-200">
+            <div className="bg-[var(--bg)] w-full max-w-sm rounded-card border border-[var(--b)] shadow-2xl p-6 space-y-6 animate-in zoom-in-95 duration-200">
               <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full bg-[#3390ec]/10 flex items-center justify-center text-[#3390ec]">
+                <div className="w-12 h-12 rounded-full bg-[var(--a-bg)] border border-[var(--a-b)] flex items-center justify-center text-[var(--a)]">
                   <Send size={24} />
                 </div>
               </div>
@@ -647,9 +647,9 @@ export const SettingsScreen = ({
                     setTimeout(() => shareToTelegram('summary'), 1000);
                     setTimeout(() => setShowTgAnim(false), 2500);
                   }}
-                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center gap-3"><AlignLeft size={16} className="text-[#3390ec]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Short Summary (Text)')}</span></div>
+                  <div className="flex items-center gap-3"><AlignLeft size={16} className="text-[var(--a)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Short Summary (Text)')}</span></div>
                   <ChevronRight size={16} className="text-[var(--t3)]" />
                 </button>
 
@@ -661,7 +661,7 @@ export const SettingsScreen = ({
                     setTimeout(() => shareToTelegram('txt'), 1000);
                     setTimeout(() => setShowTgAnim(false), 2500);
                   }}
-                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-3"><FileText size={16} className="text-[var(--t2)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Detailed Report (TXT)')}</span></div>
                   <ChevronRight size={16} className="text-[var(--t3)]" />
@@ -675,7 +675,7 @@ export const SettingsScreen = ({
                     setTimeout(() => shareToTelegram('pdf'), 1000);
                     setTimeout(() => setShowTgAnim(false), 2500);
                   }}
-                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-3"><FileText size={16} className="text-[var(--a)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Visual Report (PDF)')}</span></div>
                   <ChevronRight size={16} className="text-[var(--t3)]" />
@@ -689,7 +689,7 @@ export const SettingsScreen = ({
                     setTimeout(() => shareToTelegram('csv'), 1000);
                     setTimeout(() => setShowTgAnim(false), 2500);
                   }}
-                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-3"><Table size={16} className="text-[var(--t2)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Spreadsheet (CSV)')}</span></div>
                   <ChevronRight size={16} className="text-[var(--t3)]" />
@@ -703,7 +703,7 @@ export const SettingsScreen = ({
                     setTimeout(() => shareToTelegram('json'), 1000);
                     setTimeout(() => setShowTgAnim(false), 2500);
                   }}
-                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] transition-all"
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-3"><Database size={16} className="text-[var(--t2)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Full Backup (JSON)')}</span></div>
                   <ChevronRight size={16} className="text-[var(--t3)]" />
@@ -736,9 +736,9 @@ export const SettingsScreen = ({
                   className="flex flex-col items-center gap-6"
                 >
                   <div className="relative">
-                    <Shield size={100} className="text-[#34c759] opacity-20 animate-pulse" />
+                    <Shield size={100} className="text-[var(--green)] opacity-20 animate-pulse" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock size={48} className="text-[#34c759]" />
+                      <Lock size={48} className="text-[var(--green)]" />
                     </div>
                   </div>
                   <div className="text-center space-y-2">
@@ -746,7 +746,7 @@ export const SettingsScreen = ({
                       initial={{ y: 10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.2 }}
-                      className="text-2xl font-black text-[#34c759] "
+                      className="text-2xl font-black text-[var(--green)]"
                     >
                       Offline Mode
                     </motion.h2>
@@ -754,7 +754,7 @@ export const SettingsScreen = ({
                       initial={{ y: 10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="text-[#34c759]/70 text-sm font-medium tracking-widest"
+                      className="text-[var(--green)]/70 text-sm font-medium tracking-widest"
                     >
                       CLOUD SYNC DISABLED. DATA STAYS ON DEVICE.
                     </motion.p>
@@ -762,7 +762,7 @@ export const SettingsScreen = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.6 }}
-                      className="flex items-center justify-center gap-2 mt-4 text-xs text-[#34c759]/50"
+                      className="flex items-center justify-center gap-2 mt-4 text-xs text-[var(--green)]/50"
                     >
                       <Terminal size={12} />
                       <span>LOCAL-ONLY MODE ENGAGED</span>
@@ -790,16 +790,16 @@ export const SettingsScreen = ({
                       rotate: [-5, 5, -5]
                     }}
                     transition={{ repeat: Infinity, duration: 2 }}
-                    className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl"
+                    className="w-32 h-32 bg-[var(--bg-1)] border border-[var(--b)] rounded-full flex items-center justify-center shadow-2xl"
                   >
-                    <Send size={64} className="text-[var(--t1)] ml-2" />
+                    <Send size={64} className="text-[var(--a)] ml-2" />
                   </motion.div>
                   <div className="text-center space-y-2">
                     <motion.h2 
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.3 }}
-                      className="text-3xl font-black text-white  shadow-black drop-shadow-md"
+                      className="text-3xl font-black text-[var(--t1)]"
                     >
                       Sending
                     </motion.h2>
@@ -807,7 +807,7 @@ export const SettingsScreen = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.5 }}
-                      className="flex items-center justify-center gap-2 text-white/80 font-bold tracking-widest"
+                      className="flex items-center justify-center gap-2 text-[var(--t2)] font-bold tracking-widest"
                     >
                       <CircleCheck size={18} />
                       <span>DATA PACKAGED</span>

@@ -15,7 +15,7 @@ export function useToast() {
   const addToast = useCallback((msg: string, type = 'info', action?: ToastAction) => {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, msg, type, action }]);
-    setTimeout(() => removeToast(id), action ? 5000 : 2000);
+    setTimeout(() => removeToast(id), action ? 3000 : 2000);
   }, [removeToast]);
 
   return { toasts, addToast, removeToast };

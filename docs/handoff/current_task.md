@@ -1,15 +1,14 @@
-# TASK HANDOFF: refactor/settings-tokens-consistency
-- **Timestamp**: 2026-11-15T16:17:35.897Z
-- **Branch**: refactor/settings-tokens-consistency
-- **Last Commit**: 16aa162 refactor(ui): migrate settings & orbital tokens, align row press states, ratchet 36
+# TASK HANDOFF: main
+- **Timestamp**: 2026-11-15T21:07:05.705Z
+- **Branch**: main
+- **Last Commit**: 6fce25d style(calendar,toasts): frosted glass toasts, 3s undo timeout, focused calendar & stacked Smart Fill
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M src/components/CalendarScreen.tsx
- M src/components/Toasts.tsx
- M src/hooks/useToast.ts
- M src/index.css
+M src/components/EditorModal.tsx
+ M src/components/OrbitalIndicator.tsx
+ M src/components/RollingNumber.tsx
 ```
 
 ## Next Action

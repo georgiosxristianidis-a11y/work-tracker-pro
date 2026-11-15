@@ -66,20 +66,23 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     const centerY = (size / 2) * dpr;
     const tiltX = 0.35; // Fixed elegant tilt
 
-    let fillStyle = '#ffffff';
+    let fillStyle = 'white';
     try {
+      const styles = getComputedStyle(canvas);
+      const tokenT1 = styles.getPropertyValue('--t1').trim();
+      if (tokenT1) fillStyle = tokenT1;
       if (color.startsWith('var(')) {
         const varName = color.slice(4, -1).trim();
-        const computed = getComputedStyle(canvas).getPropertyValue(varName).trim();
+        const computed = styles.getPropertyValue(varName).trim();
         if (computed) fillStyle = computed;
       } else if (color !== 'currentColor') {
         fillStyle = color;
       } else {
-        const computedColor = getComputedStyle(canvas).color;
+        const computedColor = styles.color;
         if (computedColor) fillStyle = computedColor;
       }
     } catch {
-      fillStyle = '#ffffff';
+      fillStyle = 'white';
     }
 
     const cosTilt = Math.cos(tiltX);

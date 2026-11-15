@@ -526,27 +526,23 @@ export const SettingsScreen = ({
               </div>
             </div>
 
-            <div className="mb-4 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-[10px] font-semibold text-amber-300">
-                  {t('Database paused?')}
-                </span>
-              </div>
-              <a
-                href={supabaseDashboardUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[10px] font-bold text-amber-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1"
-              >
-                <span>{t('Wake in Supabase')}</span>
-                <ExternalLink size={10} />
-              </a>
-            </div>
-
             {syncStatus === 'error' && (
-              <div className="mb-4 text-[9px] text-[var(--danger)] font-bold bg-[var(--danger)]/10 p-2.5 rounded-[12px] leading-relaxed">
-                Error: {syncErrorMsg}
+              <div className="mb-4 p-3 rounded-[12px] bg-[var(--danger-bg)] border border-[var(--danger)]/20 space-y-2">
+                <div className="text-[10px] text-[var(--danger)] font-bold leading-relaxed break-words">
+                  Error: {syncErrorMsg}
+                </div>
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--danger)]/15 text-[10px]">
+                  <span className="font-medium text-[var(--t3)]">{t('Database paused?')}</span>
+                  <a
+                    href={supabaseDashboardUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-[var(--t2)] hover:text-[var(--t1)] underline underline-offset-2 flex items-center gap-1 transition-colors"
+                  >
+                    <span>{t('Wake in Supabase')}</span>
+                    <ExternalLink size={10} />
+                  </a>
+                </div>
               </div>
             )}
 
@@ -555,7 +551,6 @@ export const SettingsScreen = ({
               disabled={syncStatus === 'syncing' || settings.strictOfflineMode}
               className={`h-14 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 relative overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.05)] ${
                 syncStatus === 'success' ? 'bg-[var(--green)] text-white' : 
-                syncStatus === 'error' ? 'bg-[var(--danger)] text-white' : 
                 'bg-[var(--t1)] text-[var(--bg)]'
               }`}
             >
@@ -573,7 +568,10 @@ export const SettingsScreen = ({
               ) : syncStatus === 'success' ? (
                 <><Check size={14} /> {t('Synchronized')}</>
               ) : syncStatus === 'error' ? (
-                <><AlertTriangle size={14} /> {t('Sync Failed')}</>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[var(--danger)] animate-pulse shrink-0" />
+                  <span>{t('Sync Failed')}</span>
+                </div>
               ) : (
                 <><RefreshCw size={14} /> {t('Sync')}</>
               )}
@@ -590,9 +588,9 @@ export const SettingsScreen = ({
             <button
               onClick={() => { haptic(10); onOpenDevicePair?.(); }}
               disabled={settings.strictOfflineMode}
-              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 bg-[#d4af37]/10 hover:bg-[#d4af37]/20 border border-[#d4af37]/30 text-[#d4af37] shadow-[0_2px_10px_rgba(212,175,55,0.08)]"
+              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 bg-[var(--bg)] hover:bg-[var(--a-bg)] border border-[var(--b)] hover:border-[var(--a-b)] text-[var(--t1)] shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
             >
-              <QrCode size={14} /> {t('Pair Device (QR Code)')}
+              <QrCode size={14} className="text-[var(--a)]" /> {t('Pair Device (QR Code)')}
             </button>
           </div>
         </div>

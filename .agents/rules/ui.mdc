@@ -10,7 +10,8 @@ When modifying or creating components in `src/components/`:
 1. **Design Tokens Only (`src/index.css` = Single Source of Truth)**:
    - Use CSS variables from `src/index.css` (`var(--bg)`, `var(--bg-1)`, `var(--t1)`, `var(--t2)`, `var(--t3)`, `var(--a)`, `var(--b)`, `var(--green)`, `var(--danger)`, `var(--amber)`).
    - Never add new hardcoded `#hex` or `rgb()` values (ratchet enforced by `gate.cjs`; only `Logo.tsx` and `BrandedQRCode.tsx` brand/QR contrast are exempt).
-   - Use semantic `@theme` radii (`rounded-card`, `rounded-panel`, `rounded-control`; `rounded-full` for pills/dock) without duplicating px literals; write `-webkit-backdrop-filter` before `backdrop-filter`.
+   - Use semantic `@theme` radii (`rounded-shell`, `rounded-card`, `rounded-panel`, `rounded-control`, standard `rounded-2xl` for Calendar day cells and `h-12` toolbar, and `rounded-full` for circle nav `< >`, pills, and dock) without arbitrary `rounded-[...]`; write `-webkit-backdrop-filter` before `backdrop-filter`.
+   - Calendar Rules (`CalendarScreen.tsx`): month title uses `tracking-[0.05em]`; compact rhythm `space-y-4`, `p-4 sm:p-5`, `gap-y-2.5`; action toolbar (`Smart Fill`, `Quick Fill`, `complete`) uses `h-12 rounded-2xl` without `uppercase`; **Saturdays = gold/accent (`var(--a)`), Sundays = neutral gray (`var(--t3)`), never `--danger`**.
 
 2. **Framer Motion Safety**:
    - Always set `initial={false}` on animated SVG elements (`motion.circle`, `motion.line`, `motion.path`) to prevent production-only hydration/read races.

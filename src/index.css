@@ -7,6 +7,7 @@
 @theme {
   --font-sans: "Epilogue Variable", ui-sans-serif, system-ui, sans-serif;
   
+  --radius-shell: 1.75rem;
   --radius-card: 1.5rem;
   --radius-panel: 14px;
   --radius-control: 10px;

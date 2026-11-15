@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Shield, Lock, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -71,6 +71,7 @@ export const SettingsScreen = ({
   const [devTapCount, setDevTapCount] = React.useState(0);
   const [showTgConfirm, setShowTgConfirm] = React.useState(false);
   const [showSpyAnim, setShowSpyAnim] = React.useState(false);
+  const offlineIconId = React.useId().replace(/:/g, '');
   const [showTgAnim, setShowTgAnim] = React.useState(false);
 
   const versionTapRef = React.useRef({ count: 0, lastTap: 0 });
@@ -735,11 +736,41 @@ export const SettingsScreen = ({
                   transition={{ type: 'spring', damping: 15 }}
                   className="flex flex-col items-center gap-6"
                 >
-                  <div className="relative">
-                    <Shield size={100} className="text-[var(--green)] opacity-20 animate-pulse" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock size={40} className="text-[var(--green)]" />
-                    </div>
+                  <div className="relative w-24 h-24 flex items-center justify-center">
+                    <div
+                      className="absolute -inset-4 rounded-full pointer-events-none animate-pulse"
+                      style={{ background: 'radial-gradient(circle, var(--green-bg) 0%, transparent 72%)' }}
+                    />
+                    <svg
+                      width="96"
+                      height="96"
+                      viewBox="0 0 100 100"
+                      className="relative z-10 text-[var(--green)]"
+                      aria-hidden="true"
+                    >
+                      <defs>
+                        <linearGradient id={`${offlineIconId}-grad`} x1="20%" y1="0%" x2="80%" y2="100%">
+                          <stop offset="0%" stopColor="currentColor" stopOpacity="0.84" />
+                          <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
+                        </linearGradient>
+                        <mask id={`${offlineIconId}-mask`}>
+                          <rect width="100" height="100" fill="white" />
+                          <path
+                            d="M 41.5 46 V 37.5 A 8.5 8.5 0 0 1 58.5 37.5 V 46"
+                            fill="none"
+                            stroke="black"
+                            strokeWidth="4.8"
+                            strokeLinecap="round"
+                          />
+                          <rect x="34.5" y="45" width="31" height="23.5" rx="6" fill="black" />
+                        </mask>
+                      </defs>
+                      <path
+                        d="M 47.4 8.3 Q 50 7 52.6 8.3 C 66 14.8 76.5 17.6 84.8 18.8 C 87.9 19.3 89.8 21.8 89.8 25.2 V 47 C 89.8 68.5 73.2 84.2 52.5 92.2 Q 50 93.2 47.5 92.2 C 26.8 84.2 10.2 68.5 10.2 47 V 25.2 C 10.2 21.8 12.1 19.3 15.2 18.8 C 23.5 17.6 34 14.8 47.4 8.3 Z"
+                        fill={`url(#${offlineIconId}-grad)`}
+                        mask={`url(#${offlineIconId}-mask)`}
+                      />
+                    </svg>
                   </div>
                   <div className="text-center space-y-2">
                     <motion.h2 

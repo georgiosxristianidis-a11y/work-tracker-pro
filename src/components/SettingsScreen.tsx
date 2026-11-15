@@ -627,7 +627,7 @@ export const SettingsScreen = ({
           <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
             <div className="bg-[var(--bg)] w-full max-w-sm rounded-card border border-[var(--b)] shadow-2xl p-6 space-y-6 animate-in zoom-in-95 duration-200">
               <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full bg-[var(--a-bg)] border border-[var(--a-b)] flex items-center justify-center text-[var(--a)]">
+                <div className="w-12 h-12 rounded-full bg-[#3390ec]/10 flex items-center justify-center text-[#3390ec]">
                   <Send size={24} />
                 </div>
               </div>
@@ -649,7 +649,7 @@ export const SettingsScreen = ({
                   }}
                   className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg-1)] border border-[var(--b)] hover:bg-[var(--b)] active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center gap-3"><AlignLeft size={16} className="text-[var(--a)]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Short Summary (Text)')}</span></div>
+                  <div className="flex items-center gap-3"><AlignLeft size={16} className="text-[#3390ec]" /> <span className="text-sm font-black text-[var(--t1)]">{t('Short Summary (Text)')}</span></div>
                   <ChevronRight size={16} className="text-[var(--t3)]" />
                 </button>
 
@@ -727,7 +727,7 @@ export const SettingsScreen = ({
         {/* Spy Mode / Anti-AI Animation Overlay */}
         <AnimatePresence>
           {showSpyAnim && (
-            <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl font-mono">
+            <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center bg-[var(--bg)]/95 backdrop-blur-xl font-mono">
               <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -792,7 +792,7 @@ export const SettingsScreen = ({
                     transition={{ repeat: Infinity, duration: 2 }}
                     className="w-32 h-32 bg-[var(--bg-1)] border border-[var(--b)] rounded-full flex items-center justify-center shadow-2xl"
                   >
-                    <Send size={64} className="text-[var(--a)] ml-2" />
+                    <Send size={64} className="text-[#3390ec] ml-2" />
                   </motion.div>
                   <div className="text-center space-y-2">
                     <motion.h2 

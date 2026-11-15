@@ -110,17 +110,17 @@ const DayCell = React.memo(({
         ${hours > 0 
           ? 'bg-[var(--a-bg)] border-[var(--a-b)] text-[var(--t1)]' 
           : isToday 
-            ? isSunday
-              ? 'bg-[var(--bg-1)] border-[var(--danger)] text-[var(--danger)] shadow-sm'
+            ? isSaturday
+              ? 'bg-[var(--bg-1)] border-[var(--a)] text-[var(--a)] shadow-sm'
               : 'bg-[var(--bg-1)] border-[var(--t1)] text-[var(--t1)] shadow-sm' 
-            : isSunday
-              ? 'bg-transparent border-transparent text-[var(--danger)] hover:bg-[var(--danger-bg)] font-bold'
-              : isSaturday
+            : isSaturday
+              ? 'bg-transparent border-transparent text-[var(--a)] font-bold hover:bg-[var(--a-bg)]'
+              : isSunday
                 ? 'bg-transparent border-transparent text-[var(--t3)] font-medium hover:bg-[var(--b)]'
                 : 'bg-transparent border-transparent text-[var(--t2)] hover:bg-[var(--b)]'}
       `}
     >
-      <span className={`text-[15px] font-bold ${hours > 0 ? '-translate-y-[2px]' : ''} ${isSunday && hours === 0 ? 'text-[var(--danger)]' : ''}`}>
+      <span className={`text-[15px] font-bold ${hours > 0 ? '-translate-y-[2px]' : ''} ${isSaturday && hours === 0 ? 'text-[var(--a)]' : isSunday && hours === 0 ? 'text-[var(--t3)]' : ''}`}>
         {day}
       </span>
 
@@ -246,14 +246,14 @@ export const CalendarScreen = ({
           <div className="flex gap-1.5">
             <motion.button 
               onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} 
-              className="p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] active:scale-95 transition-all" 
+              className="p-1.5 rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] active:scale-95 transition-all" 
               aria-label={t('Previous Month')}
             >
               <ChevronLeft size={18} strokeWidth={1.5} />
             </motion.button>
             <motion.button 
               onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} 
-              className="p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] active:scale-95 transition-all" 
+              className="p-1.5 rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] active:scale-95 transition-all" 
               aria-label={t('Next Month')}
             >
               <ChevronRight size={18} strokeWidth={1.5} />
@@ -262,8 +262,8 @@ export const CalendarScreen = ({
         </div>
       </div>
 
-      {/* Calendar Card: High Breathing Room, Radar Pulse Hint, Saturday Dimmed, Sunday Accent */}
-      <div className="p-4 sm:p-5 apple-glass-panel rounded-[1.75rem] relative">
+      {/* Calendar Card: Concentric Shell, Radar Pulse Hint, Saturday Gold (--a), Sunday Gray (--t3) */}
+      <div className="p-4 sm:p-5 apple-glass-panel rounded-shell relative">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -318,10 +318,10 @@ export const CalendarScreen = ({
               <div 
                 key={d} 
                 className={`text-center text-micro font-black uppercase tracking-widest py-1.5 select-none ${
-                  isSunday 
-                    ? 'text-[var(--danger)] opacity-85 font-bold' 
-                    : isSaturday 
-                      ? 'text-[var(--t3)] opacity-75' 
+                  isSaturday
+                    ? 'text-[var(--a)] font-bold'
+                    : isSunday
+                      ? 'text-[var(--t3)] opacity-75'
                       : 'text-[var(--t3)]'
                 }`}
               >
@@ -365,7 +365,7 @@ export const CalendarScreen = ({
       <div className="flex items-center gap-2.5">
         {canSmartFill && smartFillUpToDay && (
           emptyDaysCount === 0 ? (
-            <div className="flex-1 h-12 px-3.5 rounded-panel apple-glass-pill text-[var(--t3)] text-xs font-semibold tracking-tight flex items-center justify-center gap-2 select-none opacity-80">
+            <div className="flex-1 h-12 px-3.5 rounded-2xl apple-glass-pill text-[var(--t3)] text-xs font-semibold tracking-tight flex items-center justify-center gap-2 select-none opacity-80">
               <Check size={15} className="text-[var(--green)] shrink-0" strokeWidth={2.5} />
               <Zap size={14} className="shrink-0 text-[var(--a)]" strokeWidth={2.2} />
               <span className="truncate">{smartFillPreview?.dateRangeLabel || `1–${smartFillTargetDay}`} {t('complete')}</span>
@@ -378,7 +378,7 @@ export const CalendarScreen = ({
                 haptic([15, 20]);
                 smartFillUpToDay(smartFillTargetDay, defaultEditorHours);
               }}
-              className="flex-1 h-12 px-3.5 rounded-panel border border-[var(--a-b)] bg-[var(--a-bg)] text-[var(--a)] flex items-center justify-center gap-2.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+              className="flex-1 h-12 px-3.5 rounded-2xl border border-[var(--a-b)] bg-[var(--a-bg)] text-[var(--a)] flex items-center justify-center gap-2.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
             >
               <Zap size={15} className="shrink-0" strokeWidth={2.2} />
               <span className="flex flex-col items-start min-w-0 leading-tight">
@@ -403,7 +403,7 @@ export const CalendarScreen = ({
             setIsWandTapped(false);
           }}
           onClick={() => { haptic([10, 20]); openQuickFill(); }} 
-          className={`h-12 rounded-panel apple-glass-pill font-semibold text-xs tracking-tight flex items-center justify-center gap-2 text-[var(--t2)] transition-colors hover:text-[var(--t1)] active:scale-[0.98] ${
+          className={`h-12 rounded-2xl apple-glass-pill font-semibold text-xs tracking-tight flex items-center justify-center gap-2 text-[var(--t2)] transition-colors hover:text-[var(--t1)] active:scale-[0.98] ${
             canSmartFill && smartFillUpToDay ? 'px-4 shrink-0' : 'w-full'
           }`}
         >

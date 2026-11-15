@@ -738,7 +738,7 @@ export const SettingsScreen = ({
                   <div className="relative">
                     <Shield size={100} className="text-[var(--green)] opacity-20 animate-pulse" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock size={48} className="text-[var(--green)]" />
+                      <Lock size={40} className="text-[var(--green)]" />
                     </div>
                   </div>
                   <div className="text-center space-y-2">

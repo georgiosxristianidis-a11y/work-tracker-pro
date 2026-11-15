@@ -494,7 +494,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
               {pendingPayload ? (
                 /* Confirmation Dialog for existing local entries */
                 <div className="w-full flex flex-col items-center py-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-[var(--a)] text-[var(--bg)]/10 flex items-center justify-center text-[var(--a)] mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--a-bg)] border border-[var(--a-b)] flex items-center justify-center text-[var(--a)] mb-3">
                     <CheckCircle className="w-6 h-6" />
                   </div>
                   <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-[var(--t1)]' : 'text-[var(--t1)]'}`}>
@@ -508,7 +508,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
                     <button
                       disabled={isApplying}
                       onClick={() => executePairing(pendingPayload, 'merge')}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[var(--a)] text-[var(--bg)] hover:bg-[#c29e2f] text-black transition-all flex items-center justify-center gap-2 shadow"
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[var(--a)] text-zinc-950 hover:brightness-95 transition-all flex items-center justify-center gap-2 shadow"
                     >
                       {isApplying ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
                       <span>{tr('Merge entries (Smart Merge)')}</span>
@@ -588,7 +588,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
               ) : (
                 /* Have a Code Tab (Scan Camera or Manual Typing) */
                 <div className="w-full flex flex-col items-center py-4 px-2 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[var(--a)] text-[var(--bg)]/10 border border-[var(--a-b)] flex items-center justify-center text-[var(--a)] mb-3">
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--a-bg)] border border-[var(--a-b)] flex items-center justify-center text-[var(--a)] mb-3">
                     <Smartphone className="w-7 h-7" />
                   </div>
                   <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-[var(--t1)]' : 'text-[var(--t1)]'}`}>
@@ -600,7 +600,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
 
                   <button
                     onClick={() => setIsScannerOpen(true)}
-                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[var(--a)] text-[var(--bg)] hover:bg-[#c29e2f] text-black transition-all flex items-center justify-center gap-2 shadow active:scale-98 mb-4"
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[var(--a)] text-zinc-950 hover:brightness-95 transition-all flex items-center justify-center gap-2 shadow active:scale-98 mb-4"
                   >
                     <Scan className="w-4 h-4" />
                     <span>{tr('Open Scanner')}</span>

@@ -247,7 +247,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-zinc-800/80">
           <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-            <Camera className="w-4 h-4 text-[#d4af37]" />
+            <Camera className="w-4 h-4 text-[var(--a)]" />
             <span>{tr('Scan QR Code')}</span>
           </div>
           <button
@@ -271,17 +271,17 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           />
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Aiming Reticle with gold accent */}
+          {/* Aiming Reticle with accent token */}
           {hasPermission && (
             <div className="relative w-56 h-56 pointer-events-none">
               {/* Corner markers */}
-              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#d4af37] rounded-tl-xl" />
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#d4af37] rounded-tr-xl" />
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#d4af37] rounded-bl-xl" />
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#d4af37] rounded-br-xl" />
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[var(--a)] rounded-tl-xl" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[var(--a)] rounded-tr-xl" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[var(--a)] rounded-bl-xl" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[var(--a)] rounded-br-xl" />
 
               {/* Animated laser line */}
-              <div className="absolute inset-x-2 h-0.5 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent animate-pulse top-1/2 -translate-y-1/2" />
+              <div className="absolute inset-x-2 h-0.5 bg-gradient-to-r from-transparent via-[var(--a)] to-transparent animate-pulse top-1/2 -translate-y-1/2" />
             </div>
           )}
 
@@ -303,7 +303,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
               {/* Upload image fallback */}
               <label className="flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold bg-zinc-800 text-zinc-200 hover:bg-zinc-700 cursor-pointer border border-zinc-700 transition-all">
-                <Upload className="w-4 h-4 text-[#d4af37]" />
+                <Upload className="w-4 h-4 text-[var(--a)]" />
                 <span>{tr('Choose screenshot/photo')}</span>
                 <input
                   type="file"
@@ -337,7 +337,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-all font-medium"
             >
-              <Keyboard className="w-3.5 h-3.5 text-[#d4af37]" />
+              <Keyboard className="w-3.5 h-3.5 text-[var(--a)]" />
               <span>{tr('Enter code')}</span>
             </button>
           )}

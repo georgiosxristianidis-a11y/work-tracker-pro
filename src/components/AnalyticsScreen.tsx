@@ -130,15 +130,23 @@ export const AnalyticsScreen = ({
             <div className="h-full p-8 rounded-card apple-glass-panel flex flex-col items-center justify-between gap-6 relative overflow-hidden">
               
               <div className="relative w-48 h-48 flex items-center justify-center shrink-0">
-                <svg className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle cx={96} cy={96} r={80} fill="none" stroke="var(--b)" strokeWidth={8} />
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 192 192">
+                  <defs>
+                    <filter id="goalRingGlow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                  </defs>
+                  <circle cx={96} cy={96} r={88} fill="none" stroke="var(--b)" strokeWidth={1.5} strokeDasharray="3 5" opacity={0.6} />
+                  <circle cx={96} cy={96} r={78} fill="none" stroke="var(--b)" strokeWidth={8} />
                   <motion.circle 
-                    cx={96} cy={96} r={80} fill="none" stroke="var(--a)" strokeWidth={8} 
-                    strokeDasharray={502}
-                    initial={{ strokeDashoffset: 502 }}
-                    animate={{ strokeDashoffset: 502 - (502 * (goalPct || 0)) / 100 }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    cx={96} cy={96} r={78} fill="none" stroke="var(--a)" strokeWidth={8} 
+                    strokeDasharray={490}
+                    initial={false}
+                    animate={{ strokeDashoffset: 490 - (490 * Math.min(100, Math.max(0, goalPct || 0))) / 100 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     strokeLinecap="round"
+                    style={{ filter: 'url(#goalRingGlow)' }}
                   />
                 </svg>
                 <div className="text-center space-y-1 relative z-10">

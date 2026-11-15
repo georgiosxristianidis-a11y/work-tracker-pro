@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, AlertTriangle, Database, FileText, Download, Trash, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, Database, FileText, Download, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -20,6 +20,7 @@ interface SettingsScreenProps {
   syncTapActual: { trigger: () => void; isConfirming: boolean };
   restoreFromCloud: () => void;
   deleteAllTap: { trigger: () => void; isConfirming: boolean };
+  onWipeData?: () => void | Promise<void>;
   toggleTheme: () => void;
   viewDate: Date;
   calcEarnings: (hours: number) => number;
@@ -27,9 +28,11 @@ interface SettingsScreenProps {
   onOpenDevicePair?: () => void;
 }
 
+const WIPE_HOLD_DURATION_MS = 900;
+
 export const SettingsScreen = ({
   settings, setSettings, t, curSym, haptic, syncStatus, syncErrorMsg,
-  lastSynced, syncTapActual, restoreFromCloud, deleteAllTap, toggleTheme,
+  lastSynced, syncTapActual, restoreFromCloud, deleteAllTap, onWipeData, toggleTheme,
   viewDate, calcEarnings, addToast, onOpenDevicePair
 }: SettingsScreenProps) => {
   const {
@@ -76,6 +79,115 @@ export const SettingsScreen = ({
 
   const versionTapRef = React.useRef({ count: 0, lastTap: 0 });
   const [isUpdatingSW, setIsUpdatingSW] = React.useState(false);
+
+  const [wipeHoldState, setWipeHoldState] = React.useState<'idle' | 'holding' | 'complete'>('idle');
+  const [wipeProgress, setWipeProgress] = React.useState(0);
+  const [wipeHint, setWipeHint] = React.useState(false);
+  const wipeRafRef = React.useRef<number | null>(null);
+  const wipeStartRef = React.useRef(0);
+  const wipeCompletedRef = React.useRef(false);
+  const wipeResetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wipeHintTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPointerDownRef = React.useRef(0);
+
+  const clearWipeTimers = React.useCallback(() => {
+    if (wipeRafRef.current !== null) {
+      cancelAnimationFrame(wipeRafRef.current);
+      wipeRafRef.current = null;
+    }
+    if (wipeResetTimerRef.current) {
+      clearTimeout(wipeResetTimerRef.current);
+      wipeResetTimerRef.current = null;
+    }
+    if (wipeHintTimerRef.current) {
+      clearTimeout(wipeHintTimerRef.current);
+      wipeHintTimerRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    return () => clearWipeTimers();
+  }, [clearWipeTimers]);
+
+  const executeWipe = React.useCallback(async () => {
+    if (wipeCompletedRef.current) return;
+    wipeCompletedRef.current = true;
+    clearWipeTimers();
+    setWipeProgress(1);
+    setWipeHoldState('complete');
+    setWipeHint(false);
+    haptic([25, 45, 25]);
+    if (onWipeData) {
+      await onWipeData();
+    } else {
+      deleteAllTap.trigger();
+      deleteAllTap.trigger();
+    }
+    wipeResetTimerRef.current = setTimeout(() => {
+      setWipeHoldState('idle');
+      setWipeProgress(0);
+      wipeCompletedRef.current = false;
+    }, 1100);
+  }, [clearWipeTimers, deleteAllTap, haptic, onWipeData]);
+
+  const cancelWipeHold = React.useCallback((showHintMessage: boolean) => {
+    if (wipeCompletedRef.current) return;
+    if (wipeRafRef.current !== null) {
+      cancelAnimationFrame(wipeRafRef.current);
+      wipeRafRef.current = null;
+    }
+    setWipeHoldState('idle');
+    setWipeProgress(0);
+    if (showHintMessage) {
+      setWipeHint(true);
+      if (wipeHintTimerRef.current) clearTimeout(wipeHintTimerRef.current);
+      wipeHintTimerRef.current = setTimeout(() => setWipeHint(false), 1600);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (wipeHoldState !== 'holding') return;
+    const handleGlobalUp = () => {
+      cancelWipeHold(true);
+    };
+    const handleGlobalCancel = () => {
+      cancelWipeHold(false);
+    };
+    window.addEventListener('pointerup', handleGlobalUp);
+    window.addEventListener('pointercancel', handleGlobalCancel);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalUp);
+      window.removeEventListener('pointercancel', handleGlobalCancel);
+    };
+  }, [wipeHoldState, cancelWipeHold]);
+
+  const handleWipePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (wipeCompletedRef.current) return;
+    lastPointerDownRef.current = performance.now();
+    clearWipeTimers();
+    setWipeHint(false);
+    setWipeHoldState('holding');
+    setWipeProgress(0);
+    wipeStartRef.current = performance.now();
+    haptic(8);
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {
+      // Synthetic pointer events may not map to an active capture id
+    }
+
+    const step = (now: number) => {
+      const p = Math.min(1, (now - wipeStartRef.current) / WIPE_HOLD_DURATION_MS);
+      setWipeProgress(p);
+      if (p >= 1) {
+        void executeWipe();
+      } else {
+        wipeRafRef.current = requestAnimationFrame(step);
+      }
+    };
+    wipeRafRef.current = requestAnimationFrame(step);
+  };
 
   const handleVersionTap = async () => {
     if (isUpdatingSW) return;
@@ -141,7 +253,7 @@ export const SettingsScreen = ({
       
       <div className="space-y-4">
         {/* Privacy Block */}
-        <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
+        <div className="rounded-card apple-glass-panel overflow-hidden flex flex-col p-2">
           <div className="flex flex-col px-4 py-3.5">
             <div className="flex items-center gap-4 mb-3">
               <div className="w-10 h-10 rounded-[12px] bg-[var(--bg)] border border-[var(--b)] flex items-center justify-center text-[var(--t2)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
@@ -197,7 +309,7 @@ export const SettingsScreen = ({
         </div>
 
         {/* Salary & Goal Block */}
-        <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
+        <div className="rounded-card apple-glass-panel overflow-hidden flex flex-col p-2">
           <div className="flex flex-col px-4 py-3.5 mb-2">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-10 h-10 rounded-[12px] bg-[var(--bg)] border border-[var(--b)] flex items-center justify-center text-[var(--t2)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
@@ -212,7 +324,7 @@ export const SettingsScreen = ({
               </div>
               <button
                 onClick={() => { haptic(10); setSettings(s => ({ ...s, privacyMode: !s.privacyMode })); }}
-                className="flex items-center justify-center w-11 h-11 shrink-0 rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] transition-all duration-300 active:scale-95 outline-none shadow-sm"
+                className="flex items-center justify-center w-11 h-11 shrink-0 rounded-full apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] transition-all duration-300 active:scale-95 outline-none shadow-sm"
                 aria-label={settings.privacyMode ? t('Show Earnings') : t('Hide Earnings')}
               >
                 {settings.privacyMode ? <EyeOff size={20} strokeWidth={2} /> : <Eye size={20} strokeWidth={2} />}
@@ -223,7 +335,7 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Hourly Rate')}</span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)] items-center focus-within:border-[var(--a)] transition-colors h-12">
-                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, rate: Math.max(0, s.rate - 1) })); }} className="w-12 h-full rounded-control bg-[var(--bg-1)] flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
+                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, rate: Math.max(0, s.rate - 1) })); }} className="w-12 h-full rounded-control apple-glass-btn flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
                     <Minus size={16} strokeWidth={2.5} />
                   </motion.button>
                   <div className={`flex items-center flex-1 justify-center text-[var(--t1)] px-2 transition-all duration-300 ${settings.privacyMode ? 'blur-md' : ''}`}>
@@ -241,7 +353,7 @@ export const SettingsScreen = ({
                       placeholder="0"
                     />
                   </div>
-                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, rate: s.rate + 1 })); }} className="w-12 h-full rounded-control bg-[var(--bg-1)] flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
+                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, rate: s.rate + 1 })); }} className="w-12 h-full rounded-control apple-glass-btn flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
                     <Plus size={16} strokeWidth={2.5} />
                   </motion.button>
                 </div>
@@ -250,7 +362,7 @@ export const SettingsScreen = ({
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Goal')} <span className="text-[var(--t3)]">/ mo</span></span>
                 <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)] items-center focus-within:border-[var(--a)] transition-colors h-12">
-                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, goal: Math.max(0, s.goal - 50) })); }} className="w-12 h-full rounded-control bg-[var(--bg-1)] flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
+                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, goal: Math.max(0, s.goal - 50) })); }} className="w-12 h-full rounded-control apple-glass-btn flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
                     <Minus size={16} strokeWidth={2.5} />
                   </motion.button>
                   <div className={`flex items-center flex-1 justify-center text-[var(--t1)] px-2 transition-all duration-300 ${settings.privacyMode ? 'blur-md' : ''}`}>
@@ -268,7 +380,7 @@ export const SettingsScreen = ({
                       placeholder="0"
                     />
                   </div>
-                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, goal: s.goal + 50 })); }} className="w-12 h-full rounded-control bg-[var(--bg-1)] flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
+                  <motion.button onClick={() => { haptic(10); setSettings(s => ({ ...s, goal: s.goal + 50 })); }} className="w-12 h-full rounded-control apple-glass-btn flex items-center justify-center text-[var(--t2)] hover:text-[var(--t1)] transition-colors active:scale-95">
                     <Plus size={16} strokeWidth={2.5} />
                   </motion.button>
                 </div>
@@ -282,7 +394,7 @@ export const SettingsScreen = ({
         </div>
 
         {/* Appearance Block */}
-        <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
+        <div className="rounded-card apple-glass-panel overflow-hidden flex flex-col p-2">
           <div className="flex flex-col px-4 py-3.5 mb-2">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-10 h-10 rounded-[12px] bg-[var(--bg)] border border-[var(--b)] flex items-center justify-center text-[var(--t2)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
@@ -297,7 +409,7 @@ export const SettingsScreen = ({
             <div className="space-y-4">
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Theme')}</span>
-                <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex p-1 rounded-panel apple-glass-btn">
                   {(['light', 'dark', 'indigo'] as const).map(th => (
                     <button 
                       key={th}
@@ -306,7 +418,7 @@ export const SettingsScreen = ({
                         setSettings(newSettings);
                         haptic(10);
                       }}
-                      className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.theme === th ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
+                      className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.theme === th ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
                     >
                       {t(th)}
                     </button>
@@ -316,12 +428,12 @@ export const SettingsScreen = ({
 
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Language')}</span>
-                <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex p-1 rounded-panel apple-glass-btn">
                   {(['ENG', 'RUS', 'GR'] as const).map(lang => (
                     <button 
                       key={lang}
                       onClick={() => { setSettings(s => ({ ...s, language: lang })); haptic(10); }}
-                      className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.language === lang ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
+                      className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.language === lang ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
                     >
                       {lang}
                     </button>
@@ -331,12 +443,12 @@ export const SettingsScreen = ({
 
               <div className="space-y-2">
                 <span className="text-[9px] font-bold text-[var(--t2)] uppercase tracking-wider px-1">{t('Currency')}</span>
-                <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex p-1 rounded-panel apple-glass-btn">
                   {(['EUR', 'RUB'] as const).map(cur => (
                     <button 
                       key={cur}
                       onClick={() => { setSettings(s => ({ ...s, currency: cur })); haptic(10); }}
-                      className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.currency === cur ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
+                      className={`flex-1 py-2.5 text-xs font-black rounded-control transition-all border ${settings.currency === cur ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-[var(--b)]' : 'text-[var(--t3)] hover:text-[var(--t2)] border-transparent'}`}
                     >
                       {cur}
                     </button>
@@ -349,7 +461,7 @@ export const SettingsScreen = ({
               {isInstallable && (
                 <button 
                   onClick={promptInstall}
-                  className="w-full flex items-center justify-between p-3.5 mt-2 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-colors"
+                  className="w-full flex items-center justify-between p-3.5 mt-2 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-colors"
                 >
                   <span className="text-xs font-bold text-[var(--a)] uppercase tracking-wider">{t('Install App')}</span>
                   <Smartphone size={16} className="text-[var(--a)]" />
@@ -360,7 +472,7 @@ export const SettingsScreen = ({
         </div>
 
         {/* Data & Backup Block */}
-        <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
+        <div className="rounded-card apple-glass-panel overflow-hidden flex flex-col p-2">
           <div className="flex flex-col px-4 py-3.5">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-10 h-10 rounded-[12px] bg-[var(--bg)] border border-[var(--b)] flex items-center justify-center text-[var(--t2)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
@@ -373,35 +485,35 @@ export const SettingsScreen = ({
             </div>
             
             <div className="space-y-3 mt-4">
-              <button onClick={exportCSV} className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all">
+              <button onClick={exportCSV} className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all">
                 <div className="flex items-center gap-3.5"><FileText size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Export CSV')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
-              <button onClick={exportTXT} className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all">
+              <button onClick={exportTXT} className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all">
                 <div className="flex items-center gap-3.5"><FileText size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Save .txt')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
               <button 
                 onClick={() => exportPDF('year')} 
                 disabled={isExporting}
-                className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all disabled:opacity-50"
+                className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all disabled:opacity-50"
               >
                 <div className="flex items-center gap-3.5"><Save size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('PDF Report')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
-              <button onClick={exportICS} className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all">
+              <button onClick={exportICS} className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all">
                 <div className="flex items-center gap-3.5"><CalendarPlus size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Add to Calendar')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
               <button 
                 onClick={() => { setShowTgConfirm(true); haptic(10); }} 
                 disabled={settings.strictOfflineMode}
-                className={`w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] transition-all relative overflow-hidden group ${settings.strictOfflineMode ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:bg-[var(--b)] text-[var(--t1)]'}`}
+                className={`w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn transition-all relative overflow-hidden group ${settings.strictOfflineMode ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:bg-[var(--b)] text-[var(--t1)]'}`}
               >
                 <div className={`flex items-center gap-3.5 relative ${settings.strictOfflineMode ? 'text-[var(--t3)]' : 'text-[var(--t1)]'}`}><Send size={16} /> <span className="text-sm font-black">{t('Share & Export...')}</span></div>
                 <ChevronRight size={16} className={`relative ${settings.strictOfflineMode ? 'text-[var(--t3)]' : 'text-[var(--t1)]'}`}/>
               </button>
-              <button onClick={shareBackup} className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all">
+              <button onClick={shareBackup} className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all">
                 <div className="flex items-center gap-3.5"><Download size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Backup Data')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
@@ -410,7 +522,7 @@ export const SettingsScreen = ({
                   useAppStore.getState().setScreen('finance');
                   haptic(10);
                 }}
-                className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--bg)] border border-[var(--b)] hover:bg-[var(--b)] transition-all group"
+                className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all group"
               >
                 <div className="flex items-center gap-3.5">
                   <LayoutDashboard size={16} className="text-[var(--a)]" />
@@ -424,7 +536,7 @@ export const SettingsScreen = ({
 
 
         {/* Device & System Block */}
-        <div className="rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2">
+        <div className="rounded-card apple-glass-panel overflow-hidden flex flex-col p-2">
           <div className="flex flex-col px-4 py-3.5 mb-2">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-10 h-10 rounded-[12px] bg-[var(--bg)] border border-[var(--b)] flex items-center justify-center text-[var(--t2)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
@@ -502,7 +614,7 @@ export const SettingsScreen = ({
           </div>
         </div>
         {/* Cloud Sync Block */}
-        <div className={`rounded-card border border-[var(--b)] bg-[var(--bg-1)] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col p-2 ${settings.strictOfflineMode ? 'opacity-50 grayscale' : ''}`}>
+        <div className={`rounded-card apple-glass-panel overflow-hidden flex flex-col p-2 ${settings.strictOfflineMode ? 'opacity-50 grayscale' : ''}`}>
           <div className="flex flex-col px-4 py-3.5 mb-2 relative">
             {settings.strictOfflineMode && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--bg-1)]/60 backdrop-blur-[2px]">
@@ -581,7 +693,7 @@ export const SettingsScreen = ({
             <button
               onClick={() => { haptic(10); restoreFromCloud(); }}
               disabled={syncStatus === 'syncing' || settings.strictOfflineMode}
-              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 bg-[var(--bg)] border border-[var(--b)] text-[var(--t1)] shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
+              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 apple-glass-btn text-[var(--t1)] shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
             >
               <Download size={14} /> {t('Restore from Cloud')}
             </button>
@@ -589,7 +701,7 @@ export const SettingsScreen = ({
             <button
               onClick={() => { haptic(10); onOpenDevicePair?.(); }}
               disabled={settings.strictOfflineMode}
-              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 bg-[var(--bg)] hover:bg-[var(--a-bg)] border border-[var(--b)] hover:border-[var(--a-b)] text-[var(--t1)] shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
+              className="h-12 mt-2 flex items-center justify-center gap-2 rounded-panel font-black text-xs active:scale-95 transition-all disabled:opacity-50 apple-glass-btn hover:bg-[var(--a-bg)] hover:border-[var(--a-b)] text-[var(--t1)] shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
             >
               <QrCode size={14} className="text-[var(--a)]" /> {t('Pair Device (QR Code)')}
             </button>
@@ -602,21 +714,63 @@ export const SettingsScreen = ({
             <span className="text-xs font-black text-[var(--danger)]">Danger Zone</span>
             <span className="text-[9px] font-bold text-[var(--t3)] uppercase tracking-wider">Irreversible actions</span>
           </div>
-          <button 
-            onClick={() => { haptic(10); deleteAllTap.trigger(); }}
-            className="w-full flex items-center justify-between h-14 px-4 rounded-panel bg-[var(--danger)]/5 border border-[var(--danger)]/30 hover:bg-[var(--b)] active:scale-[0.98] transition-all text-[var(--danger)] relative overflow-hidden group shadow-xs"
+          <button
+            id="danger-wipe-btn"
+            type="button"
+            data-hold-state={wipeHoldState}
+            onPointerDown={handleWipePointerDown}
+            onPointerUp={() => cancelWipeHold(true)}
+            onPointerCancel={() => cancelWipeHold(false)}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={() => {
+              if (performance.now() - lastPointerDownRef.current < 1500) return;
+              cancelWipeHold(true);
+            }}
+            className={`wt-opal-btn w-full flex items-center justify-between h-14 px-4 rounded-panel transition-transform active:scale-[0.985] group ${
+              wipeHoldState === 'holding' ? 'is-active-hold' : ''
+            } ${
+              wipeHoldState === 'complete' || (wipeHoldState === 'holding' && wipeProgress >= 0.85) ? 'is-ink-dark' : ''
+            }`}
           >
-            <div className="flex items-center gap-3.5 relative">
-              <AnimatedTrash size={16} isConfirming={deleteAllTap.isConfirming} className="group-hover:scale-110 transition-transform" /> 
-              <span className="text-sm font-black">
-                {deleteAllTap.isConfirming ? t('Tap to Confirm Wipe') : t('Wipe All Local Data')}
+            <div
+              className="wt-opal-fill"
+              aria-hidden="true"
+              style={{
+                width: `${Math.round(wipeProgress * 116)}%`,
+                opacity: wipeHoldState === 'holding' ? Math.min(1, 0.28 + wipeProgress * 0.85) : 0,
+              }}
+            >
+              <div className="wt-opal-halo" />
+              <div className="wt-opal-core" />
+            </div>
+            <div
+              className={`wt-opal-finish ${wipeHoldState === 'complete' ? 'is-complete' : ''}`}
+              aria-hidden="true"
+            />
+            <div className="flex items-center gap-3.5 relative z-10">
+              <AnimatedTrash
+                size={16}
+                isConfirming={wipeHoldState === 'holding' && wipeProgress > 0.35}
+                openProgress={wipeProgress}
+                className="group-hover:scale-110 transition-transform"
+              />
+              <span className="text-sm font-black tracking-tight">
+                {wipeHoldState === 'complete'
+                  ? t('All data deleted')
+                  : wipeHoldState === 'holding'
+                  ? t('Keep Holding...')
+                  : wipeHint
+                  ? t('Hold to Confirm')
+                  : t('Wipe Data')}
               </span>
             </div>
-            {deleteAllTap.isConfirming ? (
-              <AlertTriangle size={16} className="text-[var(--danger)] animate-pulse relative" />
-            ) : (
-              <ChevronRight size={16} className="text-[var(--danger)] relative" />
-            )}
+            <span className="relative z-10 flex items-center">
+              {wipeHoldState === 'complete' ? (
+                <Check size={16} strokeWidth={2.5} />
+              ) : (
+                <ChevronRight size={16} className="opacity-70 transition-transform group-hover:translate-x-0.5" />
+              )}
+            </span>
           </button>
         </div>
 

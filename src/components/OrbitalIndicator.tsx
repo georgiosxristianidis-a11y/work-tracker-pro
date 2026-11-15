@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface OrbitalIndicatorProps {
   /** Size in pixels (default 24) */
@@ -10,6 +10,9 @@ export interface OrbitalIndicatorProps {
   /** Rotation speed multiplier (default 0.2 for calm ambient drift) */
   speed?: number;
   className?: string;
+  /** Enable tap/click direction reversal (default true) */
+  interactive?: boolean;
+  onDirectionChange?: (dir: 'cw' | 'ccw') => void;
 }
 
 interface Point3D {
@@ -20,8 +23,7 @@ interface Point3D {
 
 /**
  * Minimalist Apple-grade 3D Constellation Indicator.
- * Renders an ultra-slow, ambient celestial orbit with 10 subtle micro-dots.
- * Pure calmness, zero distraction, 120fps hardware acceleration.
+ * Supports smooth speed tuning and click/tap rotation direction reversal.
  */
 export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
   size = 24,
@@ -29,8 +31,13 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
   color = 'currentColor',
   speed = 0.2,
   className = '',
+  interactive = true,
+  onDirectionChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const dirRef = useRef<1 | -1>(1);
+  const boostRef = useRef<number>(0);
+  const [dir, setDir] = useState<'cw' | 'ccw'>('cw');
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,9 +52,8 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     canvas.width = size * dpr;
     canvas.height = size * dpr;
 
-    // Fibonacci Sphere points: perfectly balanced minimalist distribution
     const points: Point3D[] = [];
-    const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle
+    const phi = Math.PI * (3 - Math.sqrt(5));
 
     for (let i = 0; i < dotCount; i++) {
       const y = 1 - (i / (dotCount - 1 || 1)) * 2;
@@ -64,7 +70,7 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     const radius = (size * 0.4) * dpr;
     const centerX = (size / 2) * dpr;
     const centerY = (size / 2) * dpr;
-    const tiltX = 0.35; // Fixed elegant tilt
+    const tiltX = 0.35;
 
     let fillStyle = 'white';
     try {
@@ -93,8 +99,9 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (!prefersReducedMotion) {
-        // Very slow, meditative ambient drift
-        angleY += 0.005 * speed;
+        boostRef.current *= 0.92;
+        if (boostRef.current < 0.0002) boostRef.current = 0;
+        angleY += dirRef.current * (0.009 * speed + boostRef.current);
       }
 
       const cosY = Math.cos(angleY);
@@ -158,12 +165,33 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     };
   }, [size, dotCount, color, speed]);
 
+  const handleToggleDirection = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!interactive) return;
+    e.stopPropagation();
+    const nextDirNum: 1 | -1 = dirRef.current === 1 ? -1 : 1;
+    dirRef.current = nextDirNum;
+    boostRef.current = 0.032;
+    const nextDir: 'cw' | 'ccw' = nextDirNum === 1 ? 'cw' : 'ccw';
+    setDir(nextDir);
+    onDirectionChange?.(nextDir);
+  };
+
   return (
     <canvas
       ref={canvasRef}
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`inline-block shrink-0 select-none pointer-events-none ${className}`}
-      aria-hidden="true"
+      onClick={interactive ? handleToggleDirection : undefined}
+      data-orbital=""
+      data-dir={dir}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        touchAction: interactive ? 'manipulation' : undefined,
+      }}
+      className={`inline-block shrink-0 select-none ${
+        interactive ? 'cursor-pointer pointer-events-auto' : 'pointer-events-none'
+      } ${className}`}
+      aria-label={interactive ? 'Orbital indicator — tap to reverse rotation' : undefined}
+      aria-hidden={interactive ? undefined : true}
     />
   );
 };

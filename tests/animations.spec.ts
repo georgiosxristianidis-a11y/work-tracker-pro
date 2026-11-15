@@ -25,27 +25,67 @@ test.describe('Animations Test', () => {
     await quickFillBtn.dispatchEvent('pointerup');
   });
 
-  test('Trash can animation responds to interactions', async ({ page }) => {
+  test('Opal hold-to-wipe button requires long hold to wipe data', async ({ page }) => {
     await page.goto('/');
-    
+
     // Switch to Settings tab
     await page.locator('nav button').nth(3).click();
 
-    // Find Delete All Data button
-    const deleteBtn = page.locator('button:has-text("Wipe All Local Data")');
-    await expect(deleteBtn).toBeVisible();
+    const wipeBtn = page.locator('#danger-wipe-btn');
+    await expect(wipeBtn).toBeVisible();
+    await expect(wipeBtn).toContainText('Wipe Data');
+    await expect(wipeBtn).toHaveAttribute('data-hold-state', 'idle');
 
-    const trashSvg = deleteBtn.locator('svg').first();
+    const trashSvg = wipeBtn.locator('svg').first();
     await expect(trashSvg).toBeVisible();
 
-    // Hover
-    await deleteBtn.hover();
-    await expect(trashSvg).toBeVisible();
-    
-    // Click (triggers confirm state)
-    await deleteBtn.click();
-    
-    // Check if the text changed to "Tap to Confirm Wipe"
-    await expect(page.locator('button:has-text("Tap to Confirm Wipe")')).toBeVisible();
+    // Quick click shows hold hint instead of wiping immediately
+    await wipeBtn.click();
+    await expect(wipeBtn).toContainText('Hold to Confirm');
+    await expect(wipeBtn).toHaveAttribute('data-hold-state', 'idle');
+
+    // Long press hold engages radial fill and executes wipe at >= 900ms
+    await wipeBtn.scrollIntoViewIfNeeded();
+    const box = await wipeBtn.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) {
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(180);
+      await expect(wipeBtn).toHaveAttribute('data-hold-state', 'holding');
+      await expect(wipeBtn).toContainText('Keep Holding...');
+      await expect(wipeBtn).toHaveAttribute('data-hold-state', 'complete', { timeout: 2000 });
+      await expect(wipeBtn).toContainText('All data deleted');
+      await page.mouse.up();
+    }
+    await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Orbital indicator reverses rotation direction on click', async ({ page }) => {
+    await page.goto('/');
+
+    const orbital = page.locator('canvas[data-orbital]');
+    await expect(orbital).toBeVisible();
+    await expect(orbital).toHaveAttribute('data-dir', 'cw');
+
+    await orbital.click();
+    await expect(orbital).toHaveAttribute('data-dir', 'ccw');
+    // Must stay on Home rather than bubbling into Shift Stopwatch navigation
+    await expect(page.getByTestId('monthly-stats')).toBeAttached();
+
+    await orbital.click();
+    await expect(orbital).toHaveAttribute('data-dir', 'cw');
+  });
+
+  test('Minimalist icon-only dock pulses top line on tab click', async ({ page }) => {
+    await page.goto('/');
+
+    const navButtons = page.locator('nav button');
+    await expect(navButtons).toHaveCount(4);
+    await expect(navButtons.nth(0)).toHaveText('');
+    await expect(page.locator('.wt-nav-topline')).toHaveCount(0);
+
+    await navButtons.nth(2).click();
+    await expect(navButtons.nth(2).locator('.wt-nav-topline.is-pulsing')).toBeVisible();
   });
 });

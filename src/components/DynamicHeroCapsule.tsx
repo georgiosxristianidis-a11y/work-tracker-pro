@@ -39,8 +39,11 @@ export const DynamicHeroCapsule: React.FC<DynamicHeroCapsuleProps> = ({
           aria-label={t('Shift Stopwatch')}
         >
           {/* Orbital 3D Constellation Sphere */}
-          <div className="relative w-8 h-8 rounded-full bg-[var(--bg)]/80 flex items-center justify-center border border-[var(--b)] shrink-0 shadow-xs group-hover:border-[var(--a)]/40 transition-colors">
-            <OrbitalIndicator size={20} color="var(--a)" speed={0.2} dotCount={10} />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-8 h-8 rounded-full apple-glass-btn flex items-center justify-center shrink-0 shadow-xs group-hover:border-[var(--a)]/40 transition-colors"
+          >
+            <OrbitalIndicator size={20} color="var(--a)" speed={0.32} dotCount={10} />
           </div>
 
           <div className="flex flex-col min-w-0">
@@ -69,7 +72,7 @@ export const DynamicHeroCapsule: React.FC<DynamicHeroCapsuleProps> = ({
               onOpenQuickFill();
             }}
             aria-label={t('Quick Fill')}
-            className="w-9 h-9 rounded-full border border-[var(--b)] bg-[var(--bg)]/70 hover:bg-[var(--bg)] text-[var(--t2)] hover:text-[var(--t1)] flex items-center justify-center transition-colors shadow-xs"
+            className="w-9 h-9 rounded-full apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] flex items-center justify-center transition-colors shadow-xs"
             title={t('Quick Fill')}
           >
             <CalendarPlus size={15} strokeWidth={1.5} />

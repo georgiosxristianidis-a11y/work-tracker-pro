@@ -22,4 +22,25 @@ test.describe('Rocket Zero State Test', () => {
     // Let's just check if calendar UI is visible, e.g. "Quick Fill" or "Month" navigation inside Calendar
     await expect(page.locator('button:has-text("Quick Fill")')).toBeVisible();
   });
+
+  test('Should coil and catapult rocket with hold gesture', async ({ page }) => {
+    await page.goto('/');
+
+    const rocketZero = page.locator('div[title="Start Work"]');
+    await expect(rocketZero).toBeVisible();
+    await expect(rocketZero).toHaveAttribute('data-rocket-state', 'idle');
+
+    const box = await rocketZero.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) {
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(160);
+      await expect(rocketZero).toHaveAttribute('data-rocket-state', 'charging');
+      await expect(rocketZero).toHaveAttribute('data-rocket-state', 'launching', { timeout: 1200 });
+      await page.mouse.up();
+    }
+
+    await expect(page.locator('button:has-text("Quick Fill")')).toBeVisible({ timeout: 3000 });
+  });
 });

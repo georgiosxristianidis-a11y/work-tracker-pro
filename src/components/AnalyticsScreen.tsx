@@ -61,7 +61,7 @@ export const AnalyticsScreen = ({
               const nextLang = langs[(langs.indexOf(current) + 1) % langs.length];
               setAiLangOverride(nextLang);
             }}
-            className="h-9 px-3 flex items-center justify-center rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] transition-colors text-xs font-black tracking-widest"
+            className="h-9 px-3 flex items-center justify-center rounded-xl apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] transition-colors text-xs font-black tracking-widest"
           >
             {aiLangOverride || settings.language}
           </motion.button>
@@ -83,7 +83,7 @@ export const AnalyticsScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="p-6 rounded-card bg-[var(--bg-1)] border border-[var(--b)] text-[var(--t1)] relative overflow-hidden shadow-sm"
+            className="p-6 rounded-card apple-glass-panel text-[var(--t1)] relative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-4">
               <span className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--t3)] flex items-center gap-1.5">
@@ -214,12 +214,12 @@ export const AnalyticsScreen = ({
                 
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-2">
-                    <div className="flex-1 flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                    <div className="flex-1 flex p-1 rounded-panel apple-glass-btn">
                       <button
                         onClick={() => { haptic(8); setChartMetric('earnings'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartMetric === 'earnings' 
-                            ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
+                            ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
                             : 'text-[var(--t3)] hover:text-[var(--t2)] border border-transparent'
                         }`}
                       >
@@ -229,7 +229,7 @@ export const AnalyticsScreen = ({
                         onClick={() => { haptic(8); setChartMetric('hours'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartMetric === 'hours' 
-                            ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
+                            ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
                             : 'text-[var(--t3)] hover:text-[var(--t2)] border border-transparent'
                         }`}
                       >
@@ -239,7 +239,7 @@ export const AnalyticsScreen = ({
                         onClick={() => { haptic(8); setChartMetric('velocity'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartMetric === 'velocity' 
-                            ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
+                            ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
                             : 'text-[var(--t3)] hover:text-[var(--t2)] border border-transparent'
                         }`}
                         title={t('Avg Hours/Day')}
@@ -248,12 +248,12 @@ export const AnalyticsScreen = ({
                       </button>
                     </div>
 
-                    <div className="flex-1 flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                    <div className="flex-1 flex p-1 rounded-panel apple-glass-btn">
                       <button
                         onClick={() => { haptic(8); setChartType('area'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartType === 'area' 
-                            ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
+                            ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
                             : 'text-[var(--t3)] hover:text-[var(--t2)] border border-transparent'
                         }`}
                       >
@@ -263,7 +263,7 @@ export const AnalyticsScreen = ({
                         onClick={() => { haptic(8); setChartType('bar'); }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartType === 'bar' 
-                            ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
+                            ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
                             : 'text-[var(--t3)] hover:text-[var(--t2)] border border-transparent'
                         }`}
                       >
@@ -272,7 +272,7 @@ export const AnalyticsScreen = ({
                     </div>
                   </div>
 
-                  <div className="flex p-1 rounded-panel bg-[var(--bg)] border border-[var(--b)] w-full">
+                  <div className="flex p-1 rounded-panel apple-glass-btn w-full">
                     {[6, 12].map((p) => (
                       <button
                         key={p}
@@ -282,7 +282,7 @@ export const AnalyticsScreen = ({
                         }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-control transition-all ${
                           chartPeriod === p 
-                            ? 'bg-[var(--bg-1)] text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
+                            ? 'apple-glass-tab bg-[var(--bg-1)]/85 text-[var(--t1)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[var(--b)]' 
                             : 'text-[var(--t3)] hover:text-[var(--t2)] border border-transparent'
                         }`}
                       >

@@ -84,18 +84,18 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
             haptic(10);
             setSettings(s => ({ ...s, privacyMode: !s.privacyMode }));
           }}
-          className="w-9 h-9 flex items-center justify-center rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] transition-all active:scale-92"
+          className="w-9 h-9 flex items-center justify-center rounded-full apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] transition-all active:scale-92"
           aria-label={privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
           title={privacyMode ? (t('Show Earnings') || 'Show Earnings') : (t('Hide Earnings') || 'Hide Earnings')}
         >
           {privacyMode ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
         </button>
 
-        <div className="h-9 flex items-center gap-1.5 px-3 rounded-full text-xs font-bold border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] shrink-0 transition-all">
+        <div className="h-9 flex items-center gap-1.5 px-3 rounded-full text-xs font-bold apple-glass-pill text-[var(--t2)] shrink-0 transition-all">
           {strictMode ? (
             <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] opacity-70" />
           ) : syncStatus === 'syncing' ? (
-            <OrbitalIndicator size={12} color="var(--green)" speed={1.8} />
+            <OrbitalIndicator size={12} color="var(--green)" speed={1.8} interactive={false} />
           ) : syncStatus === 'error' ? (
             <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
           ) : !isOnline ? (

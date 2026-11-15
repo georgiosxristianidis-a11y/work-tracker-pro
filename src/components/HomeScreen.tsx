@@ -103,10 +103,10 @@ export const HomeScreen = ({
         <div className="flex items-center gap-2">
 
           <div className="flex gap-1.5">
-            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
+            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
               <ChevronLeft size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
             </motion.button>
-            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} className="group p-1.5 rounded-xl border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] hover:border-[var(--b)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
+            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} className="group p-1.5 rounded-xl apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
               <ChevronRight size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-0.5" />
             </motion.button>
           </div>

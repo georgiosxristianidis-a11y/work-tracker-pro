@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Save, Minus, Plus, CircleCheck, Trash, Database } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
@@ -43,10 +43,31 @@ export const EditorModal = ({
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showAutoSaved, setShowAutoSaved] = useState(false);
   const isFirstRender = useRef(true);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSavedHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveEpochRef = useRef(0);
   // Holds the latest hours change that has not yet been persisted, so closing
   // the modal before the 600ms autosave timer fires can flush it instead of
   // losing the edit.
   const pendingSaveRef = useRef<{ date: string; hours: number } | null>(null);
+
+  const clearTimerRef = (ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>) => {
+    if (ref.current !== null) {
+      clearTimeout(ref.current);
+      ref.current = null;
+    }
+  };
+
+  const cancelPendingAutoSave = useCallback(() => {
+    saveEpochRef.current += 1;
+    clearTimerRef(autoSaveTimerRef);
+    clearTimerRef(autoSavedHideTimerRef);
+    pendingSaveRef.current = null;
+    setIsAutoSaving(false);
+    setShowAutoSaved(false);
+  }, []);
+
+  useEffect(() => cancelPendingAutoSave, [cancelPendingAutoSave]);
 
   // A day with no stored entry is an unsaved default, not a recorded value.
   const isExistingEntry = editorDate ? allEntries.some(e => e.date === editorDate) : false;
@@ -54,38 +75,46 @@ export const EditorModal = ({
   useEffect(() => {
     if (!editorDate) {
       isFirstRender.current = true;
-      pendingSaveRef.current = null;
+      cancelPendingAutoSave();
       return;
     }
-
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
 
+    clearTimerRef(autoSavedHideTimerRef);
     setIsAutoSaving(true);
     setShowAutoSaved(false);
+    const epoch = ++saveEpochRef.current;
     pendingSaveRef.current = { date: editorDate, hours: editorHours };
 
     const timeout = setTimeout(async () => {
-      await saveEntry(editorDate, editorHours);
+      autoSaveTimerRef.current = null;
       pendingSaveRef.current = null;
+      await saveEntry(editorDate, editorHours);
+      if (epoch !== saveEpochRef.current) return;
       setIsAutoSaving(false);
       setShowAutoSaved(true);
 
-      setTimeout(() => {
+      autoSavedHideTimerRef.current = setTimeout(() => {
+        autoSavedHideTimerRef.current = null;
         setShowAutoSaved(false);
       }, 2000);
     }, 600);
+    autoSaveTimerRef.current = timeout;
 
-    return () => clearTimeout(timeout);
-  }, [editorHours, editorDate, saveEntry]);
+    return () => {
+      clearTimeout(timeout);
+      if (autoSaveTimerRef.current === timeout) autoSaveTimerRef.current = null;
+    };
+  }, [editorHours, editorDate, saveEntry, cancelPendingAutoSave]);
 
   // Persist any pending (debounced) edit before dismissing the modal, then close.
   const closeEditor = () => {
     const pending = pendingSaveRef.current;
+    cancelPendingAutoSave();
     if (pending) {
-      pendingSaveRef.current = null;
       void saveEntry(pending.date, pending.hours);
     }
     setEditorDate(null);
@@ -254,6 +283,7 @@ export const EditorModal = ({
                 <motion.button 
                   whileHover="hover"
                   onClick={async () => { 
+                    cancelPendingAutoSave();
                     await saveEntry(editorDate, editorHours); 
                     setEditorDate(null);
                     setShowSaveAnim(true);
@@ -266,6 +296,7 @@ export const EditorModal = ({
                 <motion.button 
                   whileHover="hover"
                   onClick={() => {
+                    cancelPendingAutoSave();
                     if (deleteEntryTap.isConfirming) {
                       setShowDeleteAnim(true);
                       setTimeout(() => setShowDeleteAnim(false), 1500);

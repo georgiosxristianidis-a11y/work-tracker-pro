@@ -16,9 +16,15 @@ export interface ToastMessage {
 
 interface ToastsProps {
   toasts: ToastMessage[];
+  removeToast?: (id: number) => void;
 }
 
-export const Toasts = ({ toasts, removeToast }: ToastsProps & { removeToast?: (id: number) => void }) => {
+interface ToastItemProps {
+  t: ToastMessage;
+  removeToast?: (id: number) => void;
+}
+
+export const Toasts = ({ toasts, removeToast }: ToastsProps) => {
   return (
     <div className="absolute top-[calc(64px+env(safe-area-inset-top))] left-6 right-6 z-[300] space-y-2 pointer-events-none flex flex-col items-center">
       <AnimatePresence>
@@ -30,29 +36,31 @@ export const Toasts = ({ toasts, removeToast }: ToastsProps & { removeToast?: (i
   );
 };
 
-const ToastItem: React.FC<{ t: ToastMessage, removeToast?: (id: number) => void }> = ({ t, removeToast }) => {
+const ToastItem: React.FC<ToastItemProps> = ({ t, removeToast }) => {
   const [actionDone, setActionDone] = React.useState(false);
 
   return (
     <motion.div 
       layout
-      initial={{ opacity: 0, y: -20, scale: 0.9 }}
+      initial={{ opacity: 0, y: -16, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9, filter: 'blur(5px)' }}
-      className="p-4 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-bold pointer-events-auto bg-[var(--bg)]/90 backdrop-blur-md border border-[var(--b)] text-[var(--t1)]"
+      exit={{ opacity: 0, y: -8, scale: 0.94, filter: 'blur(4px)' }}
+      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+      className="px-4 py-3 rounded-panel apple-glass-toast flex items-center gap-3 text-xs font-semibold pointer-events-auto text-[var(--t1)]"
     >
-      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${t.type === 'success' ? 'bg-[var(--a-bg)] text-[var(--a)]' : t.type === 'error' ? 'bg-[var(--danger-bg)] text-[var(--danger)]' : 'bg-[var(--b)] text-[var(--t1)]'}`}>
-        {t.type === 'success' ? <Check size={12} strokeWidth={3} /> : t.type === 'error' ? <AlertTriangle size={12} strokeWidth={3} /> : <Sparkles size={12} strokeWidth={3} />}
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${t.type === 'success' ? 'bg-[var(--green-bg)] text-[var(--green)]' : t.type === 'error' ? 'bg-[var(--danger-bg)] text-[var(--danger)]' : 'bg-[var(--b)] text-[var(--t2)]'}`}>
+        {t.type === 'success' ? <Check size={12} strokeWidth={2.5} /> : t.type === 'error' ? <AlertTriangle size={12} strokeWidth={2.5} /> : <Sparkles size={12} strokeWidth={2.5} />}
       </div>
-      <span className="flex-1">{t.msg}</span>
+      <span className="flex-1 leading-snug">{t.msg}</span>
       {t.action && (
         <AnimatePresence mode="popLayout">
           {!actionDone && (
             <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
+              type="button"
+              initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 2, filter: 'blur(4px)', y: -10 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
+              exit={{ opacity: 0, scale: 1.4, filter: 'blur(4px)', y: -6 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
               onClick={(e) => {
                 e.stopPropagation();
                 setActionDone(true);
@@ -61,9 +69,9 @@ const ToastItem: React.FC<{ t: ToastMessage, removeToast?: (id: number) => void 
                   setTimeout(() => removeToast(t.id), 400); // give it time to animate then remove toast entirely
                 }
               }}
-              className="px-3 py-1 flex items-center gap-1.5 bg-transparent text-[var(--a)] rounded-full hover:bg-[var(--b)] active:scale-95 transition-all text-[11px] uppercase tracking-wider font-black"
+              className="px-2.5 py-1 flex items-center gap-1.5 bg-[var(--b)]/70 text-[var(--t1)] rounded-full hover:bg-[var(--b)] active:scale-95 transition-all text-xs font-bold shrink-0"
             >
-              <Undo2 size={12} strokeWidth={3} />
+              <Undo2 size={12} strokeWidth={2.5} />
               {t.action.label}
             </motion.button>
           )}

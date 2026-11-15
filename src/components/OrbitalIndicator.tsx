@@ -59,7 +59,7 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     }
 
     let angleY = 0;
-    let animId: number;
+    let animId = 0;
 
     const radius = (size * 0.4) * dpr;
     const centerX = (size / 2) * dpr;
@@ -89,6 +89,7 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     const sinTilt = Math.sin(tiltX);
 
     const render = () => {
+      animId = 0;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (!prefersReducedMotion) {
@@ -132,14 +133,27 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
         ctx.fill();
       }
 
-      if (!prefersReducedMotion) {
+      if (!prefersReducedMotion && !document.hidden) {
         animId = requestAnimationFrame(render);
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (animId) {
+          cancelAnimationFrame(animId);
+          animId = 0;
+        }
+      } else if (!prefersReducedMotion && !animId) {
+        animId = requestAnimationFrame(render);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     render();
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (animId) cancelAnimationFrame(animId);
     };
   }, [size, dotCount, color, speed]);

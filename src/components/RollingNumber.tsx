@@ -26,13 +26,17 @@ export interface RollingNumberProps {
 
 export const RollingNumber = React.memo(({ value, className = '', prefix, suffix }: RollingNumberProps) => {
   const str = String(value);
+  const sepIndex = str.search(/[.,]/);
+  const intLen = sepIndex === -1 ? str.length : sepIndex;
   return (
     <span className={`inline-flex items-baseline overflow-hidden ${className}`} aria-label={str}>
       {prefix}
-      {str.split('').map((c, i) => (c >= '0' && c <= '9')
-        ? <RollingDigit key={`${str.length - i}-${c}`} digit={parseInt(c, 10)} />
-        : <span key={i} className="inline-block whitespace-pre">{c === ' ' ? '\u00A0' : c}</span>
-      )}
+      {str.split('').map((c, i) => {
+        const key = i < intLen ? `int-${intLen - i}` : i === sepIndex ? 'sep' : `frac-${i - intLen}`;
+        return (c >= '0' && c <= '9')
+          ? <RollingDigit key={key} digit={parseInt(c, 10)} />
+          : <span key={`${key}-${c}`} className="inline-block whitespace-pre">{c === ' ' ? '\u00A0' : c}</span>;
+      })}
       {suffix}
     </span>
   );

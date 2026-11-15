@@ -222,14 +222,14 @@ export const CalendarScreen = ({
   }, [haptic, setEditorDate, setEditorHours, settings.normal, defaultEditorHours]);
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-4">
       {/* Top Header: Month Title, Days KPI Badge (Core Metric #2), Month Navigation */}
       <div className="relative flex items-center justify-between gap-3">
         <div className="flex flex-col min-w-0">
           <span className="text-micro font-bold text-[var(--t3)] uppercase tracking-widest leading-none mb-1 ml-1 block h-[12px]">
             {viewDate.getFullYear()}
           </span>
-          <h1 className="text-2xl font-black tracking-tight text-[var(--t1)] truncate pr-2">
+          <h1 className="text-2xl font-black tracking-[0.05em] text-[var(--t1)] truncate pr-2">
             {monthName}
           </h1>
         </div>
@@ -263,12 +263,12 @@ export const CalendarScreen = ({
       </div>
 
       {/* Calendar Card: High Breathing Room, Radar Pulse Hint, Saturday Dimmed, Sunday Accent */}
-      <div className="p-5 sm:p-6 apple-glass-panel rounded-[1.75rem] relative">
+      <div className="p-4 sm:p-5 apple-glass-panel rounded-[1.75rem] relative">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
-          className="text-center pb-2 flex justify-center opacity-75 mb-3"
+          className="text-center pb-1 flex justify-center opacity-75 mb-1.5"
         >
           <div className="flex items-center gap-2 px-2 py-1">
             <div className="relative flex items-center justify-center w-4 h-4">
@@ -293,7 +293,7 @@ export const CalendarScreen = ({
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-7 gap-y-3.5 gap-x-2 touch-pan-y"
+          className="grid grid-cols-7 gap-y-2.5 gap-x-2 touch-pan-y"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.05}
@@ -362,12 +362,12 @@ export const CalendarScreen = ({
       </div>
 
       {/* Action Toolbar: Smart Fill & Quick Fill */}
-      <div className="flex items-center gap-2.5 pt-1">
+      <div className="flex items-center gap-2.5">
         {canSmartFill && smartFillUpToDay && (
           emptyDaysCount === 0 ? (
-            <div className="flex-1 h-14 px-4 rounded-2xl apple-glass-pill text-[var(--t3)] text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 select-none opacity-80">
-              <Check size={16} className="text-[var(--green)] shrink-0" strokeWidth={2.5} />
-              <Zap size={15} className="shrink-0 text-[var(--a)]" strokeWidth={2.2} />
+            <div className="flex-1 h-12 px-3.5 rounded-panel apple-glass-pill text-[var(--t3)] text-xs font-semibold tracking-tight flex items-center justify-center gap-2 select-none opacity-80">
+              <Check size={15} className="text-[var(--green)] shrink-0" strokeWidth={2.5} />
+              <Zap size={14} className="shrink-0 text-[var(--a)]" strokeWidth={2.2} />
               <span className="truncate">{smartFillPreview?.dateRangeLabel || `1–${smartFillTargetDay}`} {t('complete')}</span>
             </div>
           ) : (
@@ -378,9 +378,9 @@ export const CalendarScreen = ({
                 haptic([15, 20]);
                 smartFillUpToDay(smartFillTargetDay, defaultEditorHours);
               }}
-              className="flex-1 h-14 px-4 rounded-2xl border border-[var(--a-b)] bg-[var(--a-bg)] text-[var(--a)] flex items-center justify-center gap-2.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+              className="flex-1 h-12 px-3.5 rounded-panel border border-[var(--a-b)] bg-[var(--a-bg)] text-[var(--a)] flex items-center justify-center gap-2.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
             >
-              <Zap size={16} className="shrink-0" strokeWidth={2.2} />
+              <Zap size={15} className="shrink-0" strokeWidth={2.2} />
               <span className="flex flex-col items-start min-w-0 leading-tight">
                 <span className="text-sm font-bold tracking-tight truncate">
                   Smart Fill
@@ -403,11 +403,11 @@ export const CalendarScreen = ({
             setIsWandTapped(false);
           }}
           onClick={() => { haptic([10, 20]); openQuickFill(); }} 
-          className={`h-14 rounded-2xl apple-glass-pill font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 text-[var(--t2)] transition-colors hover:text-[var(--t1)] active:scale-[0.98] ${
-            canSmartFill && smartFillUpToDay ? 'px-5 shrink-0' : 'w-full'
+          className={`h-12 rounded-panel apple-glass-pill font-semibold text-xs tracking-tight flex items-center justify-center gap-2 text-[var(--t2)] transition-colors hover:text-[var(--t1)] active:scale-[0.98] ${
+            canSmartFill && smartFillUpToDay ? 'px-4 shrink-0' : 'w-full'
           }`}
         >
-          <AnimatedWand size={18} className="text-[var(--a)]" strokeWidth={2} isHovered={isWandHovered} isTapped={isWandTapped} />
+          <AnimatedWand size={16} className="text-[var(--a)]" strokeWidth={2} isHovered={isWandHovered} isTapped={isWandTapped} />
           <span>{t('Quick Fill')}</span>
         </motion.button>
       </div>

@@ -2,14 +2,14 @@
 
 This document outlines the strict design rules for the application to maintain a unified, professional, and mature visual language.
 
-## 1. Visual Language: Solid & Elevated
-- **No Glassmorphism:** Do not use `backdrop-blur` for heavy UI elements unless strictly necessary for OS-level overlays (like Modals). Keep backgrounds solid and predictable.
-- **Clean Backgrounds:** Rely on subtle contrast between panels (`--bg-1`, `--bg`) and border definitions (`border-[var(--b)]`) rather than heavy shadows.
+## 1. Visual Language: Quiet Instrument (Matte Cards + Floating Glass Chrome)
+- **Cards stay solid matte (`--bg-1`):** Keep numeric displays, forms, and content panels solid with hairline borders (`border-[var(--b)]`) for high daylight legibility.
+- **Selective Frosted Glass (`src/index.css`):** Restrict backdrop blur to floating shell chrome (`.apple-glass-bar`, `.apple-glass-dock`, `.apple-glass-panel`, `.apple-glass-pill`). Always write `-webkit-backdrop-filter` before `backdrop-filter` so LightningCSS keeps both.
 
 ## 2. Component Primitives
 - **Buttons:** 
   - Standard Height: Primary action buttons should use `h-14`.
-  - Border Radius: Use `rounded-panel` (14px) or `rounded-control` (10px) depending on the context. Never use arbitrary values like `rounded-[2rem]`.
+  - Border Radius: Use `@theme` tokens from `src/index.css` (`rounded-card`, `rounded-panel`, `rounded-control`; `rounded-full` for pills/dock) without hardcoding pixel values or `rounded-[...]`.
   - Typography: Button text should be standard case (NO CAPS / uppercase). Text size should typically be `text-sm` or `text-xs`.
 - **Modals:**
   - Modals should slide up smoothly using consistent Framer Motion parameters.

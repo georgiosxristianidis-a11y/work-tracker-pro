@@ -3,6 +3,39 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const projectRoot = path.resolve(__dirname, '..');
+const HEX_EXEMPT_FILES = new Set(['Logo.tsx', 'BrandedQRCode.tsx']); // Brand mark & QR scan contrast require fixed colors
+const MAX_COMPONENT_HEX = 56; // Ratchet ceiling: lower this as legacy #hex occurrences are migrated to tokens
+
+function countComponentHex(dir) {
+  let total = 0;
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, ent.name);
+    if (ent.isDirectory()) total += countComponentHex(full);
+    else if (/\.(ts|tsx)$/.test(ent.name) && !HEX_EXEMPT_FILES.has(ent.name)) {
+      const matches = fs.readFileSync(full, 'utf8').match(/#[0-9a-fA-F]{3,8}\b/g);
+      if (matches) total += matches.length;
+    }
+  }
+  return total;
+}
+
+function checkDesignTokens() {
+  const hexCount = countComponentHex(path.join(projectRoot, 'src/components'));
+  if (hexCount > MAX_COMPONENT_HEX) {
+    return { ok: false, message: `Hardcoded #hex ratchet exceeded: ${hexCount} > ${MAX_COMPONENT_HEX}. Use CSS tokens from src/index.css.` };
+  }
+  const assetsDir = path.join(projectRoot, 'dist/assets');
+  const cssFiles = fs.existsSync(assetsDir) ? fs.readdirSync(assetsDir).filter(f => f.endsWith('.css')) : [];
+  for (const file of cssFiles) {
+    const css = fs.readFileSync(path.join(assetsDir, file), 'utf8');
+    const wk = (css.match(/-webkit-backdrop-filter:/g) || []).length;
+    const std = (css.replace(/-webkit-backdrop-filter:/g, '').match(/backdrop-filter:/g) || []).length;
+    if (wk === 0 || wk !== std) {
+      return { ok: false, message: `Backdrop-filter mismatch in dist/assets/${file} (webkit=${wk}, std=${std}). Put -webkit-backdrop-filter first.` };
+    }
+  }
+  return { ok: true, hexCount };
+}
 
 function runCommand(cmd, options = {}) {
   try {
@@ -153,7 +186,14 @@ function main() {
     process.exit(1);
   }
 
-  // 6. Diff Check
+  // 6. Design Tokens & Glass Ratchet Check
+  const tokenRes = checkDesignTokens();
+  if (!tokenRes.ok) {
+    console.error(`[GATE] FAIL: ${tokenRes.message}`);
+    process.exit(1);
+  }
+
+  // 7. Diff Check
   const diffCheck = checkDiff();
   if (!diffCheck.ok) {
     console.error(`[GATE] FAIL: ${diffCheck.message}`);
@@ -161,7 +201,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`[GATE] PASS: TypeScript OK | ESLint OK | Build OK | Diff: ${diffCheck.message} (exit 0)`);
+  console.log(`[GATE] PASS: TypeScript OK | ESLint OK | Build OK | Hex: ${tokenRes.hexCount}/${MAX_COMPONENT_HEX} | Diff: ${diffCheck.message} (exit 0)`);
   process.exit(0);
 }
 

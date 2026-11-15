@@ -475,6 +475,7 @@ export default function App() {
                     syncTapActual={syncTapActual}
                     restoreFromCloud={restoreFromCloud}
                     deleteAllTap={deleteAllTap}
+                    onWipeData={clearAllData}
                     toggleTheme={toggleTheme}
                     viewDate={viewDate}
                     calcEarnings={calcEarnings}

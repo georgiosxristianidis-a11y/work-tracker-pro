@@ -31,6 +31,7 @@ export const AnimatedWand = ({ size = 24, className = "", strokeWidth = 2, isHov
       style={{ overflow: 'visible' }}
     >
       <motion.g
+        initial={false}
         animate={getVariant()}
         variants={{
           initial: { rotate: 0, scale: 1 },
@@ -42,7 +43,7 @@ export const AnimatedWand = ({ size = 24, className = "", strokeWidth = 2, isHov
           tap: { 
             rotate: -40, 
             scale: 1.15,
-            transition: { type: "spring", stiffness: 400, damping: 10 } 
+            transition: { duration: 0.42, ease: [0.16, 1, 0.3, 1] } 
           }
         }}
         style={{ transformOrigin: "2.36px 18.64px" }}
@@ -55,7 +56,7 @@ export const AnimatedWand = ({ size = 24, className = "", strokeWidth = 2, isHov
       <motion.path
         d="M18 4l1-2.5L21.5 0.5L19 2l-1 2.5L16.5 6L18 4z"
         fill="currentColor"
-        initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+        initial={false}
         animate={getVariant()}
         variants={{
           initial: { opacity: 0, scale: 0, rotate: 0, x: 0, y: 0 },
@@ -82,10 +83,10 @@ export const AnimatedWand = ({ size = 24, className = "", strokeWidth = 2, isHov
       <motion.path
         d="M21 9l0.8-1.5L23.5 7L21.5 7.8L21 9z"
         fill="currentColor"
-        initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+        initial={false}
         animate={getVariant()}
         variants={{
-          initial: { opacity: 0, scale: 0, rotate: 0, x: 0, y: 0 },
+          initial: { opacity: 0, scale: 0, x: 0, y: 0 },
           hover: { 
             opacity: [0, 1, 0], 
             scale: [0, 1.5, 0], 
@@ -109,7 +110,7 @@ export const AnimatedWand = ({ size = 24, className = "", strokeWidth = 2, isHov
       <motion.path
         d="M14 2l0.8-1.5L16.5 0L14.5 0.8L14 2z"
         fill="currentColor"
-        initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+        initial={false}
         animate={getVariant()}
         variants={{
           initial: { opacity: 0, scale: 0, rotate: 0, x: 0, y: 0 },

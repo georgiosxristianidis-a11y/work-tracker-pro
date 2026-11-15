@@ -47,26 +47,24 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
   const isOnline = isOnlineState && !strictMode;
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-5 flex items-center justify-between shrink-0 z-[100] apple-glass-panel border-b border-[var(--b)] shadow-xs">
-      <div className="flex items-center gap-2 -ml-2">
-        <div className="w-8 flex justify-center shrink-0">
+    <div className="absolute top-0 left-0 right-0 h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-6 flex items-center justify-between shrink-0 z-[100] apple-glass-bar border-b border-[var(--b)]">
+      <div className="flex items-center gap-2.5 min-w-0">
+        {screen === 'total' && (
           <button
             aria-label={t('Go Back') || "Go Back"}
-            onClick={() => { 
-              if (screen !== 'home') {
-                haptic(15); 
-                setScreen('home'); 
-              }
+            onClick={() => {
+              haptic(15);
+              setScreen('home');
             }}
-            className={`w-9 h-9 flex items-center justify-center text-[var(--t1)] hover:bg-[var(--b)] rounded-full transition-all duration-300 ${screen === 'home' ? 'opacity-0 pointer-events-none scale-75' : 'opacity-100 scale-100'}`}
+            className="w-8 h-8 -ml-1.5 flex items-center justify-center text-[var(--t1)] hover:bg-[var(--b)] rounded-full transition-all shrink-0"
           >
-            <ChevronLeft size={22} strokeWidth={2} />
+            <ChevronLeft size={20} strokeWidth={2} />
           </button>
-        </div>
+        )}
         <button 
           aria-label="Work Tracker Pro"
           onClick={() => { haptic(15); setScreen('home'); }}
-          className="flex items-center gap-2 group shrink-0"
+          className="flex items-center gap-2.5 group shrink-0"
         >
           <motion.div 
             whileTap={{ scale: 0.88 }}
@@ -75,15 +73,12 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
           >
             <Logo className="w-full h-full" />
           </motion.div>
-          <span className="text-xs font-black tracking-tight text-[var(--t1)] uppercase">
-            Work Tracker
-          </span>
           <span className="w-1 h-1 rounded-full bg-[var(--t3)] opacity-40" />
           <Clock />
         </button>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={() => {
             haptic(10);
@@ -96,12 +91,14 @@ export function Topbar({ haptic, syncStatus, strictMode, t }: TopbarProps) {
           {privacyMode ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
         </button>
 
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold apple-glass-pill text-[var(--t2)] shrink-0 transition-all">
+        <div className="h-9 flex items-center gap-1.5 px-3 rounded-full text-xs font-bold border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] shrink-0 transition-all">
           {strictMode ? (
             <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] opacity-70" />
           ) : syncStatus === 'syncing' ? (
             <OrbitalIndicator size={12} color="var(--green)" speed={1.8} />
-          ) : (!isOnline || syncStatus === 'error') ? (
+          ) : syncStatus === 'error' ? (
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
+          ) : !isOnline ? (
             <div className="w-1.5 h-1.5 rounded-full bg-[var(--t3)] opacity-60" />
           ) : (
             <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />

@@ -12,70 +12,77 @@ export function Navigation({ t }: NavigationProps) {
   const [navClicks, setNavClicks] = React.useState({ home: 0, calendar: 0, chart: 0, total: 0, settings: 0 });
 
   return (
-    <nav className="absolute bottom-0 left-0 right-0 h-[calc(76px+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] apple-glass-panel sm:rounded-b-[41px] flex items-center px-2 z-[50] border-t border-[var(--b)] shadow-sm">
-      {[
-        { 
-          id: 'home', 
-          label: t('Home'),
-          icon: (
-            <motion.svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-              <motion.path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" animate={{ y: navClicks.home % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} />
-              <motion.rect width={18} height={14} x={3} y={6} rx={3} animate={{ scaleY: navClicks.home % 2 !== 0 ? 0.9 : 1, y: navClicks.home % 2 !== 0 ? 1 : 0 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} />
-            </motion.svg>
-          )
-        },
-        { 
-          id: 'calendar', 
-          label: t('Calendar'),
-          icon: (
-            <motion.svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-              <rect width={18} height={18} x={3} y={4} rx={3} />
-              <motion.path d="M16 2v4" animate={{ y: navClicks.calendar % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 300 }} />
-              <motion.path d="M8 2v4" animate={{ y: navClicks.calendar % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 300 }} />
-              <path d="M3 10h18" />
-              <motion.circle cx={7} cy={14} r={1.5} fill="currentColor" stroke="none" initial={false} animate={{ cx: 7 + ((navClicks.calendar) % 3) * 5, cy: 14 + Math.floor((navClicks.calendar % 6) / 3) * 4 }} transition={{ type: "spring", stiffness: 200, damping: 15 }} />
-            </motion.svg>
-          )
-        },
-        { 
-          id: 'chart', 
-          label: t('Chart'),
-          icon: (
-            <motion.svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-              <motion.line x1={6} y1={20} x2={6} y2={14} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 8 : 14 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0 }} />
-              <motion.line x1={12} y1={20} x2={12} y2={6} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 14 : 6 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.05 }} />
-              <motion.line x1={18} y1={20} x2={18} y2={12} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 6 : 12 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.1 }} />
-            </motion.svg>
-          )
-        },
-        { 
-          id: 'settings', 
-          label: t('Settings'),
-          icon: (
-            <motion.svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" animate={{ rotate: navClicks.settings * 180 }} transition={{ duration: 1.5, ease: [0.1, 1, 0.2, 1] }}>
-              <circle cx={12} cy={12} r={3} />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </motion.svg>
-          )
-        }
-      ].map(item => (
-        <button 
-          key={item.id}
-          aria-label={item.label}
-          onClick={() => {
-            setScreen(item.id as AppScreen);
-            setNavClicks(c => ({ ...c, [item.id]: (c[item.id as keyof typeof c] ?? 0) + 1 }));
-          }}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 relative select-none"
-        >
-          {screen === item.id && (
-            <motion.div layoutId="nav-indicator" className="absolute top-0 w-8 h-[3px] bg-[var(--a)] rounded-b-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />
-          )}
-          <div className={`transition-all duration-300 ${screen === item.id ? 'text-[var(--a)] scale-110' : 'text-[var(--t3)] hover:text-[var(--t2)]'}`}>
-            {item.icon}
-          </div>
-        </button>
-      ))}
-    </nav>
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-[calc(88px+env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/75 to-transparent z-[45] sm:rounded-b-[41px]"
+      />
+      <nav className="absolute bottom-[calc(12px+env(safe-area-inset-bottom))] left-4 right-4 h-[60px] apple-glass-dock rounded-full flex items-center p-1.5 z-[50]">
+        {[
+          { 
+            id: 'home', 
+            label: t('Home'),
+            icon: (
+              <motion.svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <motion.path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" animate={{ y: navClicks.home % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} />
+                <motion.rect width={18} height={14} x={3} y={6} rx={3} animate={{ scaleY: navClicks.home % 2 !== 0 ? 0.9 : 1, y: navClicks.home % 2 !== 0 ? 1 : 0 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} />
+              </motion.svg>
+            )
+          },
+          { 
+            id: 'calendar', 
+            label: t('Calendar'),
+            icon: (
+              <motion.svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect width={18} height={18} x={3} y={4} rx={3} />
+                <motion.path d="M16 2v4" animate={{ y: navClicks.calendar % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 300 }} />
+                <motion.path d="M8 2v4" animate={{ y: navClicks.calendar % 2 !== 0 ? -2 : 0 }} transition={{ type: "spring", stiffness: 300 }} />
+                <path d="M3 10h18" />
+                <motion.circle cx={7} cy={14} r={1.5} fill="currentColor" stroke="none" initial={false} animate={{ cx: 7 + ((navClicks.calendar) % 3) * 5, cy: 14 + Math.floor((navClicks.calendar % 6) / 3) * 4 }} transition={{ type: "spring", stiffness: 200, damping: 15 }} />
+              </motion.svg>
+            )
+          },
+          { 
+            id: 'chart', 
+            label: t('Chart'),
+            icon: (
+              <motion.svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <motion.line x1={6} y1={20} x2={6} y2={14} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 8 : 14 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0 }} />
+                <motion.line x1={12} y1={20} x2={12} y2={6} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 14 : 6 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.05 }} />
+                <motion.line x1={18} y1={20} x2={18} y2={12} initial={false} animate={{ y2: navClicks.chart % 2 !== 0 ? 6 : 12 }} transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.1 }} />
+              </motion.svg>
+            )
+          },
+          { 
+            id: 'settings', 
+            label: t('Settings'),
+            icon: (
+              <motion.svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" animate={{ rotate: navClicks.settings * 180 }} transition={{ duration: 1.5, ease: [0.1, 1, 0.2, 1] }}>
+                <circle cx={12} cy={12} r={3} />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </motion.svg>
+            )
+          }
+        ].map(item => (
+          <button 
+            key={item.id}
+            aria-label={item.label}
+            onClick={() => {
+              setScreen(item.id as AppScreen);
+              setNavClicks(c => ({ ...c, [item.id]: (c[item.id as keyof typeof c] ?? 0) + 1 }));
+            }}
+            className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative select-none min-w-0 px-1"
+          >
+            {screen === item.id && (
+              <motion.div layoutId="nav-indicator" className="absolute inset-0 rounded-full bg-[var(--a-bg)] border border-[var(--a-b)] pointer-events-none" transition={{ type: "spring", stiffness: 300, damping: 22 }} />
+            )}
+            <div className={`relative z-10 transition-all duration-300 ${screen === item.id ? 'text-[var(--a)] scale-105' : 'text-[var(--t3)] hover:text-[var(--t2)]'}`}>
+              {item.icon}
+            </div>
+            <span className={`relative z-10 text-[10px] font-bold leading-none tracking-tight truncate max-w-full px-1 transition-colors duration-300 ${screen === item.id ? 'text-[var(--a)]' : 'text-[var(--t3)]'}`}>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </>
   );
 }

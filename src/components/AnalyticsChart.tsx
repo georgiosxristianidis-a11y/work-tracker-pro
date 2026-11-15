@@ -212,12 +212,13 @@ export default function AnalyticsChart({
                   content={<CustomChartTooltip curSym={curSym} chartMetric={chartMetric} privacyMode={privacyMode} t={t} />}
                   isAnimationActive={false}
                 />
-                {chartMetric === 'earnings' && (
+                {chartMetric === 'earnings' && Boolean(goal && goal > 0) && (
                   <ReferenceLine
-                    y={goal || 0}
+                    y={goal}
                     stroke="var(--a)"
                     strokeDasharray="4 4"
-                    opacity={0.4}
+                    opacity={0.45}
+                    label={{ value: `${t('Goal')}: ${privacyMode ? '••••' : `${curSym}${formatMoney(goal || 0)}`}`, position: 'insideTopRight', fill: 'var(--a)', fontSize: 10, fontWeight: 700 }}
                   />
                 )}
                 <Area
@@ -264,12 +265,13 @@ export default function AnalyticsChart({
                   content={<CustomChartTooltip curSym={curSym} chartMetric={chartMetric} privacyMode={privacyMode} t={t} />}
                   isAnimationActive={false}
                 />
-                {chartMetric === 'earnings' && (
+                {chartMetric === 'earnings' && Boolean(goal && goal > 0) && (
                   <ReferenceLine
-                    y={goal || 0}
+                    y={goal}
                     stroke="var(--a)"
                     strokeDasharray="4 4"
-                    opacity={0.4}
+                    opacity={0.45}
+                    label={{ value: `${t('Goal')}: ${privacyMode ? '••••' : `${curSym}${formatMoney(goal || 0)}`}`, position: 'insideTopRight', fill: 'var(--a)', fontSize: 10, fontWeight: 700 }}
                   />
                 )}
                 <Bar dataKey={chartMetric} radius={[6, 6, 0, 0]}>

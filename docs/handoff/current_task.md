@@ -1,14 +1,12 @@
-# TASK HANDOFF: feat/phase4-store-idb-hygiene
-- **Timestamp**: 2026-11-14T20:00:16.414Z
-- **Branch**: feat/phase4-store-idb-hygiene
-- **Last Commit**: fd6a4e9 refactor(core): isolate zustand settings persistence and add idb migration guard
+# TASK HANDOFF: main
+- **Timestamp**: 2026-11-15T12:09:32.063Z
+- **Branch**: main
+- **Last Commit**: f83b08d style(ui): frosted glass topbar, floating pill nav4, calm sync status
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M src/components/DevicePairModal.tsx
- M src/components/QRScannerModal.tsx
- M tests/qr-device-pairing.spec.ts
+M docs/handoff/current_task.md
 ```
 
 ## Next Action

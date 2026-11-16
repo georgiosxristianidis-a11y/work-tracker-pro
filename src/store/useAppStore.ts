@@ -101,13 +101,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       const mStr = `${dateToUse.getFullYear()}-${String(dateToUse.getMonth() + 1).padStart(2, '0')}`;
       const yearStr = `${dateToUse.getFullYear()}`;
       
-      const [mEntriesRaw, allEntriesRaw] = await Promise.all([
-        db.getEntriesByMonth(mStr),
-        db.getAllEntries()
-      ]);
-      
-      const mEntries = sanitizeEntries(mEntriesRaw);
+      const allEntriesRaw = await db.getAllEntries();
       const allEntries = sanitizeEntries(allEntriesRaw);
+      const mEntries = allEntries.filter(e => e.month === mStr).reverse();
       const yEntries = allEntries.filter(e => e.date.startsWith(yearStr));
       
       set({ entries: mEntries, yearEntries: yEntries, allEntries });

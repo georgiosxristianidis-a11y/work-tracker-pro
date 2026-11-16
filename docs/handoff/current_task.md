@@ -1,16 +1,16 @@
-# TASK HANDOFF: main
-- **Timestamp**: 2026-11-16T19:47:45.295Z
-- **Branch**: main
-- **Last Commit**: 86a0af3 Merge pull request #41 from georgiosxristianidis-a11y/fix/calendar-nav-opal-polish
+# TASK HANDOFF: perf/store-app-taperuler
+- **Timestamp**: 2026-11-16T21:07:10.840Z
+- **Branch**: perf/store-app-taperuler
+- **Last Commit**: aad306d chore(release): v0.1.66 [skip actions]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M src/hooks/useDevicePairing.ts
- M src/hooks/useSupabaseSync.ts
- M src/lib/db.ts
- M src/lib/device-pairing.ts
- M tests/unit/device-pairing.test.ts
+M src/App.tsx
+ M src/components/DynamicHeroCapsule.tsx
+ M src/components/HomeScreen.tsx
+ M src/components/TimeTapeRuler.tsx
+ M src/store/useAppStore.ts
 ```
 
 ## Next Action

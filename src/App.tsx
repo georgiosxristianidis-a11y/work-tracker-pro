@@ -61,7 +61,7 @@ export default function App() {
     yearEntries,
     settings, setSettings,
     isLoading, setIsLoading,
-    editorDate, setEditorDate,
+    setEditorDate,
     loadSettings, loadEntries,
     saveEntry: storeSaveEntry,
     saveMany: storeSaveMany,
@@ -80,7 +80,6 @@ export default function App() {
       setSettings: s.setSettings,
       isLoading: s.isLoading,
       setIsLoading: s.setIsLoading,
-      editorDate: s.editorDate,
       setEditorDate: s.setEditorDate,
       loadSettings: s.loadSettings,
       loadEntries: s.loadEntries,
@@ -349,8 +348,9 @@ export default function App() {
 
   const deleteAllTap = useDoubleTap(clearAllData);
   const deleteEntryTap = useDoubleTap(async () => {
-    if (editorDate) {
-      await deleteEntry(editorDate);
+    const currentEditorDate = useAppStore.getState().editorDate;
+    if (currentEditorDate) {
+      await deleteEntry(currentEditorDate);
       setEditorDate(null);
     }
   });
@@ -412,7 +412,7 @@ export default function App() {
                     deleteEntry={deleteEntry}
                     haptic={h}
                     chartData={chartData}
-                    openQuickFill={() => setIsQuickFillOpen(true)}
+                    openQuickFill={handleOpenQuickFill}
                   />
                 )}
                 {screen === 'calendar' && (

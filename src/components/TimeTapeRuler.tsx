@@ -15,6 +15,55 @@ const MIN = 0;
 const MAX = 24;
 const TICK_WIDTH = 28; // width in pixels of each 0.5h segment
 
+interface TapeTickProps {
+  tick: number;
+  isCurrent: boolean;
+  onSelect: (tick: number) => void;
+}
+
+const TapeTick = React.memo(({ tick, isCurrent, onSelect }: TapeTickProps) => {
+  const isInteger = tick % 1 === 0;
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(tick)}
+      style={{ width: `${TICK_WIDTH}px` }}
+      className="shrink-0 snap-center flex flex-col items-center justify-start h-12 focus:outline-none group"
+      aria-label={`${tick} hours`}
+    >
+      {isInteger ? (
+        <>
+          <div
+            className={`w-[2px] rounded-full transition-colors ${
+              isCurrent
+                ? 'h-6 bg-[var(--a)]'
+                : 'h-5 bg-[var(--t1)] opacity-40 group-hover:opacity-80'
+            }`}
+          />
+          <span
+            className={`text-[10px] font-mono font-black tabular-nums transition-colors mt-1 leading-none ${
+              isCurrent
+                ? 'text-[var(--a)] scale-110'
+                : 'text-[var(--t3)] group-hover:text-[var(--t1)]'
+            }`}
+          >
+            {tick}
+          </span>
+        </>
+      ) : (
+        <div
+          className={`w-[1px] rounded-full transition-colors ${
+            isCurrent
+              ? 'h-4 bg-[var(--a)]'
+              : 'h-3 bg-[var(--t3)] opacity-30 group-hover:opacity-60'
+          }`}
+        />
+      )}
+    </button>
+  );
+});
+TapeTick.displayName = 'TapeTick';
+
 export const TimeTapeRuler = React.memo(({
   value,
   onChange,
@@ -27,6 +76,9 @@ export const TimeTapeRuler = React.memo(({
   const containerRef = useRef<HTMLDivElement>(null);
   const isUserScrollingRef = useRef(false);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
   const lastHourHapticRef = useRef<number>(Math.round(value));
 
   // Generate all tick values: 0, 0.5, 1, 1.5, ... 24
@@ -60,11 +112,21 @@ export const TimeTapeRuler = React.memo(({
     }
   }, [value, scrollToValue]);
 
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, []);
+
+  const handleTickSelect = useCallback((tick: number) => {
+    haptic?.(10);
+    onChange(tick);
+    scrollToValue(tick, true);
+  }, [haptic, onChange, scrollToValue]);
+
   // Handle scroll events with haptic feedback and snap detection
   const handleScroll = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
     isUserScrollingRef.current = true;
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
@@ -73,22 +135,29 @@ export const TimeTapeRuler = React.memo(({
       isUserScrollingRef.current = false;
     }, 150);
 
-    const scrollLeft = el.scrollLeft;
-    const rawIndex = scrollLeft / TICK_WIDTH;
-    const closestIndex = Math.round(rawIndex);
-    const newHour = Math.max(min, Math.min(max, Math.round((min + closestIndex * step) * 10) / 10));
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const el = containerRef.current;
+      if (!el) return;
 
-    if (newHour !== value) {
-      onChange(newHour);
+      const scrollLeft = el.scrollLeft;
+      const rawIndex = scrollLeft / TICK_WIDTH;
+      const closestIndex = Math.round(rawIndex);
+      const newHour = Math.max(min, Math.min(max, Math.round((min + closestIndex * step) * 10) / 10));
 
-      // Trigger whole-hour tactile tick
-      const integerHour = Math.round(newHour);
-      if (newHour % 1 === 0 && integerHour !== lastHourHapticRef.current) {
-        lastHourHapticRef.current = integerHour;
-        haptic?.(8);
+      if (newHour !== valueRef.current) {
+        onChange(newHour);
+
+        // Trigger whole-hour tactile tick
+        const integerHour = Math.round(newHour);
+        if (newHour % 1 === 0 && integerHour !== lastHourHapticRef.current) {
+          lastHourHapticRef.current = integerHour;
+          haptic?.(8);
+        }
       }
-    }
-  }, [min, max, step, value, onChange, haptic]);
+    });
+  }, [min, max, step, onChange, haptic]);
 
   return (
     <div
@@ -119,54 +188,14 @@ export const TimeTapeRuler = React.memo(({
         <div className="shrink-0" style={{ width: 'calc(50% - 14px)' }} />
 
         {/* Ticks Track */}
-        {ticks.map((tick) => {
-          const isInteger = tick % 1 === 0;
-          const isCurrent = Math.abs(tick - value) < 0.1;
-
-          return (
-            <button
-              key={tick}
-              type="button"
-              onClick={() => {
-                haptic?.(10);
-                onChange(tick);
-                scrollToValue(tick, true);
-              }}
-              style={{ width: `${TICK_WIDTH}px` }}
-              className="shrink-0 snap-center flex flex-col items-center justify-start h-12 focus:outline-none group"
-              aria-label={`${tick} hours`}
-            >
-              {isInteger ? (
-                <>
-                  <div
-                    className={`w-[2px] rounded-full transition-colors ${
-                      isCurrent
-                        ? 'h-6 bg-[var(--a)]'
-                        : 'h-5 bg-[var(--t1)] opacity-40 group-hover:opacity-80'
-                    }`}
-                  />
-                  <span
-                    className={`text-[10px] font-mono font-black tabular-nums transition-colors mt-1 leading-none ${
-                      isCurrent
-                        ? 'text-[var(--a)] scale-110'
-                        : 'text-[var(--t3)] group-hover:text-[var(--t1)]'
-                    }`}
-                  >
-                    {tick}
-                  </span>
-                </>
-              ) : (
-                <div
-                  className={`w-[1px] rounded-full transition-colors ${
-                    isCurrent
-                      ? 'h-4 bg-[var(--a)]'
-                      : 'h-3 bg-[var(--t3)] opacity-30 group-hover:opacity-60'
-                  }`}
-                />
-              )}
-            </button>
-          );
-        })}
+        {ticks.map((tick) => (
+          <TapeTick
+            key={tick}
+            tick={tick}
+            isCurrent={Math.abs(tick - value) < 0.1}
+            onSelect={handleTickSelect}
+          />
+        ))}
 
         {/* Right Spacer to center the last tick (24h) */}
         <div className="shrink-0" style={{ width: 'calc(50% - 14px)' }} />

@@ -10,6 +10,81 @@ export interface Entry {
   updated_at?: number;
 }
 
+export interface WorkEntryRow {
+  user_id: string;
+  date: string;
+  hours: number;
+  month: string;
+  device_id: string;
+  updated_at: string;
+}
+
+export interface RawCloudEntryRow {
+  date: string;
+  hours: number | string;
+  month: string;
+  updated_at?: number | string | null;
+}
+
+const MIN_ISO_MS = -62135596800000; // 0001-01-01T00:00:00.000Z
+const MAX_ISO_MS = 253402300799999; // 9999-12-31T23:59:59.999Z
+
+const isValidIsoMs = (ms: number): boolean =>
+  Number.isFinite(ms) && ms >= MIN_ISO_MS && ms <= MAX_ISO_MS;
+
+/** Normalizes epoch ms, numeric strings, or ISO-8601 strings to finite epoch ms. */
+export function parseEntryTimestamp(value: unknown): number | undefined {
+  if (typeof value === 'number') {
+    return isValidIsoMs(value) ? value : undefined;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      const numeric = Number(trimmed);
+      return isValidIsoMs(numeric) ? numeric : undefined;
+    }
+    const parsed = Date.parse(trimmed);
+    return isValidIsoMs(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+/** Formats an entry timestamp as an ISO-8601 string for PostgreSQL timestamptz. */
+export function formatSupabaseTimestamp(value: unknown, fallbackMs = Date.now()): string {
+  const ms = parseEntryTimestamp(value) ?? parseEntryTimestamp(fallbackMs) ?? Date.now();
+  return new Date(ms).toISOString();
+}
+
+/** Maps a local Entry to the exact public.work_entries columns for Supabase upsert. */
+export function toWorkEntryRow(
+  entry: Entry,
+  userId: string,
+  deviceId: string,
+  fallbackMs = Date.now()
+): WorkEntryRow {
+  const hours = Number(entry.hours);
+  return {
+    user_id: userId,
+    date: entry.date,
+    hours: Number.isFinite(hours) ? hours : 0,
+    month: entry.month || entry.date.slice(0, 7),
+    device_id: deviceId,
+    updated_at: formatSupabaseTimestamp(entry.updated_at, fallbackMs)
+  };
+}
+
+/** Maps a Supabase work_entries row back to a local IndexedDB Entry. */
+export function fromWorkEntryRow(row: RawCloudEntryRow): Entry {
+  const hours = Number(row.hours);
+  return {
+    date: row.date,
+    hours: Number.isFinite(hours) ? hours : 0,
+    month: row.month || row.date.slice(0, 7),
+    updated_at: parseEntryTimestamp(row.updated_at)
+  };
+}
+
 const DB_NAME = 'WorkTrackerProDB';
 const DB_VER = 1;
 
@@ -46,7 +121,7 @@ export class WorkDB {
   async saveEntry(entry: Entry) {
     const toSave: Entry = {
       ...entry,
-      updated_at: entry.updated_at ?? Date.now()
+      updated_at: parseEntryTimestamp(entry.updated_at) ?? Date.now()
     };
     return new Promise((res, rej) => {
       const req = this.tx('entries', 'readwrite').put(toSave);
@@ -65,7 +140,7 @@ export class WorkDB {
       for (const entry of entries) {
         store.put({
           ...entry,
-          updated_at: entry.updated_at ?? now
+          updated_at: parseEntryTimestamp(entry.updated_at) ?? now
         });
       }
       tx.oncomplete = () => res(true);

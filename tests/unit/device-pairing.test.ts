@@ -9,7 +9,13 @@ import {
   mergeEntries
 } from '../../src/lib/device-pairing.ts';
 import type { PairingPayload } from '../../src/lib/device-pairing.ts';
-import type { Entry } from '../../src/lib/db.ts';
+import {
+  parseEntryTimestamp,
+  formatSupabaseTimestamp,
+  toWorkEntryRow,
+  fromWorkEntryRow,
+  type Entry
+} from '../../src/lib/db.ts';
 
 test('device-pairing - payload encoding and decoding round-trip', () => {
   const payload: PairingPayload = {
@@ -118,4 +124,64 @@ test('device-pairing - mergeEntries safe union without deleting local records', 
   assert.equal(day1?.hours, 8);
   assert.equal(day2?.hours, 7.5);
   assert.equal(day3?.hours, 8);
+});
+
+test('db timestamps - formats epoch ms to ISO timestamptz and parses Supabase rows without NaN', () => {
+  const sampleMs = 1794850145045;
+  const iso = '2026-11-16T17:29:05.045Z';
+
+  assert.equal(parseEntryTimestamp(sampleMs), sampleMs);
+  assert.equal(parseEntryTimestamp(String(sampleMs)), sampleMs);
+  assert.equal(parseEntryTimestamp(iso), sampleMs);
+  assert.equal(parseEntryTimestamp('2026-11-16T17:29:05.045+00:00'), sampleMs);
+  assert.equal(parseEntryTimestamp(Number.NaN), undefined);
+  assert.equal(parseEntryTimestamp('not-a-timestamp'), undefined);
+  assert.equal(parseEntryTimestamp(''), undefined);
+
+  assert.equal(formatSupabaseTimestamp(sampleMs), iso);
+  assert.equal(formatSupabaseTimestamp(Number.NaN, sampleMs), iso);
+
+  const localWithExtra = {
+    date: '2026-11-16',
+    hours: 8,
+    month: '2026-11',
+    updated_at: sampleMs,
+    extraField: 'should-not-leak'
+  } as Entry;
+  const row = toWorkEntryRow(localWithExtra, 'user-1', 'dev-1');
+  assert.deepEqual(row, {
+    user_id: 'user-1',
+    date: '2026-11-16',
+    hours: 8,
+    month: '2026-11',
+    device_id: 'dev-1',
+    updated_at: iso
+  });
+
+  const restored = fromWorkEntryRow({
+    date: '2026-11-16',
+    hours: '8.5',
+    month: '2026-11',
+    updated_at: '2026-11-16T17:29:05.045+00:00'
+  });
+  assert.deepEqual(restored, {
+    date: '2026-11-16',
+    hours: 8.5,
+    month: '2026-11',
+    updated_at: sampleMs
+  });
+});
+
+test('device-pairing - mergeEntries recovers cleanly when local updated_at is NaN', () => {
+  const local: Entry[] = [
+    { date: '2026-11-16', hours: 4, month: '2026-11', updated_at: Number.NaN }
+  ];
+  const cloud: Entry[] = [
+    { date: '2026-11-16', hours: 9, month: '2026-11', updated_at: 1794850145045 }
+  ];
+
+  const result = mergeEntries(local, cloud);
+  assert.equal(result.merged.length, 1);
+  assert.equal(result.merged[0]?.hours, 9);
+  assert.equal(result.newFromCloud, 1);
 });

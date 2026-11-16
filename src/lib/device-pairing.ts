@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Entry } from './db.ts';
+import { parseEntryTimestamp, type Entry } from './db.ts';
 
 export const PAIRING_QR_TTL_MS = 10 * 60 * 1000; // 10 minutes TTL
 
@@ -176,8 +176,8 @@ export function mergeEntries(localEntries: Entry[], cloudEntries: Entry[]): Merg
       map.set(cloud.date, { ...cloud });
       newFromCloud++;
     } else {
-      const localTime = existing.updated_at ?? 0;
-      const cloudTime = cloud.updated_at ?? 0;
+      const localTime = parseEntryTimestamp(existing.updated_at) ?? 0;
+      const cloudTime = parseEntryTimestamp(cloud.updated_at) ?? 0;
 
       if (cloudTime > localTime) {
         // Remote is newer and has positive hours: update to newest hours

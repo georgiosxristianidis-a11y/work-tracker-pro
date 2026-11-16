@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase, ensureAuth } from '../lib/supabase';
-import { db, Entry } from '../lib/db';
+import { db, Entry, RawCloudEntryRow, fromWorkEntryRow, toWorkEntryRow } from '../lib/db';
 import { AppSettings } from '../constants';
 
 interface UseSupabaseSyncProps {
@@ -80,9 +80,7 @@ export const useSupabaseSync = ({
       const device_id = getDeviceId();
 
       if (toUpload.length > 0) {
-        const payload = toUpload.map(e => {
-          return { ...e, user_id: userId, device_id };
-        });
+        const payload = toUpload.map(e => toWorkEntryRow(e, userId, device_id));
 
         const { error } = await supabase
           .from('work_entries')
@@ -163,15 +161,10 @@ export const useSupabaseSync = ({
       const localEntries = await db.getAllEntries();
       const localDates = new Set(localEntries.map(e => e.date));
       const toRestore: Entry[] = [];
-      const rows = (data as Array<{ date: string; hours: number; month: string; updated_at?: number | string }> | null) ?? [];
+      const rows = (data as RawCloudEntryRow[] | null) ?? [];
       for (const row of rows) {
         if (localDates.has(row.date)) continue;
-        toRestore.push({
-          date: row.date,
-          hours: Number(row.hours),
-          month: row.month,
-          updated_at: row.updated_at ? Number(row.updated_at) : undefined
-        });
+        toRestore.push(fromWorkEntryRow(row));
       }
       if (toRestore.length > 0) {
         await db.saveMany(toRestore);

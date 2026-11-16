@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
-import { db, Entry } from '../lib/db';
+import { db, Entry, RawCloudEntryRow, fromWorkEntryRow, parseEntryTimestamp, toWorkEntryRow } from '../lib/db';
 import {
   decodePairingPayload,
   isPairingPayloadExpired,
@@ -98,7 +98,7 @@ export const useDevicePairing = ({
               date: e.date,
               hours: Number(e.hours),
               month: e.date.substring(0, 7),
-              updated_at: e.updated_at
+              updated_at: parseEntryTimestamp(e.updated_at)
             }));
             const localEntries = await db.getAllEntries();
 
@@ -169,13 +169,8 @@ export const useDevicePairing = ({
         if (fetchError) throw fetchError;
 
         const cloudEntries: Entry[] = (
-          (cloudRows as Array<{ date: string; hours: number; month: string; updated_at?: number | string }> | null) || []
-        ).map((r) => ({
-          date: r.date,
-          hours: Number(r.hours),
-          month: r.month,
-          updated_at: r.updated_at ? Number(r.updated_at) : undefined
-        }));
+          (cloudRows as RawCloudEntryRow[] | null) || []
+        ).map(fromWorkEntryRow);
 
         const localEntries = await db.getAllEntries();
 
@@ -194,16 +189,15 @@ export const useDevicePairing = ({
 
           // Push merged entries back to Supabase so both devices have full history
           const deviceId = getDeviceId();
-          const uploadPayload = mergeResult.merged.map((e) => ({
-            ...e,
-            user_id: payload.uid,
-            device_id: deviceId
-          }));
+          const uploadPayload = mergeResult.merged.map((e) =>
+            toWorkEntryRow(e, payload.uid, deviceId)
+          );
 
           if (uploadPayload.length > 0) {
-            await supabase
+            const { error: upsertError } = await supabase
               .from('work_entries')
               .upsert(uploadPayload, { onConflict: 'user_id,date' });
+            if (upsertError) throw upsertError;
           }
 
           addToast(

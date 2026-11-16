@@ -1,7 +1,10 @@
 import React from 'react';
-import { X, ShieldAlert, ShieldCheck, Download, RotateCcw, Trash2, Eye, EyeOff, ClipboardList, Sparkles } from 'lucide-react';
+import { X, ShieldAlert, ShieldCheck, Download, RotateCcw, Eye, EyeOff, ClipboardList, Sparkles } from 'lucide-react';
 import { useFinancialDashboardStore } from '../../store/useFinancialDashboardStore';
+import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { OfflineVault } from '../../lib/offline-vault';
+import { OpalHoldSheet } from '../OpalHoldSheet';
 
 export function SecurityControlsModal() {
   const {
@@ -13,7 +16,11 @@ export function SecurityControlsModal() {
     panicWipeData
   } = useFinancialDashboardStore();
 
-  const [confirmPanic, setConfirmPanic] = React.useState<boolean>(false);
+  const language = useAppStore((s) => s.settings.language);
+  const t = useTranslation(language);
+
+  const [showPanicSheet, setShowPanicSheet] = React.useState<boolean>(false);
+  const panicConfirmedRef = React.useRef<boolean>(false);
   const [feedbackMsg, setFeedbackMsg] = React.useState<string | null>(null);
 
   if (activeModal !== 'security') return null;
@@ -40,13 +47,9 @@ export function SecurityControlsModal() {
     setFeedbackMsg('Reset to baseline reference successfully ($11,121.22).');
   };
 
-  const handlePanicWipe = async () => {
-    if (!confirmPanic) {
-      setConfirmPanic(true);
-      return;
-    }
+  const handlePanicWipeConfirm = async () => {
     await panicWipeData();
-    setActiveModal(null);
+    panicConfirmedRef.current = true;
   };
 
   return (
@@ -164,17 +167,28 @@ export function SecurityControlsModal() {
             </p>
             <button
               type="button"
-              onClick={handlePanicWipe}
-              className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
-                confirmPanic
-                  ? 'bg-rose-600 text-white animate-pulse'
-                  : 'bg-white border border-rose-200 text-rose-600 hover:bg-rose-100/50'
-              }`}
+              onClick={() => {
+                panicConfirmedRef.current = false;
+                setShowPanicSheet(true);
+              }}
+              className="w-full py-2.5 rounded-xl font-bold text-xs transition-all bg-white border border-rose-200 text-rose-600 hover:bg-rose-100/50 active:scale-[0.99]"
             >
-              {confirmPanic ? 'Confirm Wipe All Data Now' : 'Panic Wipe All Local Data'}
+              Panic Wipe All Local Data
             </button>
           </div>
         </div>
+        <OpalHoldSheet
+          isOpen={showPanicSheet}
+          onClose={() => {
+            setShowPanicSheet(false);
+            if (panicConfirmedRef.current) {
+              panicConfirmedRef.current = false;
+              setActiveModal(null);
+            }
+          }}
+          onConfirm={handlePanicWipeConfirm}
+          t={t}
+        />
       </div>
     </div>
   );

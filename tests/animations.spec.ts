@@ -25,16 +25,16 @@ test.describe('Animations Test', () => {
     await quickFillBtn.dispatchEvent('pointerup');
   });
 
-  test('Opal hold-to-wipe button requires long hold to wipe data', async ({ page }) => {
+  test('Opal hold sheet guards wipe data with secondary long-hold confirmation', async ({ page }) => {
     await page.goto('/');
 
     // Switch to Settings tab
     await page.locator('nav button').nth(3).click();
 
     const wipeBtn = page.locator('#danger-wipe-btn');
+    await wipeBtn.scrollIntoViewIfNeeded();
     await expect(wipeBtn).toBeVisible();
     await expect(wipeBtn).toContainText('Wipe Data');
-    await expect(wipeBtn).toHaveAttribute('data-hold-state', 'idle');
     // Light theme keeps obsidian dark + light ink pattern rather than turning cream/white
     const wipeColor = await wipeBtn.evaluate((el) => getComputedStyle(el).color);
     expect(wipeColor).toBe('rgb(244, 241, 234)');
@@ -42,23 +42,40 @@ test.describe('Animations Test', () => {
     const trashSvg = wipeBtn.locator('svg').first();
     await expect(trashSvg).toBeVisible();
 
-    // Quick click shows hold hint instead of wiping immediately
+    // Tap opens OpalHoldSheet safety confirmation without deleting immediately
     await wipeBtn.click();
-    await expect(wipeBtn).toContainText('Hold to Confirm');
-    await expect(wipeBtn).toHaveAttribute('data-hold-state', 'idle');
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText('Wipe Local Data?');
 
-    // Long press hold engages radial fill and executes wipe at >= 900ms
-    await wipeBtn.scrollIntoViewIfNeeded();
-    const box = await wipeBtn.boundingBox();
+    const holdBtn = page.locator('#opal-sheet-hold-btn');
+    const cancelBtn = page.locator('#opal-sheet-cancel-btn');
+    await expect(holdBtn).toContainText('Hold to Wipe');
+    await expect(holdBtn).toHaveAttribute('data-hold-state', 'idle');
+
+    // Never Mind cancels safely without wiping
+    await cancelBtn.click();
+    await expect(sheet).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
+
+    // Reopen sheet and verify short tap on Hold to Wipe only hints
+    await wipeBtn.click();
+    await expect(holdBtn).toBeVisible();
+    await holdBtn.click();
+    await expect(holdBtn).toContainText('Hold to Confirm');
+    await expect(holdBtn).toHaveAttribute('data-hold-state', 'idle');
+
+    // Long press hold inside OpalHoldSheet engages radial fill and wipes at >= 900ms
+    const box = await holdBtn.boundingBox();
     expect(box).not.toBeNull();
     if (box) {
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
       await page.mouse.down();
       await page.waitForTimeout(180);
-      await expect(wipeBtn).toHaveAttribute('data-hold-state', 'holding');
-      await expect(wipeBtn).toContainText('Keep Holding...');
-      await expect(wipeBtn).toHaveAttribute('data-hold-state', 'complete', { timeout: 2000 });
-      await expect(wipeBtn).toContainText('All data deleted');
+      await expect(holdBtn).toHaveAttribute('data-hold-state', 'holding');
+      await expect(holdBtn).toContainText('Keep Holding...');
+      await expect(holdBtn).toHaveAttribute('data-hold-state', 'complete', { timeout: 2000 });
+      await expect(holdBtn).toContainText('Done');
       await page.mouse.up();
     }
     await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible({ timeout: 3000 });

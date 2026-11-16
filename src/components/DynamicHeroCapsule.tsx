@@ -25,18 +25,18 @@ export const DynamicHeroCapsule: React.FC<DynamicHeroCapsuleProps> = ({
   haptic,
 }) => {
   return (
-    <div className="relative w-full rounded-2xl apple-glass-pill p-3 sm:p-4 border border-[var(--b)] transition-all">
-      <div className="flex items-center justify-between gap-3">
+    <div className="relative w-full rounded-card apple-glass-pill p-6 border border-[var(--b)] transition-all min-h-[120px] flex items-center">
+      <div className="flex items-center justify-between gap-4 w-full">
         {/* Left: Dynamic Island Status & Orbital Dot Cluster */}
         <div 
           onClick={() => {
             if (haptic) haptic(8);
             if (onStartShift) onStartShift();
           }}
-          className="flex items-center gap-3 min-w-0 cursor-pointer group"
+          className="flex items-center gap-4 min-w-0 cursor-pointer group"
           role="button"
           tabIndex={0}
-          aria-label={t('Shift Stopwatch')}
+          aria-label={t('Stopwatch')}
         >
           {/* Orbital 3D Constellation Sphere */}
           <div
@@ -57,7 +57,7 @@ export const DynamicHeroCapsule: React.FC<DynamicHeroCapsuleProps> = ({
               </span>
             </div>
             <h3 className="text-sm font-bold tracking-tight text-[var(--t1)] group-hover:text-[var(--a)] transition-colors">
-              {t('Shift Stopwatch')}
+              {t('Stopwatch')}
             </h3>
           </div>
         </div>
@@ -85,7 +85,7 @@ export const DynamicHeroCapsule: React.FC<DynamicHeroCapsuleProps> = ({
               if (haptic) haptic(12);
               if (onStartShift) onStartShift();
             }}
-            aria-label={t('Track Shift')}
+            aria-label={t('Track')}
             className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-full bg-[var(--a)] text-[var(--bg)] font-bold text-xs shadow-xs hover:opacity-90 transition-opacity"
           >
             <Play size={12} fill="currentColor" strokeWidth={0} />

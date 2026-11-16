@@ -75,7 +75,7 @@ export function Navigation({ t }: NavigationProps) {
         aria-hidden="true"
         className="pointer-events-none absolute bottom-0 left-0 right-0 h-[calc(88px+env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/75 to-transparent z-[45] sm:rounded-b-[41px]"
       />
-      <nav className="absolute bottom-[calc(14px+env(safe-area-inset-bottom))] left-4 right-4 h-[52px] apple-glass-dock !border-0 rounded-full flex items-center px-2 z-[50]">
+      <nav className="absolute bottom-[calc(14px+env(safe-area-inset-bottom))] left-4 right-4 h-[52px] apple-glass-dock !border-0 rounded-full flex items-center px-2 z-[50] overflow-hidden">
         {items.map(item => {
           const isActive = screen === item.id;
           const isPulsing = pulse?.id === item.id;
@@ -93,14 +93,11 @@ export function Navigation({ t }: NavigationProps) {
               }}
               className="flex-1 h-full flex items-center justify-center relative select-none min-w-0 rounded-full transition-transform active:scale-95"
             >
-              {isPulsing && pulse && (
+              {isActive && (
                 <span
-                  key={pulse.seq}
-                  className="wt-nav-topline is-pulsing"
+                  key={isPulsing && pulse ? `pulse-${pulse.seq}` : `active-${item.id}`}
+                  className={`wt-nav-topline ${isPulsing && pulse ? 'is-pulsing' : 'is-active'}`}
                   aria-hidden="true"
-                  onAnimationEnd={() =>
-                    setPulse(p => (p && p.id === item.id && p.seq === pulse.seq ? null : p))
-                  }
                 />
               )}
               <div

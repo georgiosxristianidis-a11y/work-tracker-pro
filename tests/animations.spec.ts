@@ -35,6 +35,9 @@ test.describe('Animations Test', () => {
     await expect(wipeBtn).toBeVisible();
     await expect(wipeBtn).toContainText('Wipe Data');
     await expect(wipeBtn).toHaveAttribute('data-hold-state', 'idle');
+    // Light theme keeps obsidian dark + light ink pattern rather than turning cream/white
+    const wipeColor = await wipeBtn.evaluate((el) => getComputedStyle(el).color);
+    expect(wipeColor).toBe('rgb(244, 241, 234)');
 
     const trashSvg = wipeBtn.locator('svg').first();
     await expect(trashSvg).toBeVisible();
@@ -77,15 +80,27 @@ test.describe('Animations Test', () => {
     await expect(orbital).toHaveAttribute('data-dir', 'cw');
   });
 
-  test('Minimalist icon-only dock pulses top line on tab click', async ({ page }) => {
+  test('Minimalist icon-only dock keeps active top line lit and pulses on tab click', async ({ page }) => {
     await page.goto('/');
 
     const navButtons = page.locator('nav button');
     await expect(navButtons).toHaveCount(4);
     await expect(navButtons.nth(0)).toHaveText('');
-    await expect(page.locator('.wt-nav-topline')).toHaveCount(0);
+    await expect(navButtons.nth(0).locator('.wt-nav-topline.is-active')).toBeVisible();
 
     await navButtons.nth(2).click();
-    await expect(navButtons.nth(2).locator('.wt-nav-topline.is-pulsing')).toBeVisible();
+    await expect(navButtons.nth(0).locator('.wt-nav-topline')).toHaveCount(0);
+    const activeTopline = navButtons.nth(2).locator('.wt-nav-topline.is-pulsing');
+    await expect(activeTopline).toBeVisible();
+
+    await page.waitForTimeout(900);
+    const settledOpacity = await activeTopline.evaluate((el) => parseFloat(getComputedStyle(el).opacity));
+    expect(settledOpacity).toBeGreaterThan(0.85);
+
+    const hasHorizontalOverflow = await page.evaluate(() => {
+      const scroller = document.querySelector('#frame > div.overflow-y-auto');
+      return scroller ? scroller.scrollWidth > scroller.clientWidth : true;
+    });
+    expect(hasHorizontalOverflow).toBe(false);
   });
 });

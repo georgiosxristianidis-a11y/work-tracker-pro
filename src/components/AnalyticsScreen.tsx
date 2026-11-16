@@ -107,7 +107,7 @@ export const AnalyticsScreen = ({
         )}
       </AnimatePresence>
 
-      <div className="relative w-full -mx-1">
+      <div className="relative w-full -mx-1 overflow-hidden">
         <motion.div 
           className="flex items-stretch w-full cursor-grab active:cursor-grabbing"
           drag="x"

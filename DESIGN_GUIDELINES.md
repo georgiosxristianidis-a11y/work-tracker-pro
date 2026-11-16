@@ -9,7 +9,7 @@ This document outlines the strict design rules for the application to maintain a
 ## 2. Component Primitives
 - **Buttons:** 
   - Standard Height: Primary standalone action buttons use `h-14` (`56px`). Paired compact toolbar controls (e.g., Calendar `Smart Fill` / `Quick Fill` / `complete`) use `h-12` (`48px`, exceeding the `44px` minimum mobile touch target so they clear the floating dock without scrolling on `393×667`).
-  - Border Radius (Concentric Squircle + Pill): Use `@theme` tokens from `src/index.css` (`rounded-shell` `28px` for primary calendar shell, `rounded-card` `24px`, `rounded-panel` `14px`, `rounded-control` `10px`), standard Tailwind `rounded-2xl` (`16px` for Calendar day cells and `h-12` toolbar buttons), and `rounded-full` (circular `< >` navigation arrows, header pills, dock) without arbitrary `rounded-[...]`.
+  - Border Radius (Concentric Squircle + Pill): Use `@theme` tokens from `src/index.css` (`rounded-shell` `28px` for primary calendar shell, `rounded-card` `24px`, `rounded-panel` `14px` for `~40px` Calendar day cells and KPI badges, `rounded-control` `10px`), standard Tailwind `rounded-2xl` (`16px` for `h-12` toolbar buttons), plus `rounded-full` (circular `< >` navigation arrows, header pills, dock) without arbitrary `rounded-[...]`.
   - Typography: Button text should be standard case (NO CAPS / uppercase), typically `text-sm` or `text-xs` (`font-semibold` on compact `h-12` toolbar actions).
 - **Modals:**
   - Modals should slide up smoothly using consistent Framer Motion parameters.
@@ -17,7 +17,7 @@ This document outlines the strict design rules for the application to maintain a
 
 ## 3. Calendar Standards
 - **Header & Navigation:** Keep `Epilogue Variable` for month titles with `+5%` tracking (`tracking-[0.05em]`), `DAYS` KPI badge using `rounded-panel`, and circular `<` / `>` navigation buttons (`rounded-full`).
-- **Compact Vertical Rhythm:** `space-y-4` container gap, `p-4 sm:p-5` calendar card padding, `pb-1 mb-1.5` hint spacing, and `gap-y-2.5` grid rows.
+- **Compact Vertical Rhythm:** `space-y-4` container gap, `px-3 py-4 sm:px-4 sm:py-5` calendar card padding, `pb-1 mb-1.5` hint spacing, and `gap-x-1.5 gap-y-2` grid spacing (`~40×40px` day cells on `393px`).
 - **Weekend Semantics:** Saturdays use theme gold/accent (`var(--a)`, `hover:bg-[var(--a-bg)]`); Sundays use calm neutral gray (`var(--t3)`). Never color rest-day Sundays with `--danger` (reserve `--danger` strictly for destructive actions and validation errors).
 
 ## 4. Typography & Spacing

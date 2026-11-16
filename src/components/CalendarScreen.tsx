@@ -106,7 +106,7 @@ const DayCell = React.memo(({
       style={{ WebkitTouchCallout: 'none' }}
       aria-label={`${day}, ${hours > 0 ? `${hours} hours` : isToday ? 'today' : 'empty'}`}
       className={`
-        relative aspect-square rounded-2xl border flex flex-col items-center justify-center gap-0.5 transition-all select-none touch-manipulation active:scale-90
+        relative aspect-square rounded-panel border flex flex-col items-center justify-center gap-0.5 transition-all select-none touch-manipulation active:scale-90
         ${hours > 0 
           ? 'bg-[var(--a-bg)] border-[var(--a-b)] text-[var(--t1)]' 
           : isToday 
@@ -120,7 +120,7 @@ const DayCell = React.memo(({
                 : 'bg-transparent border-transparent text-[var(--t2)] hover:bg-[var(--b)]'}
       `}
     >
-      <span className={`text-[15px] font-bold ${hours > 0 ? '-translate-y-[2px]' : ''} ${isSaturday && hours === 0 ? 'text-[var(--a)]' : isSunday && hours === 0 ? 'text-[var(--t3)]' : ''}`}>
+      <span className={`text-base font-bold ${hours > 0 ? '-translate-y-[2px]' : ''} ${isSaturday && hours === 0 ? 'text-[var(--a)]' : isSunday && hours === 0 ? 'text-[var(--t3)]' : ''}`}>
         {day}
       </span>
 
@@ -263,7 +263,7 @@ export const CalendarScreen = ({
       </div>
 
       {/* Calendar Card: Concentric Shell, Radar Pulse Hint, Saturday Gold (--a), Sunday Gray (--t3) */}
-      <div className="p-4 sm:p-5 apple-glass-panel rounded-shell relative">
+      <div className="px-3 py-4 sm:px-4 sm:py-5 apple-glass-panel rounded-shell relative">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -293,7 +293,7 @@ export const CalendarScreen = ({
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-7 gap-y-2.5 gap-x-2 touch-pan-y"
+          className="grid grid-cols-7 gap-y-2 gap-x-1.5 touch-pan-y"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.05}

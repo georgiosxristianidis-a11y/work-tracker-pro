@@ -83,7 +83,7 @@ export const HomeScreen = ({
   );
 
   return (
-    <div className="space-y-6 pt-1 relative">
+    <div className="space-y-4 pt-1 relative">
       <SuccessSparkles
         active={celebration.active}
         glyph={celebration.glyph}
@@ -125,14 +125,14 @@ export const HomeScreen = ({
       </div>
 
       <div className="px-1">
-        <div className="p-6 rounded-card apple-glass-panel flex flex-col gap-4 relative overflow-hidden">
+        <div className="p-5 rounded-card apple-glass-panel flex flex-col gap-3 relative overflow-hidden">
           {/* Subtle accent gradient for premium feel without breaking the solid style */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--a)]/5 rounded-full blur-3xl pointer-events-none" />
           
           <span className="text-xs font-black uppercase tracking-widest text-[var(--t3)] relative z-10">{t('Monthly Summary')}</span>
-          <div className="relative min-h-[100px] flex justify-center">
-            <div data-testid="monthly-stats" className={`grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-[360px] justify-between transition-all duration-500 ${totalHours === 0 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}>
-              <div className="flex flex-col items-start text-left flex-1 min-w-0 p-2.5 sm:p-3 rounded-panel bg-[var(--bg)]/80 border border-[var(--b)]">
+          <div className="relative min-h-[84px] flex justify-center">
+            <div data-testid="monthly-stats" className={`grid grid-cols-3 gap-2 sm:gap-4 w-full max-w-[360px] justify-between transition-all duration-500 ${totalHours === 0 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}>
+              <div className="flex flex-col items-start text-left flex-1 min-w-0">
                 <span className="text-micro font-bold uppercase tracking-wider text-[var(--t3)] mb-1">{t('Earnings')}</span>
                 <div 
                   onClick={() => { if (haptic) haptic(10); setSettings(s => ({ ...s, privacyMode: !s.privacyMode })); }}
@@ -161,7 +161,7 @@ export const HomeScreen = ({
                   <span className="text-micro text-[var(--t3)] font-normal">{t('vs last month')}</span>
                 </div>
               </div>
-              <div className="flex flex-col items-start text-left flex-1 min-w-0 p-2.5 sm:p-3 rounded-panel bg-[var(--bg)]/80 border border-[var(--b)]">
+              <div className="flex flex-col items-start text-left flex-1 min-w-0">
                 <span className="text-micro font-bold uppercase tracking-wider text-[var(--t3)] mb-1">{t('Hours')}</span>
                 <div className="flex items-baseline gap-1 h-[36px] justify-start whitespace-nowrap overflow-visible">
                   <RollingNumber
@@ -178,7 +178,7 @@ export const HomeScreen = ({
                   <span className="text-micro text-[var(--t3)] font-normal">{t('vs last month')}</span>
                 </div>
               </div>
-              <div className="flex flex-col items-start text-left flex-1 min-w-0 p-2.5 sm:p-3 rounded-panel bg-[var(--bg)]/80 border border-[var(--b)]">
+              <div className="flex flex-col items-start text-left flex-1 min-w-0">
                 <span className="text-micro font-bold uppercase tracking-wider text-[var(--t3)] mb-1">{t('Days')}</span>
                 <div className="flex items-baseline gap-1 h-[36px] justify-start whitespace-nowrap overflow-visible">
                   <RollingNumber

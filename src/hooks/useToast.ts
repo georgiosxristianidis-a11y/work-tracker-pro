@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ToastMessage, ToastAction } from '../components/Toasts';
+import type { ToastMessage, ToastAction } from '../components/Toasts';
 
 export function useToast() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);

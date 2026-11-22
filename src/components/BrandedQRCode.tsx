@@ -98,7 +98,7 @@ export const BrandedQRCode: React.FC<BrandedQRCodeProps> = ({
           }
         });
 
-        containerRef.current.innerHTML = '';
+        containerRef.current.replaceChildren();
         qrCodeRef.current.append(containerRef.current);
       } else {
         qrCodeRef.current.update({

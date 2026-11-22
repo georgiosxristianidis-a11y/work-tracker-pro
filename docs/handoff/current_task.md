@@ -1,16 +1,20 @@
-# TASK HANDOFF: main
-- **Timestamp**: 2026-11-16T19:47:45.295Z
-- **Branch**: main
-- **Last Commit**: 86a0af3 Merge pull request #41 from georgiosxristianidis-a11y/fix/calendar-nav-opal-polish
+# TASK HANDOFF: chore/security-gates
+- **Timestamp**: 2026-11-22T18:53:09.331Z
+- **Branch**: chore/security-gates
+- **Last Commit**: 5c74503 chore(release): v0.1.67 [skip actions]
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M src/hooks/useDevicePairing.ts
- M src/hooks/useSupabaseSync.ts
- M src/lib/db.ts
- M src/lib/device-pairing.ts
- M tests/unit/device-pairing.test.ts
+M .github/workflows/ci.yml
+ M api/insight.ts
+ M eslint.config.js
+ M package.json
+ M scripts/gate.cjs
+ M src/components/BrandedQRCode.tsx
+ M src/hooks/useToast.ts
+ M tests/unit/insight-api.test.ts
+?? tests/unit/gate-security.test.ts
 ```
 
 ## Next Action

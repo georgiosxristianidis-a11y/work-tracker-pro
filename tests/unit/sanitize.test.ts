@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sanitizeEntries, shiftMonth } from '../../src/lib/utils.ts';
+import { sanitizeEntries, shiftMonth, parseBackupPayload } from '../../src/lib/utils.ts';
 
 test('sanitizeEntries - keeps valid rows unchanged', () => {
   const rows = [{ date: '2026-10-05', hours: 7.5, month: '2026-10' }];
@@ -66,4 +66,22 @@ test('shiftMonth - avoids 29th-31st day overflow when navigating to shorter mont
   const decPrevYear = shiftMonth(jan1, -1);
   assert.equal(decPrevYear.getFullYear(), 2025);
   assert.equal(decPrevYear.getMonth(), 11);
+});
+
+test('parseBackupPayload - accepts v1 and legacy backups, strips bad fields, rejects future versions', () => {
+  const v1 = parseBackupPayload(JSON.stringify({
+    version: 1,
+    entries: [{ date: '2026-11-10', hours: 8, updated_at: 1700000000000 }, { date: 'bad', hours: 99 }],
+    settings: { rate: 25, currency: 'EUR', theme: 'indigo', injectedFn: 'ignored' }
+  }));
+  assert.ok(v1);
+  assert.equal(v1.entries.length, 1);
+  assert.equal(v1.entries[0].updated_at, 1700000000000);
+  assert.deepEqual(v1.settings, { rate: 25, currency: 'EUR', theme: 'indigo' });
+
+  const legacy = parseBackupPayload(JSON.stringify({ entries: [{ date: '2026-11-11', hours: 6 }] }));
+  assert.equal(legacy?.entries.length, 1);
+
+  assert.equal(parseBackupPayload(JSON.stringify({ version: 2, entries: [] })), null);
+  assert.equal(parseBackupPayload('not-json'), null);
 });

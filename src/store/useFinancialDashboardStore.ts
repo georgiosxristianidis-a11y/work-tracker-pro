@@ -136,7 +136,7 @@ const BASELINE_DATA = {
   ],
   selectedPeriod: 'June - December',
   userName: 'Ruben Torff',
-  userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+  userAvatar: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><rect width='96' height='96' rx='48' fill='rgb(30,41,59)'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='sans-serif' font-size='34' font-weight='700'>RT</text></svg>",
   isPrivacyMasked: false,
   isVaultLocked: false,
   activeModal: null,

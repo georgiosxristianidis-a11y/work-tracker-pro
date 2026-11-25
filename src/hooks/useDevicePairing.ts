@@ -279,19 +279,24 @@ export const useDevicePairing = ({
           }
         }
 
-        // 2. Query cloud entries for linked workspace owner (active shifts only)
-        const { data: cloudRows, error: fetchError } = await supabase
-          .from('work_entries')
-          .select('*')
-          .eq('user_id', targetOwnerUid);
-
-        if (fetchError) throw fetchError;
-
-        const activeCloudEntries: Entry[] = (
-          (cloudRows as RawCloudEntryRow[] | null) || []
-        )
-          .filter(r => (r.deleted_at === null || r.deleted_at === undefined) && Number(r.hours) > 0)
-          .map(fromWorkEntryRow);
+        // 2. Query cloud entries when targetOwnerUid is a valid Supabase UUID;
+        //    non-UUID P2P payloads or sleeping/unreachable cloud fall back to inline QR shifts.
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetOwnerUid);
+        let activeCloudEntries: Entry[] = [];
+        if (isUuid) {
+          const { data: cloudRows, error: fetchError } = await supabase
+            .from('work_entries')
+            .select('*')
+            .eq('user_id', targetOwnerUid);
+          if (fetchError) {
+            if (p2pEntries.length === 0) throw fetchError;
+            console.warn('Cloud fetch skipped during pairing, using inline QR entries:', fetchError.message);
+          } else {
+            activeCloudEntries = ((cloudRows as RawCloudEntryRow[] | null) || [])
+              .filter(r => (r.deleted_at === null || r.deleted_at === undefined) && Number(r.hours) > 0)
+              .map(fromWorkEntryRow);
+          }
+        }
 
         const combinedRemote = mergeEntries(p2pEntries, activeCloudEntries).merged;
         const localEntries = await db.getAllEntries();
@@ -308,7 +313,7 @@ export const useDevicePairing = ({
             await db.saveMany(mergeResult.merged);
           }
 
-          if (localAuthUid) {
+          if (localAuthUid && isUuid) {
             const deviceId = getDeviceId();
             const uploadPayload = mergeResult.merged.map((e) =>
               toWorkEntryRow(e, targetOwnerUid, deviceId)

@@ -91,7 +91,7 @@ export const useDevicePairing = ({
 
   const preparePairingSession = useCallback(async (): Promise<PreparedPairingSession> => {
     const now = Date.now();
-    const code = generatePairingCode();
+    let code = generatePairingCode();
     const deviceId = getDeviceId();
     const localEntries = await db.getAllEntries();
     const recentEntries = localEntries.slice(0, 60).map(e => ({
@@ -107,7 +107,11 @@ export const useDevicePairing = ({
           const uid = await ensureAuth();
           if (!uid) return null;
           const storedOwner = await db.getSetting<string>('syncOwnerId', '');
-          const { data: rpcOwner, error: rpcErr } = await supabase.rpc('create_pairing_code', { p_code: code });
+          let { data: rpcOwner, error: rpcErr } = await supabase.rpc('create_pairing_code', { p_code: code });
+          if (rpcErr?.message?.includes('already in use')) {
+            code = generatePairingCode();
+            ({ data: rpcOwner, error: rpcErr } = await supabase.rpc('create_pairing_code', { p_code: code }));
+          }
           if (!rpcErr && typeof rpcOwner === 'string' && rpcOwner) {
             return rpcOwner;
           }
@@ -269,11 +273,15 @@ export const useDevicePairing = ({
         const localAuthUid = await ensureAuth();
         let targetOwnerUid = payload.uid;
 
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (localAuthUid && payload.code) {
           const { data: claimedOwner, error: claimErr } = await supabase.rpc('claim_pairing_code', {
             p_code: payload.code
           });
           if (!claimErr && typeof claimedOwner === 'string' && claimedOwner) {
+            if (uuidRe.test(payload.uid) && claimedOwner !== payload.uid) {
+              throw new Error('Pairing code owner mismatch');
+            }
             targetOwnerUid = claimedOwner;
             await db.setSetting('syncOwnerId', claimedOwner);
           }
@@ -281,7 +289,7 @@ export const useDevicePairing = ({
 
         // 2. Query cloud entries when targetOwnerUid is a valid Supabase UUID;
         //    non-UUID P2P payloads or sleeping/unreachable cloud fall back to inline QR shifts.
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetOwnerUid);
+        const isUuid = uuidRe.test(targetOwnerUid);
         let activeCloudEntries: Entry[] = [];
         if (isUuid) {
           const { data: cloudRows, error: fetchError } = await supabase

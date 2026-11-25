@@ -112,4 +112,10 @@ test('gate sql/rls - passes real supabase/schema.sql and deny-all supabase/keepa
 
   assert.deepEqual(checkSqlContent(schemaSql, 'supabase/schema.sql'), []);
   assert.deepEqual(checkSqlContent(keepaliveSql, 'supabase/keepalive.sql'), []);
+  assert.equal(
+    /on\s+conflict\s*\(\s*code\s*\)\s+do\s+update/i.test(schemaSql),
+    false,
+    'pairing_codes must never overwrite owner_uid on code conflict (hijack vector)'
+  );
+  assert.match(schemaSql, /on\s+conflict\s*\(\s*code\s*\)\s+do\s+nothing/i);
 });

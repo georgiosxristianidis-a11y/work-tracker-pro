@@ -62,12 +62,15 @@ begin
   if v_uid is null or p_code is null or length(p_code) < 8 or length(p_code) > 16 then
     raise exception 'invalid pairing request';
   end if;
-  delete from public.pairing_codes where expires_at <= now();
   select dl.owner_uid into v_owner from public.device_links dl where dl.member_uid = v_uid;
   v_owner := coalesce(v_owner, v_uid);
+  delete from public.pairing_codes where expires_at <= now() or owner_uid = v_owner;
   insert into public.pairing_codes (code, owner_uid, expires_at)
   values (upper(p_code), v_owner, now() + interval '10 minutes')
-  on conflict (code) do update set owner_uid = excluded.owner_uid, expires_at = excluded.expires_at;
+  on conflict (code) do nothing;
+  if not found then
+    raise exception 'pairing code already in use';
+  end if;
   return v_owner;
 end;
 $$;

@@ -112,6 +112,16 @@ function merge(name) {
 function abort(name, isMerged = false) {
   const targetPath = path.join(worktreesDir, name);
   const branchName = `worktree/${name}`;
+  const targetNodeModules = path.join(targetPath, 'node_modules');
+
+  // Unlink Windows directory junction BEFORE git worktree remove --force so git never traverses into root node_modules
+  if (fs.existsSync(targetNodeModules)) {
+    if (process.platform === 'win32') {
+      execSafe(`cmd /c rmdir "${targetNodeModules}"`, rootDir);
+    } else {
+      try { fs.unlinkSync(targetNodeModules); } catch (_) {}
+    }
+  }
 
   // Remove worktree
   execSafe(`git worktree remove --force "${targetPath}"`, rootDir);

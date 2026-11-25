@@ -4,13 +4,16 @@ const { execSync } = require('child_process');
 
 const projectRoot = path.resolve(__dirname, '..');
 const HEX_EXEMPT_FILES = new Set(['Logo.tsx', 'BrandedQRCode.tsx']); // Brand mark & QR scan contrast require fixed colors
-const MAX_COMPONENT_HEX = 40; // Ratchet ceiling: lower this as legacy #hex occurrences are migrated to tokens
+const MAX_CORE_COMPONENT_HEX = 5; // Strict ceiling for core Work Tracker Pro UI
+const MAX_LAB_COMPONENT_HEX = 35; // Isolated quarantine ceiling for experimental financial-dashboard/
 
-function countComponentHex(dir) {
+function countComponentHex(dir, skipDirName = null) {
   let total = 0;
+  if (!fs.existsSync(dir)) return 0;
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (ent.isDirectory() && ent.name === skipDirName) continue;
     const full = path.join(dir, ent.name);
-    if (ent.isDirectory()) total += countComponentHex(full);
+    if (ent.isDirectory()) total += countComponentHex(full, skipDirName);
     else if (/\.(ts|tsx)$/.test(ent.name) && !HEX_EXEMPT_FILES.has(ent.name)) {
       const matches = fs.readFileSync(full, 'utf8').match(/#[0-9a-fA-F]{3,8}\b/g);
       if (matches) total += matches.length;
@@ -20,9 +23,13 @@ function countComponentHex(dir) {
 }
 
 function checkDesignTokens() {
-  const hexCount = countComponentHex(path.join(projectRoot, 'src/components'));
-  if (hexCount > MAX_COMPONENT_HEX) {
-    return { ok: false, message: `Hardcoded #hex ratchet exceeded: ${hexCount} > ${MAX_COMPONENT_HEX}. Use CSS tokens from src/index.css.` };
+  const coreHex = countComponentHex(path.join(projectRoot, 'src/components'), 'financial-dashboard');
+  const labHex = countComponentHex(path.join(projectRoot, 'src/components/financial-dashboard'));
+  if (coreHex > MAX_CORE_COMPONENT_HEX) {
+    return { ok: false, message: `Core #hex ratchet exceeded: ${coreHex} > ${MAX_CORE_COMPONENT_HEX}. Use CSS tokens from src/index.css.` };
+  }
+  if (labHex > MAX_LAB_COMPONENT_HEX) {
+    return { ok: false, message: `Lab #hex quarantine exceeded: ${labHex} > ${MAX_LAB_COMPONENT_HEX}.` };
   }
   const assetsDir = path.join(projectRoot, 'dist/assets');
   const cssFiles = fs.existsSync(assetsDir) ? fs.readdirSync(assetsDir).filter(f => f.endsWith('.css')) : [];
@@ -34,7 +41,7 @@ function checkDesignTokens() {
       return { ok: false, message: `Backdrop-filter mismatch in dist/assets/${file} (webkit=${wk}, std=${std}). Put -webkit-backdrop-filter first.` };
     }
   }
-  return { ok: true, hexCount };
+  return { ok: true, coreHex, labHex };
 }
 
 function runCommand(cmd, options = {}) {
@@ -406,7 +413,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`[GATE] PASS: TypeScript OK | ESLint OK | Build OK | Secrets OK | RLS OK | Hex: ${tokenRes.hexCount}/${MAX_COMPONENT_HEX} | Diff: ${diffCheck.message} (exit 0)`);
+  console.log(`[GATE] PASS: TypeScript OK | ESLint OK | Build OK | Secrets OK | RLS OK | CoreHex: ${tokenRes.coreHex}/${MAX_CORE_COMPONENT_HEX} | LabHex: ${tokenRes.labHex}/${MAX_LAB_COMPONENT_HEX} | Diff: ${diffCheck.message} (exit 0)`);
   process.exit(0);
 }
 

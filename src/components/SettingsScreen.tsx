@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, Database, FileText, Download, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, Database, FileText, Download, Upload, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { OpalHoldSheet } from './OpalHoldSheet';
 import { AppSettings } from '../constants';
@@ -36,7 +36,7 @@ export const SettingsScreen = ({
 }: SettingsScreenProps) => {
   const {
     exportCSV, exportTXT, exportPDF, exportICS,
-    shareToTelegram, shareBackup, isExporting
+    shareToTelegram, shareBackup, importBackup, isExporting
   } = useDataExport({
     settings,
     curSym,
@@ -45,6 +45,7 @@ export const SettingsScreen = ({
     addToast,
     haptic
   });
+  const backupInputRef = React.useRef<HTMLInputElement>(null);
   const { isInstallable, promptInstall } = usePWAInstall();
 
   const supabaseDashboardUrl = React.useMemo(() => {
@@ -416,6 +417,21 @@ export const SettingsScreen = ({
               </button>
               <button onClick={shareBackup} className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all">
                 <div className="flex items-center gap-3.5"><Download size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Backup Data')}</span></div>
+                <ChevronRight size={16} className="text-[var(--t3)]"/>
+              </button>
+              <input
+                ref={backupInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) importBackup(file);
+                  e.target.value = '';
+                }}
+              />
+              <button onClick={() => backupInputRef.current?.click()} className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all">
+                <div className="flex items-center gap-3.5"><Upload size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Import Backup (JSON)')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
               <button 

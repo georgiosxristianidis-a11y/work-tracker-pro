@@ -19,8 +19,12 @@ const BASE_RESTRICTED_SYNTAX = [
     message: 'document.write is banned.',
   },
   {
-    selector: 'TemplateElement[value.raw=/[?&](key|api_key|token|secret)=/i]',
-    message: 'Never pass secrets in URL query strings. Send API keys via HTTP headers.',
+    selector: 'TemplateElement[value.raw=/[?&](key|api_key|token|secret|pair)=/i]',
+    message: 'Never pass secrets or pairing payloads in URL query strings. Use headers or #pair= URL fragment.',
+  },
+  {
+    selector: 'CallExpression[callee.property.name="setMonth"]',
+    message: 'Direct Date.setMonth() overflows on days 29-31. Use shiftMonth(date, delta) from src/lib/utils.ts.',
   },
 ];
 
@@ -100,13 +104,6 @@ export default [
           ],
         },
       ],
-    },
-  },
-  // Legacy ratchet exemption: DevicePairModal (657 lines, tracked for dedicated refactor)
-  {
-    files: ['src/components/DevicePairModal.tsx'],
-    rules: {
-      '@typescript-eslint/no-restricted-imports': 'off',
     },
   },
   // Hooks: no runtime imports from UI components (type-only imports allowed)

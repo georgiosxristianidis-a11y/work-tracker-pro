@@ -76,8 +76,10 @@ test.describe('Smart Import & Multi-Year Historical Sync (#devil)', () => {
     const navButtons = page.locator('nav button');
     await navButtons.nth(3).click();
 
-    // Click "Financial Dashboard (Offline)"
+    // Verify Finance Lab is isolated/off by default, then enable via Labs toggle
     const financeBtn = page.locator('button:has-text("Financial Dashboard (Offline)")').first();
+    await expect(financeBtn).toBeHidden();
+    await page.locator('button[aria-label="Enable Finance Lab"]').click();
     await expect(financeBtn).toBeVisible();
     await financeBtn.click();
 

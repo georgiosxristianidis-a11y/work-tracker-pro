@@ -64,11 +64,11 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-          globIgnores: ['**/vendor-pdf*.js', '**/html2canvas*.js'],
+          globIgnores: ['**/vendor-pdf*.js', '**/html2canvas*.js', '**/FinancialDashboardView*.js'],
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MB to guarantee heavy charts cache in airplane mode
           runtimeCaching: [
             {
-              urlPattern: ({ url }) => /vendor-(pdf|charts)|html2canvas/.test(url.pathname),
+              urlPattern: ({ url }) => /vendor-(pdf|charts)|html2canvas|FinancialDashboardView/.test(url.pathname),
               handler: 'CacheFirst',
               options: {
                 cacheName: 'heavy-chunks-cache',
@@ -110,6 +110,7 @@ export default defineConfig(() => {
               !dep.includes('vendor-charts') &&
               !dep.includes('html2canvas') &&
               !dep.includes('DevicePairModal') &&
+              !dep.includes('FinancialDashboardView') &&
               !dep.includes('jsQR')
           );
         },

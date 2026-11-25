@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { supabase } from './lib/supabase';
 import { db, Entry } from './lib/db';
@@ -92,6 +92,10 @@ export default function App() {
 
   const [chartPeriod, setChartPeriod] = useState<6 | 12>(6);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const isEditorOpen = useAppStore(s => s.editorDate !== null);
+  const [openedModals, setOpenedModals] = useState({ qf: false, ed: false, pair: false });
+  const deviceId = useMemo(() => getDeviceId(), []);
+  const lastLoadedMonthRef = useRef('');
 
   const { isPowerSaveMode } = usePowerSave(settings);
 
@@ -123,6 +127,8 @@ export default function App() {
         }
 
         await Promise.all([loadSettings(), loadEntries()]);
+        const bootDate = useAppStore.getState().viewDate;
+        lastLoadedMonthRef.current = `${bootDate.getFullYear()}-${bootDate.getMonth()}`;
 
         setIsAuthReady(true);
       } catch (err) {
@@ -183,17 +189,21 @@ export default function App() {
   }, [settings.theme]);
 
   useEffect(() => {
-    if (isAuthReady) loadEntries();
+    if (!isAuthReady) return;
+    const key = `${viewDate.getFullYear()}-${viewDate.getMonth()}`;
+    if (lastLoadedMonthRef.current !== key) {
+      lastLoadedMonthRef.current = key;
+      loadEntries();
+    }
   }, [viewDate, isAuthReady, loadEntries]);
 
-  // Idle cache warmup: prefetch heavy lazy modules after initial render so PWA is 100% offline-ready
+  // Idle cache warmup: prefetch common tracker modals without parsing heavy QR scanner on boot
   useEffect(() => {
     if (!isAuthReady || typeof window === 'undefined') return;
     const timer = setTimeout(() => {
       if (navigator.onLine) {
         import('./components/QuickFillModal').catch(() => {});
         import('./components/EditorModal').catch(() => {});
-        import('./components/DevicePairModal').catch(() => {});
         import('./components/AnalyticsScreen').catch(() => {});
       }
     }, 4000);
@@ -208,11 +218,12 @@ export default function App() {
     chartPeriod
   );
 
-  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, restoreFromCloudAction, deleteEntryFromCloud, clearCloudData } = useSupabaseSync({
+  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, restoreFromCloudAction, queueCloudDeletes, clearPendingDeletes, clearCloudData } = useSupabaseSync({
     settings,
     setSettings,
     addToast,
     getDeviceId,
+    onLocalChange: loadEntries,
   });
 
   const restoreFromCloud = useCallback(async () => {
@@ -262,42 +273,46 @@ export default function App() {
     h(20);
     try {
       await storeSaveEntry(date, hours);
+      await clearPendingDeletes([date]);
       scheduleBackgroundSync();
     } catch {
       addToast(t('Failed to save entry'), 'error');
     }
-  }, [h, storeSaveEntry, scheduleBackgroundSync, addToast, t]);
+  }, [h, storeSaveEntry, clearPendingDeletes, scheduleBackgroundSync, addToast, t]);
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
     h([20, 20]);
     try {
       await storeSaveMany(dates.map(date => ({ date, hours, month: date.slice(0, 7) })));
+      await clearPendingDeletes(dates);
       addToast(t('Entries added'), 'success');
       scheduleBackgroundSync();
     } catch {
       addToast(t('Failed to save entries'), 'error');
     }
-  }, [h, storeSaveMany, addToast, t, scheduleBackgroundSync]);
+  }, [h, storeSaveMany, clearPendingDeletes, addToast, t, scheduleBackgroundSync]);
 
   const deleteEntry = useCallback(async (date: string) => {
     h([30, 50]);
     try {
       const existing = useAppStore.getState().allEntries.find(e => e.date === date);
       await storeDeleteEntry(date);
-      deleteEntryFromCloud(date);
+      await queueCloudDeletes([date]);
+      scheduleBackgroundSync();
       const msg = existing ? `${t('Entry deleted')} (${existing.hours}h)` : t('Entry deleted');
       addToast(msg, 'warning', {
         label: t('Undo'),
         onClick: async () => {
           const store = useAppStore.getState();
           await store.undoDelete();
+          await clearPendingDeletes([date]);
           scheduleBackgroundSync();
         }
       });
     } catch {
       addToast(t('Failed to delete entry'), 'error');
     }
-  }, [h, storeDeleteEntry, deleteEntryFromCloud, addToast, t, scheduleBackgroundSync]);
+  }, [h, storeDeleteEntry, queueCloudDeletes, clearPendingDeletes, addToast, t, scheduleBackgroundSync]);
 
   const {
     selectedTemplate,
@@ -313,19 +328,35 @@ export default function App() {
     smartFillPreview,
     getDefaultHours,
     clearMonth
-  } = useQuickFill({ viewDate, entries, excludeSundays, loadEntries, addToast, undoLabel: t('Undo'), onSync: scheduleBackgroundSync });
+  } = useQuickFill({
+    viewDate,
+    entries,
+    excludeSundays,
+    loadEntries,
+    addToast,
+    undoLabel: t('Undo'),
+    onSync: scheduleBackgroundSync,
+    onQueueDeletes: queueCloudDeletes,
+    onClearDeletes: clearPendingDeletes
+  });
 
   const {
     isPairModalOpen,
     setIsPairModalOpen,
     incomingPayload,
     setIncomingPayload,
-    applyPairing
+    applyPairing,
+    preparePairingSession,
+    subscribeHostPairing,
+    resolvePairingCode,
+    exportPairingBackup,
+    broadcastPairSuccess
   } = useDevicePairing({
     getDeviceId,
     loadEntries,
     addToast,
     haptic: h,
+    strictOfflineMode: settings.strictOfflineMode,
     t
   });
 
@@ -334,13 +365,16 @@ export default function App() {
   const syncTapActual = useDoubleTap(syncWithSupabaseAction);
   
   const clearAllData = async () => {
+    const prevDates = useAppStore.getState().allEntries.map(e => e.date);
     await storeClearAll();
-    clearCloudData();
+    await clearCloudData(prevDates);
+    scheduleBackgroundSync();
     addToast(t('All data deleted'), 'warning', {
       label: t('Undo'),
       onClick: async () => {
         const store = useAppStore.getState();
         await store.undoDelete();
+        await clearPendingDeletes(prevDates);
         scheduleBackgroundSync();
       }
     });
@@ -360,6 +394,15 @@ export default function App() {
     setIsQuickFillOpen(true);
   }, [h, setIsQuickFillOpen]);
 
+  const isPairActive = isPairModalOpen || incomingPayload !== null;
+  const handleOpenDevicePair = useCallback(() => setIsPairModalOpen(true), [setIsPairModalOpen]);
+
+  useEffect(() => {
+    if ((isQuickFillOpen && !openedModals.qf) || (isEditorOpen && !openedModals.ed) || (isPairActive && !openedModals.pair)) {
+      setOpenedModals(m => ({ qf: m.qf || isQuickFillOpen, ed: m.ed || isEditorOpen, pair: m.pair || isPairActive }));
+    }
+  }, [isQuickFillOpen, isEditorOpen, isPairActive, openedModals]);
+
   const toggleTheme = async () => {
     const themes: ('light' | 'dark' | 'indigo')[] = ['light', 'dark', 'indigo'];
     const nextTheme = themes[(themes.indexOf(settings.theme) + 1) % themes.length];
@@ -369,7 +412,7 @@ export default function App() {
   // --- Renderers ---
   return (
     <MotionConfig reducedMotion={isPowerSaveMode ? 'always' : 'user'}>
-      {screen === 'finance' ? (
+      {screen === 'finance' && settings.enableFinanceLab ? (
         <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#141518]"><div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" /></div>}>
           <FinancialDashboardView onBackToTracker={() => setScreen('settings')} />
         </Suspense>
@@ -384,13 +427,13 @@ export default function App() {
 
         {/* Main Content */}
         <div className="absolute inset-0 overflow-y-auto px-6 pt-[calc(64px+env(safe-area-inset-top))] pb-[calc(128px+env(safe-area-inset-bottom))] scrollbar-hide overscroll-y-none">
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={screen}
-              initial={false}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
               style={{ willChange: "transform, opacity" }}
             >
               <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="w-6 h-6 border-2 border-[var(--t3)] border-t-[var(--a)] rounded-full animate-spin" /></div>}>
@@ -480,7 +523,7 @@ export default function App() {
                     viewDate={viewDate}
                     calcEarnings={calcEarnings}
                     addToast={addToast}
-                    onOpenDevicePair={() => setIsPairModalOpen(true)}
+                    onOpenDevicePair={handleOpenDevicePair}
                   />
                 )}
                 {screen === 'total' && <TotalScreen allEntries={allEntries} viewDate={viewDate} settings={settings} calcEarnings={calcEarnings} curSym={curSym} t={t} />}
@@ -492,6 +535,7 @@ export default function App() {
         <Navigation t={t} />
 
         {/* Quick Fill Sheet */}
+        {(openedModals.qf || isQuickFillOpen) && (
         <Suspense fallback={null}>
         <QuickFillModal
           isOpen={isQuickFillOpen}
@@ -512,8 +556,10 @@ export default function App() {
           onSmartFill={smartFillUpToDay}
         />
         </Suspense>
+        )}
 
         {/* Editor Sheet */}
+        {(openedModals.ed || isEditorOpen) && (
         <Suspense fallback={null}>
         <EditorModal
           settings={settings}
@@ -525,24 +571,32 @@ export default function App() {
           haptic={h}
         />
         </Suspense>
+        )}
 
         {/* Device Pair & QR Sync Modal */}
+        {(openedModals.pair || isPairActive) && (
         <Suspense fallback={null}>
         <DevicePairModal
-          isOpen={isPairModalOpen || incomingPayload !== null}
+          isOpen={isPairActive}
           onClose={() => {
             setIsPairModalOpen(false);
             setIncomingPayload(null);
           }}
           theme={settings.theme}
           incomingPayload={incomingPayload}
-          deviceId={getDeviceId()}
+          deviceId={deviceId}
           localEntriesCount={allEntries.length}
           onApplyPairing={async (p, m) => { setIsPairModalOpen(true); await applyPairing(p, m); }}
+          onPreparePairing={preparePairingSession}
+          onSubscribeHost={subscribeHostPairing}
+          onResolveCode={resolvePairingCode}
+          onExportBackup={exportPairingBackup}
+          onBroadcastSuccess={broadcastPairSuccess}
           addToast={addToast}
           t={t}
         />
         </Suspense>
+        )}
 
         {/* Toasts */}
         <Toasts toasts={toasts} removeToast={removeToast} />

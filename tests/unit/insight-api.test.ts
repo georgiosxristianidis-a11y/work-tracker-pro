@@ -34,6 +34,15 @@ test('api/insight - rejects array body and enforces rate limit 429', async () =>
   }
   const limited = await handler(makeReq({ targetLang: 'English', history: '8h' }, { 'x-forwarded-for': '198.51.100.7' }));
   assert.equal(limited.status, 429);
+
+  // Spoofed unique IP flood (>1000 keys) must not wipe active 429 block via map.clear()
+  for (let i = 0; i < 520; i++) {
+    await handler(makeReq(['x'], { 'x-forwarded-for': `203.0.113.${i}` }));
+    await handler(makeReq(['x'], { 'x-forwarded-for': `192.0.2.${i}` }));
+    if (i === 250) await handler(makeReq({ targetLang: 'English', history: '8h' }, { 'x-forwarded-for': '198.51.100.7' }));
+  }
+  const stillLimited = await handler(makeReq({ targetLang: 'English', history: '8h' }, { 'x-forwarded-for': '198.51.100.7' }));
+  assert.equal(stillLimited.status, 429);
 });
 
 test('api/insight - sends Gemini API key via x-goog-api-key header and passes AbortSignal', async () => {
@@ -55,6 +64,7 @@ test('api/insight - sends Gemini API key via x-goog-api-key header and passes Ab
   try {
     const res = await handler(makeReq({ targetLang: 'English', history: '8h' }, { 'x-forwarded-for': '198.51.100.99' }));
     assert.equal(res.status, 200);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
     assert.equal(capturedUrl.includes('key='), false, 'API key must not be in URL query string');
     const headers = capturedInit?.headers as Record<string, string>;
     assert.equal(headers?.['x-goog-api-key'], 'unit-test-placeholder-key');

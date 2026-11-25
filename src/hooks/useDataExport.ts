@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { db, Entry } from '../lib/db';
+import { mergeEntries } from '../lib/device-pairing';
 import { AppSettings, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../constants';
-import { formatMoney } from '../lib/utils';
+import { formatMoney, parseBackupPayload } from '../lib/utils';
+import { useAppStore } from '../store/useAppStore';
 
 interface UseDataExportProps {
   settings: AppSettings;
@@ -138,7 +140,7 @@ export const useDataExport = ({
         const blob = new Blob([csv], { type: 'text/csv' });
         file = new File([blob], 'work-tracker.csv', { type: 'text/csv' });
       } else if (format === 'json') {
-        const data = { entries: allEntries, settings };
+        const data = { version: 1 as const, exportedAt: Date.now(), entries: allEntries, settings };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         file = new File([blob], 'work-tracker-backup.json', { type: 'application/json' });
       }
@@ -198,10 +200,37 @@ export const useDataExport = ({
 
   const shareBackup = async () => {
     const allEntries = await db.getAllEntries();
-    const data = { entries: allEntries, settings };
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const data = { version: 1 as const, exportedAt: Date.now(), entries: allEntries, settings };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     triggerBlobDownload(blob, 'work-tracker-backup.json');
     addToast('Backup Downloaded', 'success');
+  };
+
+  const importBackup = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      addToast('Backup file exceeds 5 MB limit', 'error');
+      return;
+    }
+    try {
+      const parsed = parseBackupPayload(await file.text());
+      if (!parsed) {
+        addToast('Invalid or unsupported backup version', 'error');
+        return;
+      }
+      const localEntries = await db.getAllEntries();
+      const { merged, newFromCloud } = mergeEntries(localEntries, parsed.entries);
+      if (merged.length > 0) await db.saveMany(merged);
+      const store = useAppStore.getState();
+      if (parsed.settings && Object.keys(parsed.settings).length > 0) {
+        store.setSettings(prev => ({ ...prev, ...parsed.settings }));
+      }
+      await store.loadEntries();
+      haptic([20, 30]);
+      addToast(`Backup restored (+${newFromCloud} shifts)`, 'success');
+    } catch (err) {
+      console.error('Backup import failed:', err);
+      addToast('Backup import failed', 'error');
+    }
   };
 
   const exportPDF = async (period: '6months' | 'year', returnFile = false): Promise<File | undefined> => {
@@ -379,6 +408,7 @@ export const useDataExport = ({
     exportICS,
     shareToTelegram,
     shareBackup,
+    importBackup,
     isExporting
   };
 };

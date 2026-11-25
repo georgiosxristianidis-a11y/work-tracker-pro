@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, Database, FileText, Download, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
+import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, Database, FileText, Download, Upload, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
 import { OpalHoldSheet } from './OpalHoldSheet';
 import { AppSettings } from '../constants';
@@ -36,7 +36,7 @@ export const SettingsScreen = ({
 }: SettingsScreenProps) => {
   const {
     exportCSV, exportTXT, exportPDF, exportICS,
-    shareToTelegram, shareBackup, isExporting
+    shareToTelegram, shareBackup, importBackup, isExporting
   } = useDataExport({
     settings,
     curSym,
@@ -45,6 +45,7 @@ export const SettingsScreen = ({
     addToast,
     haptic
   });
+  const backupInputRef = React.useRef<HTMLInputElement>(null);
   const { isInstallable, promptInstall } = usePWAInstall();
 
   const supabaseDashboardUrl = React.useMemo(() => {
@@ -418,19 +419,36 @@ export const SettingsScreen = ({
                 <div className="flex items-center gap-3.5"><Download size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Backup Data')}</span></div>
                 <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
-              <button 
-                onClick={() => {
-                  useAppStore.getState().setScreen('finance');
-                  haptic(10);
+              <input
+                ref={backupInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) importBackup(file);
+                  e.target.value = '';
                 }}
-                className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all group"
-              >
-                <div className="flex items-center gap-3.5">
-                  <LayoutDashboard size={16} className="text-[var(--a)]" />
-                  <span className="text-sm font-black text-[var(--t1)]">Financial Dashboard (Offline)</span>
-                </div>
-                <ChevronRight size={16} className="text-[var(--t3)] group-hover:translate-x-0.5 transition-transform" />
+              />
+              <button onClick={() => backupInputRef.current?.click()} className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all">
+                <div className="flex items-center gap-3.5"><Upload size={16} className="text-[var(--t2)]"/> <span className="text-sm font-black text-[var(--t1)]">{t('Import Backup (JSON)')}</span></div>
+                <ChevronRight size={16} className="text-[var(--t3)]"/>
               </button>
+              {settings.enableFinanceLab && (
+                <button 
+                  onClick={() => {
+                    useAppStore.getState().setScreen('finance');
+                    haptic(10);
+                  }}
+                  className="w-full flex items-center justify-between h-14 px-4 rounded-panel apple-glass-btn hover:bg-[var(--b)] transition-all group"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <LayoutDashboard size={16} className="text-[var(--a)]" />
+                    <span className="text-sm font-black text-[var(--t1)]">Financial Dashboard (Offline)</span>
+                  </div>
+                  <ChevronRight size={16} className="text-[var(--t3)] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -508,6 +526,27 @@ export const SettingsScreen = ({
                   aria-label={settings.powerSaveMode ? t('Disable Power Save Mode') : t('Enable Power Save Mode')}
                 >
                   <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} className={`w-4 h-4 rounded-full shadow-sm ${settings.powerSaveMode ? 'bg-[var(--bg)] ml-auto' : 'bg-[var(--t3)]/50'}`} />
+                </button>
+              </div>
+
+              {/* Experimental Finance Lab Toggle (Zero-Byte until enabled) */}
+              <div className="flex items-center justify-between p-3.5 mt-2 rounded-panel bg-[var(--bg)] border border-[var(--b)]">
+                <div className="flex items-center gap-3">
+                  <LayoutDashboard size={16} className="text-[var(--t2)]" />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-[var(--t2)] uppercase tracking-wider">Finance Lab (Mockup)</span>
+                    <span className="text-[9px] font-medium text-[var(--t3)]">Experimental preview</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSettings(s => ({ ...s, enableFinanceLab: !s.enableFinanceLab }));
+                    haptic(10);
+                  }}
+                  className={`w-10 h-6 p-1 rounded-full border border-[var(--b)] transition-colors relative flex items-center shrink-0 ${settings.enableFinanceLab ? 'bg-[var(--a)] border-[var(--a)]' : 'bg-[var(--bg-1)] text-[var(--t3)]'}`}
+                  aria-label={settings.enableFinanceLab ? 'Disable Finance Lab' : 'Enable Finance Lab'}
+                >
+                  <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} className={`w-4 h-4 rounded-full shadow-sm ${settings.enableFinanceLab ? 'bg-[var(--bg)] ml-auto' : 'bg-[var(--t3)]/50'}`} />
                 </button>
               </div>
 

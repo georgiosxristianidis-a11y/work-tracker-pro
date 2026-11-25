@@ -12,14 +12,25 @@ const ipHits = new Map<string, { count: number; resetAt: number }>();
 const PROD_ORIGIN = process.env.APP_ORIGIN || 'https://work-tracker-pro-kohl.vercel.app';
 
 function isRateLimited(req: Request): boolean {
-  const ip = (req.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
+  const rawIp =
+    req.headers.get('x-vercel-forwarded-for') ||
+    req.headers.get('x-real-ip') ||
+    req.headers.get('x-forwarded-for') ||
+    'unknown';
+  const ip = rawIp.split(',')[0].trim();
   const now = Date.now();
   const entry = ipHits.get(ip);
   if (!entry || now >= entry.resetAt) {
-    if (ipHits.size > 1000) ipHits.clear();
+    if (ipHits.size >= 1000) {
+      const oldest = ipHits.keys().next().value;
+      if (oldest !== undefined) ipHits.delete(oldest);
+    }
     ipHits.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
     return false;
   }
+  // Refresh LRU order so spoofed 1-hit IPs cannot evict an actively rate-limited client
+  ipHits.delete(ip);
+  ipHits.set(ip, entry);
   if (entry.count >= RATE_MAX_REQS) return true;
   entry.count += 1;
   return false;
@@ -143,7 +154,7 @@ CRITICAL RULES:
 
     return new Response(JSON.stringify({ text }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   } catch (error) {
     console.error('AI Insight Error:', error);

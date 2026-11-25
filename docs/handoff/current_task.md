@@ -1,20 +1,12 @@
-# TASK HANDOFF: chore/security-gates
-- **Timestamp**: 2026-11-22T18:53:09.331Z
-- **Branch**: chore/security-gates
-- **Last Commit**: 5c74503 chore(release): v0.1.67 [skip actions]
+# TASK HANDOFF: feat/audit-v2-remediation
+- **Timestamp**: 2026-11-25T11:08:06.005Z
+- **Branch**: feat/audit-v2-remediation
+- **Last Commit**: 9c1c274 fix(security): prevent pairing code owner hijack via on conflict do nothing and client owner pinning
 - **Gate Status**: PASS (TypeScript + Build OK)
 
 ## Changed Files (git status -s)
 ```
-M .github/workflows/ci.yml
- M api/insight.ts
- M eslint.config.js
- M package.json
- M scripts/gate.cjs
- M src/components/BrandedQRCode.tsx
- M src/hooks/useToast.ts
- M tests/unit/insight-api.test.ts
-?? tests/unit/gate-security.test.ts
+(clean working tree)
 ```
 
 ## Next Action

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Clock, TrendingUp, Calendar } from 'lucide-react';
 import { AppSettings } from '../constants';
 import { Entry } from '../lib/db';
-import { formatMoney } from '../lib/utils';
+import { formatMoney, shiftMonth } from '../lib/utils';
 import { AnimatedZero } from './AnimatedZero';
 import { AnimatedClock } from './AnimatedClock';
 import { SuccessSparkles } from './SuccessSparkles';
@@ -103,10 +103,10 @@ export const HomeScreen = ({
         <div className="flex items-center gap-2">
 
           <div className="flex gap-1.5">
-            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} className="group p-1.5 rounded-xl apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
+            <motion.button onClick={() => setViewDate(shiftMonth(viewDate, -1))} className="group p-1.5 rounded-xl apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Previous Month')}>
               <ChevronLeft size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
             </motion.button>
-            <motion.button onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} className="group p-1.5 rounded-xl apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
+            <motion.button onClick={() => setViewDate(shiftMonth(viewDate, 1))} className="group p-1.5 rounded-xl apple-glass-btn text-[var(--t2)] hover:text-[var(--t1)] hover:shadow-sm active:scale-95 transition-all duration-300" aria-label={t('Next Month')}>
               <ChevronRight size={18} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-x-0.5" />
             </motion.button>
           </div>

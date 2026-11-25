@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import jsQR from 'jsqr';
 import { Camera, X, Zap, ZapOff, Upload, AlertCircle, Keyboard } from 'lucide-react';
 import {
-  decodePairingPayload,
+  decodePairingPayloadAsync,
   isPairingPayloadExpired,
   PairingPayload
 } from '../lib/device-pairing';
@@ -37,6 +37,8 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const animFrameRef = useRef<number | null>(null);
   const lastScanTimeRef = useRef<number>(0);
   const hasScannedRef = useRef<boolean>(false);
+  const detectorRef = useRef<{ detect: (src: HTMLCanvasElement) => Promise<Array<{ rawValue: string }>> } | null | false>(null);
+  const isDetectingRef = useRef<boolean>(false);
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -56,10 +58,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   }, []);
 
   const handleDetectedCode = useCallback(
-    (rawValue: string) => {
+    async (rawValue: string) => {
       if (hasScannedRef.current) return;
-      const payload = decodePairingPayload(rawValue);
-      if (payload) {
+      const payload = await decodePairingPayloadAsync(rawValue);
+      if (payload && !hasScannedRef.current) {
         if (isPairingPayloadExpired(payload)) {
           setErrorMessage(
             tr('QR code expired (10 minutes). Tap "Refresh code" on first device.')
@@ -75,14 +77,14 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   );
 
   const scanFrame = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || hasScannedRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
     const now = performance.now();
     const shouldProcess = now - lastScanTimeRef.current >= SCAN_THROTTLE_MS;
 
-    if (shouldProcess && video.readyState === video.HAVE_ENOUGH_DATA) {
+    if (shouldProcess && video.readyState === video.HAVE_ENOUGH_DATA && !isDetectingRef.current) {
       lastScanTimeRef.current = now;
 
       // Center Crop logic: process reticle area to conserve CPU & memory
@@ -93,41 +95,51 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
       const sx = (vWidth - cropSize) / 2;
       const sy = (vHeight - cropSize) / 2;
 
-      canvas.width = CROP_CANVAS_DIM;
-      canvas.height = CROP_CANVAS_DIM;
+      if (canvas.width !== CROP_CANVAS_DIM) canvas.width = CROP_CANVAS_DIM;
+      if (canvas.height !== CROP_CANVAS_DIM) canvas.height = CROP_CANVAS_DIM;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       if (ctx) {
         ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, CROP_CANVAS_DIM, CROP_CANVAS_DIM);
 
-        // Try native BarcodeDetector if available
-        if ('BarcodeDetector' in window) {
-          try {
-            // @ts-expect-error BarcodeDetector experimental API
-            const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
-            detector
-              .detect(canvas)
-              .then((barcodes: Array<{ rawValue: string }>) => {
-                if (barcodes.length > 0) {
-                  handleDetectedCode(barcodes[0].rawValue);
-                }
-              })
-              .catch(() => {
-                // Fallback to jsQR
-              });
-          } catch {
-            // Fallback to jsQR
+        if (detectorRef.current === null) {
+          if ('BarcodeDetector' in window) {
+            try {
+              // @ts-expect-error BarcodeDetector experimental API
+              detectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] });
+            } catch {
+              detectorRef.current = false;
+            }
+          } else {
+            detectorRef.current = false;
           }
         }
 
-        const imageData = ctx.getImageData(0, 0, CROP_CANVAS_DIM, CROP_CANVAS_DIM);
-        const code = jsQR(imageData.data, CROP_CANVAS_DIM, CROP_CANVAS_DIM, {
-          inversionAttempts: 'attemptBoth'
-        });
+        if (detectorRef.current) {
+          isDetectingRef.current = true;
+          detectorRef.current
+            .detect(canvas)
+            .then((barcodes) => {
+              if (barcodes.length > 0 && barcodes[0].rawValue) {
+                void handleDetectedCode(barcodes[0].rawValue);
+              }
+            })
+            .catch(() => {
+              detectorRef.current = false;
+            })
+            .finally(() => {
+              isDetectingRef.current = false;
+            });
+        } else {
+          const imageData = ctx.getImageData(0, 0, CROP_CANVAS_DIM, CROP_CANVAS_DIM);
+          const code = jsQR(imageData.data, CROP_CANVAS_DIM, CROP_CANVAS_DIM, {
+            inversionAttempts: 'attemptBoth'
+          });
 
-        if (code && code.data) {
-          handleDetectedCode(code.data);
-          return;
+          if (code && code.data) {
+            void handleDetectedCode(code.data);
+            return;
+          }
         }
       }
     }

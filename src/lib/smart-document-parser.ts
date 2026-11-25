@@ -19,11 +19,22 @@ export interface ParseResult {
   warnings: string[];
 }
 
+const MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024; // 10 MB input file cap
+const MAX_DOCX_XML_BYTES = 10 * 1024 * 1024; // 10 MB decompressed XML cap against Zip Bombs
+
 export class SmartDocumentParser {
   /**
    * Universal offline entry point for any uploaded file.
    */
   static async parseFile(file: File): Promise<ParseResult> {
+    if (file.size > MAX_IMPORT_FILE_BYTES) {
+      return {
+        records: [],
+        totalHours: 0,
+        detectedFormat: 'unknown',
+        warnings: [`${file.name} exceeds 10 MB safety limit.`]
+      };
+    }
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
 
     try {
@@ -436,18 +447,38 @@ export class SmartDocumentParser {
             return new TextDecoder().decode(compressedData);
           }
 
-          // If deflated (method 8), use browser native DecompressionStream
+          // If deflated (method 8), stream DecompressionStream with byte cap against Zip Bombs
           if (compressionMethod === 8 && typeof DecompressionStream !== 'undefined') {
             try {
               const stream = new Response(compressedData).body?.pipeThrough(
                 new DecompressionStream('deflate-raw')
               );
               if (stream) {
-                const decompressed = await new Response(stream).text();
-                return decompressed;
+                const reader = stream.getReader();
+                const chunks: Uint8Array[] = [];
+                let total = 0;
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  if (value) {
+                    total += value.byteLength;
+                    if (total > MAX_DOCX_XML_BYTES) {
+                      await reader.cancel();
+                      throw new Error('Archive decompression limit exceeded');
+                    }
+                    chunks.push(value);
+                  }
+                }
+                const out = new Uint8Array(total);
+                let pos = 0;
+                for (const c of chunks) {
+                  out.set(c, pos);
+                  pos += c.byteLength;
+                }
+                return new TextDecoder().decode(out);
               }
             } catch {
-              // Fallback for environments lacking raw deflate stream
+              return null;
             }
           }
         }

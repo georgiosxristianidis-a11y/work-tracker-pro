@@ -75,8 +75,8 @@ test.describe('Live Verification: New Features & Tasks', () => {
     const qrElementsCount = await qrSvg.locator('rect, path, circle').count();
     expect(qrElementsCount).toBeGreaterThan(10);
 
-    // Verify brand logo overlay badge "27" is rendered in center
-    const brandBadge = page.locator('div:has-text("SECURE SYNC") span:has-text("27")');
+    // Verify brand logo overlay badge "27" is rendered in center (exact match avoids colliding with Topbar XX:27 clock)
+    const brandBadge = page.locator('[data-testid="branded-qr-canvas"] + div span').filter({ hasText: /^27$/ });
     await expect(brandBadge).toBeVisible();
 
     // Verify copy button is present and clickable

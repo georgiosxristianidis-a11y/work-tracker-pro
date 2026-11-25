@@ -41,6 +41,7 @@ export interface AppSettings {
   sortOldestFirst?: boolean;
   powerSaveMode?: boolean;
   notificationsEnabled?: boolean;
+  enableFinanceLab?: boolean;
   lastSync?: string;
 }
 
@@ -62,5 +63,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   developerMode: false,
   sortOldestFirst: false,
   powerSaveMode: false,
-  notificationsEnabled: true
+  notificationsEnabled: true,
+  enableFinanceLab: false
 };

@@ -214,6 +214,37 @@
 .wt-opal-finish.is-complete {
   opacity: 1;
 }
+.wt-opal-fill.is-complete {
+  width: 100% !important;
+  opacity: 1 !important;
+}
+.wt-opal-sheet {
+  background:
+    radial-gradient(ellipse 88% 58% at 50% -6%, rgba(225, 29, 72, 0.36) 0%, rgba(225, 29, 72, 0.10) 52%, transparent 80%),
+    linear-gradient(180deg, rgba(22, 20, 26, 0.96) 0%, rgba(11, 11, 16, 0.98) 100%);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  backdrop-filter: blur(26px) saturate(155%);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.62), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+  color: #f4f1ea;
+}
+.wt-opal-sheet-handle {
+  background: rgba(255, 255, 255, 0.16);
+}
+.wt-opal-sheet-icon {
+  background: rgba(244, 63, 94, 0.16);
+  border: 1px solid rgba(244, 63, 94, 0.36);
+  color: #fb7185;
+}
+.wt-opal-sheet-sub {
+  color: rgba(244, 241, 234, 0.64);
+}
+.wt-opal-sheet-cancel {
+  color: rgba(244, 241, 234, 0.72);
+}
+.wt-opal-sheet-cancel:hover {
+  color: #f4f1ea;
+}
 
 /* Nav 4 Living Subtle Top Line & Mobile-Safe F1 Rocket Launch */
 @keyframes wtNavToplinePulse {

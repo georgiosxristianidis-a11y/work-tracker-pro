@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, Minus, Plus, Palette, Bell, Sliders, Check, RefreshCw, Database, FileText, Download, ChevronRight, Send, CalendarPlus, Smartphone, Zap, Terminal, CircleCheck, Save, AlignLeft, Table, QrCode, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { AnimatedTrash } from './AnimatedTrash';
+import { OpalHoldSheet } from './OpalHoldSheet';
 import { AppSettings } from '../constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useDataExport } from '../hooks/useDataExport';
@@ -27,8 +28,6 @@ interface SettingsScreenProps {
   addToast: (msg: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
   onOpenDevicePair?: () => void;
 }
-
-const WIPE_HOLD_DURATION_MS = 900;
 
 export const SettingsScreen = ({
   settings, setSettings, t, curSym, haptic, syncStatus, syncErrorMsg,
@@ -80,114 +79,16 @@ export const SettingsScreen = ({
   const versionTapRef = React.useRef({ count: 0, lastTap: 0 });
   const [isUpdatingSW, setIsUpdatingSW] = React.useState(false);
 
-  const [wipeHoldState, setWipeHoldState] = React.useState<'idle' | 'holding' | 'complete'>('idle');
-  const [wipeProgress, setWipeProgress] = React.useState(0);
-  const [wipeHint, setWipeHint] = React.useState(false);
-  const wipeRafRef = React.useRef<number | null>(null);
-  const wipeStartRef = React.useRef(0);
-  const wipeCompletedRef = React.useRef(false);
-  const wipeResetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wipeHintTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPointerDownRef = React.useRef(0);
+  const [showWipeSheet, setShowWipeSheet] = React.useState(false);
 
-  const clearWipeTimers = React.useCallback(() => {
-    if (wipeRafRef.current !== null) {
-      cancelAnimationFrame(wipeRafRef.current);
-      wipeRafRef.current = null;
-    }
-    if (wipeResetTimerRef.current) {
-      clearTimeout(wipeResetTimerRef.current);
-      wipeResetTimerRef.current = null;
-    }
-    if (wipeHintTimerRef.current) {
-      clearTimeout(wipeHintTimerRef.current);
-      wipeHintTimerRef.current = null;
-    }
-  }, []);
-
-  React.useEffect(() => {
-    return () => clearWipeTimers();
-  }, [clearWipeTimers]);
-
-  const executeWipe = React.useCallback(async () => {
-    if (wipeCompletedRef.current) return;
-    wipeCompletedRef.current = true;
-    clearWipeTimers();
-    setWipeProgress(1);
-    setWipeHoldState('complete');
-    setWipeHint(false);
-    haptic([25, 45, 25]);
+  const handleConfirmedWipe = React.useCallback(async () => {
     if (onWipeData) {
       await onWipeData();
     } else {
       deleteAllTap.trigger();
       deleteAllTap.trigger();
     }
-    wipeResetTimerRef.current = setTimeout(() => {
-      setWipeHoldState('idle');
-      setWipeProgress(0);
-      wipeCompletedRef.current = false;
-    }, 1100);
-  }, [clearWipeTimers, deleteAllTap, haptic, onWipeData]);
-
-  const cancelWipeHold = React.useCallback((showHintMessage: boolean) => {
-    if (wipeCompletedRef.current) return;
-    if (wipeRafRef.current !== null) {
-      cancelAnimationFrame(wipeRafRef.current);
-      wipeRafRef.current = null;
-    }
-    setWipeHoldState('idle');
-    setWipeProgress(0);
-    if (showHintMessage) {
-      setWipeHint(true);
-      if (wipeHintTimerRef.current) clearTimeout(wipeHintTimerRef.current);
-      wipeHintTimerRef.current = setTimeout(() => setWipeHint(false), 1600);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (wipeHoldState !== 'holding') return;
-    const handleGlobalUp = () => {
-      cancelWipeHold(true);
-    };
-    const handleGlobalCancel = () => {
-      cancelWipeHold(false);
-    };
-    window.addEventListener('pointerup', handleGlobalUp);
-    window.addEventListener('pointercancel', handleGlobalCancel);
-    return () => {
-      window.removeEventListener('pointerup', handleGlobalUp);
-      window.removeEventListener('pointercancel', handleGlobalCancel);
-    };
-  }, [wipeHoldState, cancelWipeHold]);
-
-  const handleWipePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    if (wipeCompletedRef.current) return;
-    lastPointerDownRef.current = performance.now();
-    clearWipeTimers();
-    setWipeHint(false);
-    setWipeHoldState('holding');
-    setWipeProgress(0);
-    wipeStartRef.current = performance.now();
-    haptic(8);
-    try {
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    } catch {
-      // Synthetic pointer events may not map to an active capture id
-    }
-
-    const step = (now: number) => {
-      const p = Math.min(1, (now - wipeStartRef.current) / WIPE_HOLD_DURATION_MS);
-      setWipeProgress(p);
-      if (p >= 1) {
-        void executeWipe();
-      } else {
-        wipeRafRef.current = requestAnimationFrame(step);
-      }
-    };
-    wipeRafRef.current = requestAnimationFrame(step);
-  };
+  }, [deleteAllTap, onWipeData]);
 
   const handleVersionTap = async () => {
     if (isUpdatingSW) return;
@@ -717,61 +618,32 @@ export const SettingsScreen = ({
           <button
             id="danger-wipe-btn"
             type="button"
-            data-hold-state={wipeHoldState}
-            onPointerDown={handleWipePointerDown}
-            onPointerUp={() => cancelWipeHold(true)}
-            onPointerCancel={() => cancelWipeHold(false)}
-            onContextMenu={(e) => e.preventDefault()}
             onClick={() => {
-              if (performance.now() - lastPointerDownRef.current < 1500) return;
-              cancelWipeHold(true);
+              haptic(8);
+              setShowWipeSheet(true);
             }}
-            className={`wt-opal-btn w-full flex items-center justify-between h-14 px-4 rounded-panel transition-transform active:scale-[0.985] group ${
-              wipeHoldState === 'holding' ? 'is-active-hold' : ''
-            } ${
-              wipeHoldState === 'complete' || (wipeHoldState === 'holding' && wipeProgress >= 0.85) ? 'is-ink-dark' : ''
-            }`}
+            className="wt-opal-btn w-full flex items-center justify-between h-14 px-4 rounded-panel transition-transform active:scale-[0.985] group"
           >
-            <div
-              className="wt-opal-fill"
-              aria-hidden="true"
-              style={{
-                width: `${Math.round(wipeProgress * 116)}%`,
-                opacity: wipeHoldState === 'holding' ? Math.min(1, 0.28 + wipeProgress * 0.85) : 0,
-              }}
-            >
-              <div className="wt-opal-halo" />
-              <div className="wt-opal-core" />
-            </div>
-            <div
-              className={`wt-opal-finish ${wipeHoldState === 'complete' ? 'is-complete' : ''}`}
-              aria-hidden="true"
-            />
             <div className="flex items-center gap-3.5 relative z-10">
               <AnimatedTrash
                 size={16}
-                isConfirming={wipeHoldState === 'holding' && wipeProgress > 0.35}
-                openProgress={wipeProgress}
                 className="group-hover:scale-110 transition-transform"
               />
               <span className="text-sm font-black tracking-tight">
-                {wipeHoldState === 'complete'
-                  ? t('All data deleted')
-                  : wipeHoldState === 'holding'
-                  ? t('Keep Holding...')
-                  : wipeHint
-                  ? t('Hold to Confirm')
-                  : t('Wipe Data')}
+                {t('Wipe Data')}
               </span>
             </div>
             <span className="relative z-10 flex items-center">
-              {wipeHoldState === 'complete' ? (
-                <Check size={16} strokeWidth={2.5} />
-              ) : (
-                <ChevronRight size={16} className="opacity-70 transition-transform group-hover:translate-x-0.5" />
-              )}
+              <ChevronRight size={16} className="opacity-70 transition-transform group-hover:translate-x-0.5" />
             </span>
           </button>
+          <OpalHoldSheet
+            isOpen={showWipeSheet}
+            onClose={() => setShowWipeSheet(false)}
+            onConfirm={handleConfirmedWipe}
+            t={t}
+            haptic={haptic}
+          />
         </div>
 
         {/* Modals via Portal */}

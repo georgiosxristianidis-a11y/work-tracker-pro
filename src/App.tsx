@@ -208,11 +208,12 @@ export default function App() {
     chartPeriod
   );
 
-  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, restoreFromCloudAction, deleteEntryFromCloud, clearCloudData } = useSupabaseSync({
+  const { syncStatus, syncErrorMsg, lastSynced, syncWithSupabaseAction, restoreFromCloudAction, queueCloudDeletes, clearPendingDeletes, clearCloudData } = useSupabaseSync({
     settings,
     setSettings,
     addToast,
     getDeviceId,
+    onLocalChange: loadEntries,
   });
 
   const restoreFromCloud = useCallback(async () => {
@@ -262,42 +263,46 @@ export default function App() {
     h(20);
     try {
       await storeSaveEntry(date, hours);
+      await clearPendingDeletes([date]);
       scheduleBackgroundSync();
     } catch {
       addToast(t('Failed to save entry'), 'error');
     }
-  }, [h, storeSaveEntry, scheduleBackgroundSync, addToast, t]);
+  }, [h, storeSaveEntry, clearPendingDeletes, scheduleBackgroundSync, addToast, t]);
 
   const saveMultipleEntries = useCallback(async (dates: string[], hours: number) => {
     h([20, 20]);
     try {
       await storeSaveMany(dates.map(date => ({ date, hours, month: date.slice(0, 7) })));
+      await clearPendingDeletes(dates);
       addToast(t('Entries added'), 'success');
       scheduleBackgroundSync();
     } catch {
       addToast(t('Failed to save entries'), 'error');
     }
-  }, [h, storeSaveMany, addToast, t, scheduleBackgroundSync]);
+  }, [h, storeSaveMany, clearPendingDeletes, addToast, t, scheduleBackgroundSync]);
 
   const deleteEntry = useCallback(async (date: string) => {
     h([30, 50]);
     try {
       const existing = useAppStore.getState().allEntries.find(e => e.date === date);
       await storeDeleteEntry(date);
-      deleteEntryFromCloud(date);
+      await queueCloudDeletes([date]);
+      scheduleBackgroundSync();
       const msg = existing ? `${t('Entry deleted')} (${existing.hours}h)` : t('Entry deleted');
       addToast(msg, 'warning', {
         label: t('Undo'),
         onClick: async () => {
           const store = useAppStore.getState();
           await store.undoDelete();
+          await clearPendingDeletes([date]);
           scheduleBackgroundSync();
         }
       });
     } catch {
       addToast(t('Failed to delete entry'), 'error');
     }
-  }, [h, storeDeleteEntry, deleteEntryFromCloud, addToast, t, scheduleBackgroundSync]);
+  }, [h, storeDeleteEntry, queueCloudDeletes, clearPendingDeletes, addToast, t, scheduleBackgroundSync]);
 
   const {
     selectedTemplate,
@@ -313,7 +318,17 @@ export default function App() {
     smartFillPreview,
     getDefaultHours,
     clearMonth
-  } = useQuickFill({ viewDate, entries, excludeSundays, loadEntries, addToast, undoLabel: t('Undo'), onSync: scheduleBackgroundSync });
+  } = useQuickFill({
+    viewDate,
+    entries,
+    excludeSundays,
+    loadEntries,
+    addToast,
+    undoLabel: t('Undo'),
+    onSync: scheduleBackgroundSync,
+    onQueueDeletes: queueCloudDeletes,
+    onClearDeletes: clearPendingDeletes
+  });
 
   const {
     isPairModalOpen,
@@ -334,13 +349,16 @@ export default function App() {
   const syncTapActual = useDoubleTap(syncWithSupabaseAction);
   
   const clearAllData = async () => {
+    const prevDates = useAppStore.getState().allEntries.map(e => e.date);
     await storeClearAll();
-    clearCloudData();
+    await clearCloudData(prevDates);
+    scheduleBackgroundSync();
     addToast(t('All data deleted'), 'warning', {
       label: t('Undo'),
       onClick: async () => {
         const store = useAppStore.getState();
         await store.undoDelete();
+        await clearPendingDeletes(prevDates);
         scheduleBackgroundSync();
       }
     });

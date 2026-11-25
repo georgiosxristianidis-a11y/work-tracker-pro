@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { parseEntryTimestamp, type Entry } from './db.ts';
+import { fromWorkEntryRow, parseEntryTimestamp, type Entry, type RawCloudEntryRow } from './db.ts';
 
 export const PAIRING_QR_TTL_MS = 10 * 60 * 1000; // 10 minutes TTL
 
@@ -204,5 +204,105 @@ export function mergeEntries(localEntries: Entry[], cloudEntries: Entry[]): Merg
     merged,
     newFromCloud,
     newFromLocal
+  };
+}
+
+export interface CloudReconcilePlan {
+  entriesToSaveLocally: Entry[];
+  datesToDeleteLocally: string[];
+  entriesToUpload: Entry[];
+  clearDeletedAtDates: Set<string>;
+  tombstonesToUpload: Array<{ date: string; deletedAtMs: number }>;
+}
+
+/**
+ * Bidirectional causal LWW reconciliation between local IndexedDB entries,
+ * queued local deletions, and remote Supabase rows (including deleted_at tombstones).
+ */
+export function reconcileCloudEntries(
+  localEntries: Entry[],
+  localPendingDeletes: Record<string, number>,
+  cloudRows: RawCloudEntryRow[]
+): CloudReconcilePlan {
+  const localMap = new Map<string, Entry>();
+  for (const e of localEntries) {
+    if (e.hours > 0) localMap.set(e.date, e);
+  }
+
+  const cloudMap = new Map<string, RawCloudEntryRow>();
+  for (const r of cloudRows) {
+    if (r && typeof r.date === 'string') cloudMap.set(r.date, r);
+  }
+
+  const allDates = new Set<string>([
+    ...localMap.keys(),
+    ...Object.keys(localPendingDeletes),
+    ...cloudMap.keys()
+  ]);
+
+  const entriesToSaveLocally: Entry[] = [];
+  const datesToDeleteLocally: string[] = [];
+  const entriesToUpload: Entry[] = [];
+  const clearDeletedAtDates = new Set<string>();
+  const tombstonesToUpload: Array<{ date: string; deletedAtMs: number }> = [];
+
+  for (const date of allDates) {
+    const local = localMap.get(date);
+    const localTime = local ? (parseEntryTimestamp(local.updated_at) ?? 0) : -1;
+    const rawPendingDel = parseEntryTimestamp(localPendingDeletes[date]);
+    const pendingDelTime = rawPendingDel !== undefined && (!local || rawPendingDel > localTime)
+      ? rawPendingDel
+      : -1;
+
+    const cloud = cloudMap.get(date);
+    const isCloudTombstone = Boolean(
+      cloud && (cloud.deleted_at !== null && cloud.deleted_at !== undefined || Number(cloud.hours) <= 0)
+    );
+    const cloudDelTime = cloud && isCloudTombstone
+      ? (parseEntryTimestamp(cloud.deleted_at) ?? parseEntryTimestamp(cloud.updated_at) ?? 0)
+      : -1;
+    const cloudActive = cloud && !isCloudTombstone ? fromWorkEntryRow(cloud) : null;
+    const cloudTime = cloudActive ? (cloudActive.updated_at ?? 0) : -1;
+
+    if (pendingDelTime >= 0) {
+      if (cloudActive && cloudTime > pendingDelTime) {
+        entriesToSaveLocally.push(cloudActive);
+      } else if (!cloud || !isCloudTombstone || pendingDelTime > cloudDelTime) {
+        tombstonesToUpload.push({ date, deletedAtMs: pendingDelTime });
+      }
+      continue;
+    }
+
+    if (local) {
+      if (isCloudTombstone) {
+        if (cloudDelTime >= localTime) {
+          datesToDeleteLocally.push(date);
+        } else {
+          entriesToUpload.push(local);
+          clearDeletedAtDates.add(date);
+        }
+      } else if (cloudActive) {
+        if (cloudTime > localTime && cloudActive.hours !== local.hours) {
+          entriesToSaveLocally.push(cloudActive);
+        } else if (localTime > cloudTime || cloudActive.hours !== local.hours) {
+          entriesToUpload.push(local);
+        }
+      } else {
+        entriesToUpload.push(local);
+      }
+      continue;
+    }
+
+    if (cloudActive) {
+      entriesToSaveLocally.push(cloudActive);
+    }
+  }
+
+  return {
+    entriesToSaveLocally,
+    datesToDeleteLocally,
+    entriesToUpload,
+    clearDeletedAtDates,
+    tombstonesToUpload
   };
 }

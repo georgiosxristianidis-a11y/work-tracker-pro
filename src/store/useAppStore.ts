@@ -45,6 +45,18 @@ interface AppState {
   undoDelete: () => Promise<void>;
 }
 
+let settingsWriteChain: Promise<unknown> = Promise.resolve();
+
+function deriveEntrySlices(allEntries: Entry[], dateToUse: Date) {
+  const mStr = `${dateToUse.getFullYear()}-${String(dateToUse.getMonth() + 1).padStart(2, '0')}`;
+  const yearStr = `${dateToUse.getFullYear()}`;
+  return {
+    entries: allEntries.filter(e => e.month === mStr).reverse(),
+    yearEntries: allEntries.filter(e => e.date.startsWith(yearStr)),
+    allEntries
+  };
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   screen: 'home' as AppScreen,
   setScreen: (screen) => set({ screen: screen as AppScreen }),
@@ -74,7 +86,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSettings: (updater) => {
     const newSettings = typeof updater === 'function' ? updater(get().settings) : updater;
     set({ settings: newSettings });
-    db.setSetting('settings', newSettings).catch(console.error);
+    settingsWriteChain = settingsWriteChain
+      .then(() => db.setSetting('settings', newSettings))
+      .catch(console.error);
   },
 
   loadSettings: async () => {
@@ -98,24 +112,27 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadEntries: async (currentDate) => {
     try {
       const dateToUse = currentDate || get().viewDate;
-      const mStr = `${dateToUse.getFullYear()}-${String(dateToUse.getMonth() + 1).padStart(2, '0')}`;
-      const yearStr = `${dateToUse.getFullYear()}`;
-      
       const allEntriesRaw = await db.getAllEntries();
       const allEntries = sanitizeEntries(allEntriesRaw);
-      const mEntries = allEntries.filter(e => e.month === mStr).reverse();
-      const yEntries = allEntries.filter(e => e.date.startsWith(yearStr));
-      
-      set({ entries: mEntries, yearEntries: yEntries, allEntries });
+      set(deriveEntrySlices(allEntries, dateToUse));
     } catch (e) {
       console.error(e);
     }
   },
 
   saveEntry: async (date: string, hours: number) => {
-    const entry = { date, hours, month: date.slice(0, 7) };
-    await db.saveEntry(entry);
-    await get().loadEntries();
+    const prevAll = get().allEntries;
+    const now = Date.now();
+    const entry: Entry = { date, hours, month: date.slice(0, 7), updated_at: now };
+    const nextAll = [entry, ...prevAll.filter(e => e.date !== date)]
+      .sort((a, b) => b.date.localeCompare(a.date));
+    set(deriveEntrySlices(nextAll, get().viewDate));
+    try {
+      await db.saveEntry(entry);
+    } catch (e) {
+      set(deriveEntrySlices(prevAll, get().viewDate));
+      throw e;
+    }
   },
 
   saveMany: async (entries: Entry[]) => {
@@ -130,12 +147,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   deleteEntry: async (date: string) => {
-    const existing = get().allEntries.find(e => e.date === date);
+    const prevAll = get().allEntries;
+    const existing = prevAll.find(e => e.date === date);
     if (existing) {
       set({ undoBuffer: [existing] });
     }
-    await db.deleteEntry(date);
-    await get().loadEntries();
+    const nextAll = prevAll.filter(e => e.date !== date);
+    set(deriveEntrySlices(nextAll, get().viewDate));
+    try {
+      await db.deleteEntry(date);
+    } catch (e) {
+      set(deriveEntrySlices(prevAll, get().viewDate));
+      throw e;
+    }
   },
 
   clearAllData: async () => {
@@ -146,7 +170,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   undoDelete: async () => {
     const buffer = get().undoBuffer;
-    await db.saveMany(buffer);
+    const now = Date.now();
+    await db.saveMany(buffer.map(e => ({ ...e, updated_at: now })));
     set({ undoBuffer: [] });
     await get().loadEntries();
   }

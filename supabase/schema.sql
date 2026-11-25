@@ -15,8 +15,12 @@ create table if not exists public.work_entries (
   month      text        not null,
   device_id  text,
   updated_at timestamptz not null default now(),
+  deleted_at timestamptz,
   primary key (user_id, date)
 );
+
+-- Idempotent migration for existing deployments (server-side soft-delete tombstones):
+alter table public.work_entries add column if not exists deleted_at timestamptz;
 
 alter table public.work_entries enable row level security;
 

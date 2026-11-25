@@ -17,6 +17,7 @@ export interface WorkEntryRow {
   month: string;
   device_id: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface RawCloudEntryRow {
@@ -24,6 +25,7 @@ export interface RawCloudEntryRow {
   hours: number | string;
   month: string;
   updated_at?: number | string | null;
+  deleted_at?: number | string | null;
 }
 
 const MIN_ISO_MS = -62135596800000; // 0001-01-01T00:00:00.000Z
@@ -61,7 +63,8 @@ export function toWorkEntryRow(
   entry: Entry,
   userId: string,
   deviceId: string,
-  fallbackMs = Date.now()
+  fallbackMs = Date.now(),
+  clearDeletedAt = false
 ): WorkEntryRow {
   const hours = Number(entry.hours);
   return {
@@ -70,7 +73,27 @@ export function toWorkEntryRow(
     hours: Number.isFinite(hours) ? hours : 0,
     month: entry.month || entry.date.slice(0, 7),
     device_id: deviceId,
-    updated_at: formatSupabaseTimestamp(entry.updated_at, fallbackMs)
+    updated_at: formatSupabaseTimestamp(entry.updated_at, fallbackMs),
+    ...(clearDeletedAt ? { deleted_at: null } : {})
+  };
+}
+
+/** Maps a deleted date to a server-side tombstone row so other devices do not resurrect it. */
+export function toTombstoneRow(
+  date: string,
+  userId: string,
+  deviceId: string,
+  deletedAtMs = Date.now()
+): WorkEntryRow {
+  const iso = formatSupabaseTimestamp(deletedAtMs, deletedAtMs);
+  return {
+    user_id: userId,
+    date,
+    hours: 0,
+    month: date.slice(0, 7),
+    device_id: deviceId,
+    updated_at: iso,
+    deleted_at: iso
   };
 }
 

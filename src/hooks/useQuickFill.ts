@@ -21,6 +21,8 @@ export interface UseQuickFillProps {
   addToast: (msg: string, type?: 'info' | 'success' | 'warning' | 'error', action?: { label: string; onClick: () => void }) => void;
   undoLabel?: string;
   onSync?: () => void;
+  onQueueDeletes?: (dates: string[]) => Promise<void> | void;
+  onClearDeletes?: (dates: string[]) => Promise<void> | void;
 }
 
 interface ComputeCandidateOptions {
@@ -121,7 +123,7 @@ export function computeSmartFillCandidates({
   };
 }
 
-export function useQuickFill({ viewDate, entries = [], excludeSundays, loadEntries, addToast, undoLabel = 'Undo', onSync }: UseQuickFillProps) {
+export function useQuickFill({ viewDate, entries = [], excludeSundays, loadEntries, addToast, undoLabel = 'Undo', onSync, onQueueDeletes, onClearDeletes }: UseQuickFillProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('5/2-8');
   const [customFill, setCustomFill] = useState({ work: 5, off: 2, hours: 8 });
   const [showCustomFill, setShowCustomFill] = useState(false);
@@ -168,8 +170,16 @@ export function useQuickFill({ viewDate, entries = [], excludeSundays, loadEntri
       }
     }
 
-    if (toSave.length > 0) await db.saveMany(toSave);
-    if (toDelete.length > 0) await db.deleteMany(toDelete);
+    if (toSave.length > 0) {
+      await db.saveMany(toSave);
+      await onClearDeletes?.(toSave.map(e => e.date));
+    }
+    if (toDelete.length > 0) {
+      await db.deleteMany(toDelete);
+      const removedSet = new Set(toDelete);
+      const removedExisting = existingEntries.filter(e => removedSet.has(e.date)).map(e => e.date);
+      if (removedExisting.length > 0) await onQueueDeletes?.(removedExisting);
+    }
     
     await loadEntries();
     onSync?.();
@@ -184,7 +194,9 @@ export function useQuickFill({ viewDate, entries = [], excludeSundays, loadEntri
           datesToDelete.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`);
         }
         await db.deleteMany(datesToDelete);
+        await onQueueDeletes?.(toSave.map(e => e.date));
         await store.undoDelete();
+        await onClearDeletes?.(existingEntries.map(e => e.date));
         await loadEntries();
         onSync?.();
       }
@@ -221,12 +233,18 @@ export function useQuickFill({ viewDate, entries = [], excludeSundays, loadEntri
       datesToDelete.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`);
     }
     await db.deleteMany(datesToDelete);
+    if (existingEntries.length > 0) {
+      await onQueueDeletes?.(existingEntries.map(e => e.date));
+    }
     await loadEntries();
     onSync?.();
     addToast('Month cleared', 'warning', {
       label: undoLabel,
       onClick: async () => {
         await useAppStore.getState().undoDelete();
+        if (existingEntries.length > 0) {
+          await onClearDeletes?.(existingEntries.map(e => e.date));
+        }
         await loadEntries();
         onSync?.();
       }
@@ -273,6 +291,7 @@ export function useQuickFill({ viewDate, entries = [], excludeSundays, loadEntri
     }));
 
     await db.saveMany(toSave);
+    await onClearDeletes?.(toSave.map(e => e.date));
     await loadEntries();
     onSync?.();
 
@@ -282,7 +301,9 @@ export function useQuickFill({ viewDate, entries = [], excludeSundays, loadEntri
         const store = useAppStore.getState();
         const datesToDelete = toSave.map(e => e.date);
         await db.deleteMany(datesToDelete);
+        await onQueueDeletes?.(datesToDelete);
         await store.undoDelete();
+        await onClearDeletes?.(existingEntries.map(e => e.date));
         await loadEntries();
         onSync?.();
       }

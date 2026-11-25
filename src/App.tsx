@@ -345,12 +345,18 @@ export default function App() {
     setIsPairModalOpen,
     incomingPayload,
     setIncomingPayload,
-    applyPairing
+    applyPairing,
+    preparePairingSession,
+    subscribeHostPairing,
+    resolvePairingCode,
+    exportPairingBackup,
+    broadcastPairSuccess
   } = useDevicePairing({
     getDeviceId,
     loadEntries,
     addToast,
     haptic: h,
+    strictOfflineMode: settings.strictOfflineMode,
     t
   });
 
@@ -581,6 +587,11 @@ export default function App() {
           deviceId={deviceId}
           localEntriesCount={allEntries.length}
           onApplyPairing={async (p, m) => { setIsPairModalOpen(true); await applyPairing(p, m); }}
+          onPreparePairing={preparePairingSession}
+          onSubscribeHost={subscribeHostPairing}
+          onResolveCode={resolvePairingCode}
+          onExportBackup={exportPairingBackup}
+          onBroadcastSuccess={broadcastPairSuccess}
           addToast={addToast}
           t={t}
         />

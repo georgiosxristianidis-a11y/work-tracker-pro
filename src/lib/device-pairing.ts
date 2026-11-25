@@ -12,8 +12,6 @@ export interface PairingPayload {
   t: number;
   uid: string;
   code?: string;
-  at?: string;
-  rt?: string;
   dev?: string;
   entries?: Array<{ date: string; hours: number; updated_at?: number }>;
 }
@@ -49,78 +47,160 @@ export function formatCountdown(totalSeconds: number): string {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+const MAX_DECOMPRESSED_QR_BYTES = 65_536;
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToBytes(input: string): Uint8Array {
+  let b64 = input.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4 !== 0) b64 += '=';
+  const binary = atob(b64);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+  return out;
+}
+
+function extractPairParam(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed.includes('pair=')) {
+    const match = trimmed.match(/[?&#]pair=([^&#]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+  return trimmed;
+}
+
+function validateParsedPayload(parsed: Partial<PairingPayload> | null, raw: string): PairingPayload | null {
+  if (
+    parsed &&
+    parsed.v === 1 &&
+    typeof parsed.t === 'number' && Number.isFinite(parsed.t) && parsed.t > 0 &&
+    typeof parsed.uid === 'string' && parsed.uid.trim().length > 0 && parsed.uid.length <= 128
+  ) {
+    if (parsed.entries !== undefined) {
+      if (!Array.isArray(parsed.entries)) return null;
+      const valid = parsed.entries.slice(0, 64).filter((e) =>
+        Boolean(e && typeof e.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
+        typeof e.hours === 'number' && Number.isFinite(e.hours) && e.hours > 0 && e.hours <= 24)
+      );
+      if (parsed.entries.length > 0 && valid.length === 0) return null;
+      parsed.entries = valid;
+    }
+    if (!parsed.code && raw.includes('code=')) {
+      const codeMatch = raw.match(/[?&#]code=([^&#]+)/);
+      if (codeMatch) {
+        parsed.code = decodeURIComponent(codeMatch[1]);
+      }
+    }
+    return parsed as PairingPayload;
+  }
+  return null;
+}
+
 /**
  * Encodes pairing data into a compact, URL-safe base64 string.
  */
 export function encodePairingPayload(payload: PairingPayload): string {
   const jsonStr = JSON.stringify(payload);
-  const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return bytesToBase64Url(new TextEncoder().encode(jsonStr));
 }
 
 /**
- * Decodes and validates a pairing payload from an encoded string or URL.
+ * Compresses pairing payload with deflate-raw (z.<base64url>) so up to 60 shifts fit comfortably in a QR code.
+ */
+export async function encodePairingPayloadAsync(payload: PairingPayload): Promise<string> {
+  const rawBytes = new TextEncoder().encode(JSON.stringify(payload));
+  if (typeof CompressionStream !== 'undefined') {
+    try {
+      const cs = new CompressionStream('deflate-raw');
+      const writer = cs.writable.getWriter();
+      writer.write(rawBytes);
+      writer.close();
+      const buf = await new Response(cs.readable).arrayBuffer();
+      return `z.${bytesToBase64Url(new Uint8Array(buf))}`;
+    } catch {
+      // Fallback to uncompressed base64url
+    }
+  }
+  return bytesToBase64Url(rawBytes);
+}
+
+/**
+ * Decodes and validates an uncompressed pairing payload from an encoded string or URL (#pair= / ?pair=).
  */
 export function decodePairingPayload(raw: string): PairingPayload | null {
   try {
-    let input = raw.trim();
-    if (input.includes('pair=')) {
-      const match = input.match(/[?&]pair=([^&#]+)/);
-      if (match) {
-        input = match[1];
-      }
-    }
-
-    let base64 = input.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4 !== 0) {
-      base64 += '=';
-    }
-
-    const jsonStr = decodeURIComponent(escape(atob(base64)));
+    const input = extractPairParam(raw);
+    if (!input || input.startsWith('z.')) return null;
+    const jsonStr = new TextDecoder().decode(base64UrlToBytes(input));
     const parsed = JSON.parse(jsonStr) as Partial<PairingPayload>;
-
-    if (
-      parsed &&
-      parsed.v === 1 &&
-      typeof parsed.t === 'number' && Number.isFinite(parsed.t) && parsed.t > 0 &&
-      typeof parsed.uid === 'string' && parsed.uid.trim().length > 0 && parsed.uid.length <= 128
-    ) {
-      if (parsed.entries !== undefined) {
-        if (!Array.isArray(parsed.entries)) return null;
-        const valid = parsed.entries.slice(0, 64).filter((e) =>
-          Boolean(e && typeof e.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
-          typeof e.hours === 'number' && Number.isFinite(e.hours) && e.hours > 0 && e.hours <= 24)
-        );
-        if (parsed.entries.length > 0 && valid.length === 0) return null;
-        parsed.entries = valid;
-      }
-      if (!parsed.code && raw.includes('code=')) {
-        const codeMatch = raw.match(/[?&]code=([^&#]+)/);
-        if (codeMatch) {
-          parsed.code = decodeURIComponent(codeMatch[1]);
-        }
-      }
-      return parsed as PairingPayload;
-    }
-    return null;
+    return validateParsedPayload(parsed, raw);
   } catch {
     return null;
   }
 }
 
 /**
- * Generates an 8-character human-readable pairing code (e.g. "6Q9E-VUBT").
- * Excludes ambiguous characters (0, O, 1, I, L) for error-free manual typing.
+ * Decodes both deflate-raw compressed (z.<base64url>) and legacy base64url pairing payloads with a 64 KB cap.
+ */
+export async function decodePairingPayloadAsync(raw: string): Promise<PairingPayload | null> {
+  try {
+    const input = extractPairParam(raw);
+    if (!input) return null;
+    if (!input.startsWith('z.')) return decodePairingPayload(raw);
+    if (typeof DecompressionStream === 'undefined') return null;
+
+    const compressed = base64UrlToBytes(input.slice(2));
+    const ds = new DecompressionStream('deflate-raw');
+    const writer = ds.writable.getWriter();
+    writer.write(compressed).catch(() => {});
+    writer.close().catch(() => {});
+
+    const reader = ds.readable.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        total += value.byteLength;
+        if (total > MAX_DECOMPRESSED_QR_BYTES) {
+          await reader.cancel();
+          return null;
+        }
+        chunks.push(value);
+      }
+    }
+    const merged = new Uint8Array(total);
+    let offset = 0;
+    for (const c of chunks) {
+      merged.set(c, offset);
+      offset += c.byteLength;
+    }
+    const parsed = JSON.parse(new TextDecoder().decode(merged)) as Partial<PairingPayload>;
+    return validateParsedPayload(parsed, raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generates an 8-character CSPRNG pairing code (e.g. "6Q9E-VUBT") without modulo bias.
  */
 export function generatePairingCode(): string {
-  const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-  let p1 = '';
-  let p2 = '';
-  for (let i = 0; i < 4; i++) {
-    p1 += chars.charAt(Math.floor(Math.random() * chars.length));
-    p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // 31 unambiguous chars (31 * 8 = 248)
+  const out: string[] = [];
+  const buf = new Uint8Array(16);
+  while (out.length < 8) {
+    crypto.getRandomValues(buf);
+    for (let i = 0; i < buf.length && out.length < 8; i++) {
+      if (buf[i] < 248) out.push(chars.charAt(buf[i] % 31));
+    }
   }
-  return `${p1}-${p2}`;
+  return `${out.slice(0, 4).join('')}-${out.slice(4, 8).join('')}`;
 }
 
 /**
@@ -133,19 +213,18 @@ export function normalizePairingCode(input: string): string {
 }
 
 /**
- * Builds the full pairing URL that can be scanned by any smartphone camera.
+ * Builds the full pairing URL using a client-only URL fragment (#pair=) so payloads never leak in HTTP access logs.
  */
 export function buildPairingUrl(encodedPayload: string, code?: string): string {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const codeParam = code ? `&code=${encodeURIComponent(code)}` : '';
 
-  // In local development (localhost / 127.0.0.1), use the configured production origin so phone cameras open the live web app
   const isLocal = !origin || origin.includes('localhost') || origin.includes('127.0.0.1');
   const envOrigin = (import.meta as { env?: { VITE_APP_ORIGIN?: string } }).env?.VITE_APP_ORIGIN;
   const baseOrigin = isLocal ? (envOrigin || 'https://work-tracker-pro-kohl.vercel.app') : origin;
 
-  return `${baseOrigin}${pathname}?pair=${encodeURIComponent(encodedPayload)}${codeParam}`;
+  return `${baseOrigin}${pathname}#pair=${encodeURIComponent(encodedPayload)}${codeParam}`;
 }
 
 /**

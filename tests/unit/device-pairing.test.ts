@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {
   encodePairingPayload,
   decodePairingPayload,
+  encodePairingPayloadAsync,
+  decodePairingPayloadAsync,
+  buildPairingUrl,
   isPairingPayloadExpired,
   generatePairingCode,
   normalizePairingCode,
@@ -238,4 +241,34 @@ test('reconcileCloudEntries - server deleted_at tombstone prevents Device B resu
     ]
   );
   assert.deepEqual(plan.tombstonesToUpload, [{ date: '2026-11-04', deletedAtMs: 2000 }]);
+});
+
+test('device-pairing - deflate-raw async QR compresses 60 shifts under 900 chars in #pair= URL fragment', async () => {
+  const entries = Array.from({ length: 60 }, (_, i) => ({
+    date: `2026-${String(Math.floor(i / 28) + 9).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`,
+    hours: 8 + (i % 3),
+    updated_at: 1764000000000 + i * 86400000,
+  }));
+  const payload: PairingPayload = {
+    v: 1,
+    t: Date.now(),
+    uid: 'd4e5f6a7-b8c9-4d0e-a1b2-c3d4e5f6a7b8',
+    code: generatePairingCode(),
+    dev: 'host-win11',
+    entries,
+  };
+
+  const compressed = await encodePairingPayloadAsync(payload);
+  assert.ok(compressed.startsWith('z.'), 'expected deflate-raw z. prefix');
+  const url = buildPairingUrl(compressed, payload.code);
+  assert.ok(url.includes('#pair='), 'expected URL hash fragment instead of query string');
+  assert.ok(!url.includes('?pair='), 'must not put pairing payload in HTTP query string');
+  assert.ok(url.length < 950, `expected compact QR URL < 950 chars, got ${url.length}`);
+
+  const decoded = await decodePairingPayloadAsync(url);
+  assert.ok(decoded !== null);
+  assert.equal(decoded.uid, payload.uid);
+  assert.equal(decoded.code, payload.code);
+  assert.equal(decoded.entries?.length, 60);
+  assert.equal(decoded.entries?.[59]?.hours, entries[59].hours);
 });

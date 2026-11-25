@@ -6,17 +6,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QrCode, Scan, X, Smartphone, CheckCircle, RefreshCw, Share2, Database, Keyboard, Check } from 'lucide-react';
 import { BrandedQRCode } from './BrandedQRCode';
-import { QRScannerModal } from './QRScannerModal';
 import {
-  encodePairingPayload,
-  buildPairingUrl,
-  generatePairingCode,
   normalizePairingCode,
   isPairingPayloadExpired,
   PairingPayload
 } from '../lib/device-pairing';
-import { supabase, ensureAuth } from '../lib/supabase';
-import { db } from '../lib/db';
+import type { PreparedPairingSession } from '../hooks/useDevicePairing';
+
+const QRScannerModal = React.lazy(() =>
+  import('./QRScannerModal').then((m) => ({ default: m.QRScannerModal }))
+);
 
 interface DevicePairModalProps {
   isOpen: boolean;
@@ -26,6 +25,15 @@ interface DevicePairModalProps {
   localEntriesCount: number;
   incomingPayload?: PairingPayload | null;
   onApplyPairing: (payload: PairingPayload, mode: 'merge' | 'overwrite') => Promise<void>;
+  onPreparePairing: () => Promise<PreparedPairingSession>;
+  onSubscribeHost: (
+    code: string,
+    getPayload: () => PairingPayload | null,
+    onPeerPaired: (deviceName: string) => void
+  ) => () => void;
+  onResolveCode: (code: string) => Promise<PairingPayload>;
+  onExportBackup: () => Promise<void>;
+  onBroadcastSuccess: (code: string) => Promise<void> | void;
   addToast: (msg: string, type?: 'info' | 'success' | 'error' | 'warning') => void;
   t?: (key: string) => string;
 }
@@ -38,6 +46,11 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   localEntriesCount,
   incomingPayload,
   onApplyPairing,
+  onPreparePairing,
+  onSubscribeHost,
+  onResolveCode,
+  onExportBackup,
+  onBroadcastSuccess,
   addToast,
   t
 }) => {
@@ -66,144 +79,30 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   const generateUrl = React.useCallback(async () => {
     setIsGenerating(true);
     try {
-      const now = Date.now();
-      const code = generatePairingCode();
-      setPairingCode(code);
-
-      // Case 1: Supabase available (cloud pairing without bloating QR with raw entries)
-      if (supabase) {
-        try {
-          const cloudAuthPromise = (async () => {
-            const uid = await ensureAuth();
-            if (!uid) return null;
-            const { data: { session } } = await supabase.auth.getSession();
-            return { uid, session };
-          })();
-          const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 2500));
-          const authResult = await Promise.race([cloudAuthPromise, timeoutPromise]);
-
-          if (authResult?.session) {
-            // Omit massive ~850-character access_token if refresh_token is present.
-            // Target device exchanges rt via supabase.auth.refreshSession in 1 lightweight request.
-            // This shrinks the QR string from ~1400 chars down to ~200 chars (Version 5 matrix with large chunky dots).
-            const payload: PairingPayload = {
-              v: 1,
-              t: now,
-              uid: authResult.session.user.id,
-              dev: deviceId,
-              code,
-              ...(authResult.session.refresh_token
-                ? { rt: authResult.session.refresh_token }
-                : { at: authResult.session.access_token })
-            };
-            activePayloadRef.current = payload;
-            const encoded = encodePairingPayload(payload);
-            setPairingCreatedAt(now);
-            setPairingUrl(buildPairingUrl(encoded, code));
-            setIsGenerating(false);
-            return;
-          } else if (authResult?.uid) {
-            const payload: PairingPayload = {
-              v: 1,
-              t: now,
-              uid: authResult.uid,
-              dev: deviceId,
-              code
-            };
-            activePayloadRef.current = payload;
-            const encoded = encodePairingPayload(payload);
-            setPairingCreatedAt(now);
-            setPairingUrl(buildPairingUrl(encoded, code));
-            setIsGenerating(false);
-            return;
-          }
-        } catch (cloudErr) {
-          console.warn('Cloud session lookup failed, falling back to local pairing:', cloudErr);
-        }
-      }
-
-      // Case 2: Offline / Local Pairing (Cloud is disabled, absent, or paused)
-      const localEntries = await db.getAllEntries();
-      const payload: PairingPayload = {
-        v: 1,
-        t: now,
-        uid: deviceId,
-        dev: deviceId,
-        code
-      };
-
-      // Only embed inline entries if count is small (<= 8) to prevent QR matrix bloat
-      if (localEntries.length > 0 && localEntries.length <= 8) {
-        payload.entries = localEntries.map(e => ({
-          date: e.date,
-          hours: e.hours,
-          updated_at: e.updated_at
-        }));
-      }
-
-      activePayloadRef.current = payload;
-      const encoded = encodePairingPayload(payload);
-      setPairingCreatedAt(now);
-      setPairingUrl(buildPairingUrl(encoded, code));
+      const session = await onPreparePairing();
+      activePayloadRef.current = session.payload;
+      setPairingCode(session.code);
+      setPairingCreatedAt(session.createdAt);
+      setPairingUrl(session.url);
     } catch (err) {
       console.error('Failed to generate pairing payload:', err);
     } finally {
       setIsGenerating(false);
     }
-  }, [deviceId]);
+  }, [onPreparePairing]);
 
-  // Realtime channel listener for Host (Windows 11)
+  // Realtime + BroadcastChannel listener for Host (delegated to hook)
   useEffect(() => {
     if (!isOpen || !pairingCode) return;
-
-    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
-    let bc: BroadcastChannel | null = null;
-
-    if (supabase) {
-      const client = supabase;
-      channel = client.channel(`pairing:${pairingCode}`);
-      channel
-        .on('broadcast', { event: 'request_pairing' }, () => {
-          if (activePayloadRef.current && channel) {
-            channel.send({
-              type: 'broadcast',
-              event: 'provide_payload',
-              payload: { payload: activePayloadRef.current }
-            });
-          }
-        })
-        .on('broadcast', { event: 'device_paired' }, (msg: { payload?: { deviceName?: string } }) => {
-          setConnectedDeviceName(msg.payload?.deviceName || 'Mobile Device');
-          setIsPairedSuccess(true);
-        })
-        .subscribe();
-    }
-
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      try {
-        bc = new BroadcastChannel(`pairing_${pairingCode}`);
-        bc.onmessage = (ev) => {
-          if (ev.data?.type === 'device_paired') {
-            setConnectedDeviceName(ev.data?.deviceName || 'Mobile Device');
-            setIsPairedSuccess(true);
-          } else if (ev.data?.type === 'request_pairing' && activePayloadRef.current) {
-            bc?.postMessage({ type: 'provide_payload', payload: activePayloadRef.current });
-          }
-        };
-      } catch {
-        // Ignored
+    return onSubscribeHost(
+      pairingCode,
+      () => activePayloadRef.current,
+      (peerName) => {
+        setConnectedDeviceName(peerName);
+        setIsPairedSuccess(true);
       }
-    }
-
-    return () => {
-      if (channel && supabase) {
-        supabase.removeChannel(channel);
-      }
-      if (bc) {
-        bc.close();
-      }
-    };
-  }, [isOpen, pairingCode]);
+    );
+  }, [isOpen, pairingCode, onSubscribeHost]);
 
   // Generate pairing URL whenever the modal opens
   useEffect(() => {
@@ -212,65 +111,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
   }, [isOpen, generateUrl]);
 
   const handleShareBackup = async () => {
-    try {
-      const allEntries = await db.getAllEntries();
-      const data = { entries: allEntries, version: '1.0' };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const file = new File([blob], 'work-tracker-backup.json', { type: 'application/json' });
-
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: tr('Work Tracker Pro — Database Backup'),
-          text: `${tr('Shift database')} (${allEntries.length} ${tr('entries')})`
-        });
-        addToast(tr('Backup file sent'), 'success');
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'work-tracker-backup.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        addToast(tr('Backup file downloaded (.json)'), 'success');
-      }
-    } catch (err) {
-      console.warn('Share backup cancelled or failed:', err);
-    }
-  };
-
-  const broadcastSuccessToHost = (code?: string) => {
-    if (!code) return;
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      try {
-        const bc = new BroadcastChannel(`pairing_${code}`);
-        bc.postMessage({ type: 'device_paired', deviceName: 'Mobile Device', timestamp: Date.now() });
-        setTimeout(() => bc.close(), 1000);
-      } catch {
-        // Ignored
-      }
-    }
-    if (supabase) {
-      const client = supabase;
-      const ch = client.channel(`pairing:${code}`);
-      ch.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          ch.send({
-            type: 'broadcast',
-            event: 'device_paired',
-            payload: { deviceName: 'Mobile Device' }
-          });
-          setTimeout(() => {
-            ch.send({
-              type: 'broadcast',
-              event: 'device_paired',
-              payload: { deviceName: 'Mobile Device' }
-            });
-            client.removeChannel(ch);
-          }, 350);
-        }
-      });
-    }
+    await onExportBackup();
   };
 
   const handleScanSuccess = (payload: PairingPayload) => {
@@ -300,7 +141,7 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
       setConnectedDeviceName('Windows 11');
       setIsPairedSuccess(true);
       if (payload.code) {
-        broadcastSuccessToHost(payload.code);
+        await onBroadcastSuccess(payload.code);
       }
     } catch {
       addToast(tr('Failed to apply pairing'), 'error');
@@ -314,89 +155,16 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
     const cleanCode = manualCodeInput.trim().toUpperCase();
     if (cleanCode.replace(/-/g, '').length < 8) return;
 
-    if (!supabase) {
-      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-        setIsResolvingCode(true);
-        let settled = false;
-        let bc: BroadcastChannel | null = null;
-        try {
-          bc = new BroadcastChannel(`pairing_${cleanCode}`);
-          const timeout = setTimeout(() => {
-            if (settled) return;
-            settled = true;
-            bc?.close();
-            setIsResolvingCode(false);
-            addToast(tr('Manual code entry requires cloud connection. Please scan QR with camera.'), 'warning');
-          }, 1200);
-          bc.onmessage = (ev) => {
-            if (settled || ev.data?.type !== 'provide_payload') return;
-            settled = true;
-            clearTimeout(timeout);
-            bc?.close();
-            const resolvedPayload = ev.data?.payload as PairingPayload | undefined;
-            if (!resolvedPayload) {
-              setIsResolvingCode(false);
-              addToast(tr('Invalid payload received'), 'error');
-              return;
-            }
-            try {
-              handleScanSuccess(resolvedPayload);
-            } catch {
-              addToast(tr('Failed to apply pairing'), 'error');
-            } finally {
-              setIsResolvingCode(false);
-            }
-          };
-          bc.postMessage({ type: 'request_pairing', clientDeviceId: deviceId });
-          return;
-        } catch {
-          bc?.close();
-          setIsResolvingCode(false);
-        }
-      }
-      addToast(tr('Manual code entry requires cloud connection. Please scan QR with camera.'), 'warning');
-      return;
-    }
-
     setIsResolvingCode(true);
-    const client = supabase;
-    const channel = client.channel(`pairing:${cleanCode}`);
-
-    const timeout = setTimeout(() => {
-      client.removeChannel(channel);
+    try {
+      const resolvedPayload = await onResolveCode(cleanCode);
+      handleScanSuccess(resolvedPayload);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : tr('Pairing code not found or timed out.');
+      addToast(msg, 'error');
+    } finally {
       setIsResolvingCode(false);
-      addToast(tr('Pairing code not found or timed out.'), 'error');
-    }, 8000);
-
-    channel
-      .on('broadcast', { event: 'provide_payload' }, (msg: { payload?: { payload?: PairingPayload } }) => {
-        clearTimeout(timeout);
-        const resolvedPayload = msg.payload?.payload;
-        if (!resolvedPayload) {
-          setIsResolvingCode(false);
-          client.removeChannel(channel);
-          addToast(tr('Invalid payload received'), 'error');
-          return;
-        }
-
-        try {
-          client.removeChannel(channel);
-          handleScanSuccess(resolvedPayload);
-        } catch {
-          addToast(tr('Failed to apply pairing'), 'error');
-        } finally {
-          setIsResolvingCode(false);
-        }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          channel.send({
-            type: 'broadcast',
-            event: 'request_pairing',
-            payload: { clientDeviceId: deviceId }
-          });
-        }
-      });
+    }
   };
 
   const handleClose = () => {
@@ -641,17 +409,21 @@ export const DevicePairModal: React.FC<DevicePairModalProps> = ({
         )}
       </div>
 
-      {/* Camera scanner sub-modal */}
-      <QRScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onScanSuccess={handleScanSuccess}
-        onSwitchToManualCode={() => {
-          setIsScannerOpen(false);
-          setActiveTab('code');
-        }}
-        t={tr}
-      />
+      {/* Camera scanner sub-modal (lazy-loaded so jsQR only parses when scanning) */}
+      {isScannerOpen && (
+        <React.Suspense fallback={null}>
+          <QRScannerModal
+            isOpen={isScannerOpen}
+            onClose={() => setIsScannerOpen(false)}
+            onScanSuccess={handleScanSuccess}
+            onSwitchToManualCode={() => {
+              setIsScannerOpen(false);
+              setActiveTab('code');
+            }}
+            t={tr}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 };

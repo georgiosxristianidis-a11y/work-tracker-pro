@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { MotionConfigContext } from 'motion/react';
 
 export interface OrbitalIndicatorProps {
   /** Size in pixels (default 24) */
@@ -38,6 +39,8 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
   const dirRef = useRef<1 | -1>(1);
   const boostRef = useRef<number>(0);
   const [dir, setDir] = useState<'cw' | 'ccw'>('cw');
+  const motionConfig = useContext(MotionConfigContext);
+  const forceReducedMotion = motionConfig.reducedMotion === 'always';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -46,7 +49,7 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion = forceReducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = size * dpr;
@@ -73,23 +76,26 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
     const tiltX = 0.35;
 
     let fillStyle = 'white';
-    try {
-      const styles = getComputedStyle(canvas);
-      const tokenT1 = styles.getPropertyValue('--t1').trim();
-      if (tokenT1) fillStyle = tokenT1;
-      if (color.startsWith('var(')) {
-        const varName = color.slice(4, -1).trim();
-        const computed = styles.getPropertyValue(varName).trim();
-        if (computed) fillStyle = computed;
-      } else if (color !== 'currentColor') {
-        fillStyle = color;
-      } else {
-        const computedColor = styles.color;
-        if (computedColor) fillStyle = computedColor;
+    const resolveFillStyle = () => {
+      try {
+        const styles = getComputedStyle(canvas);
+        const tokenT1 = styles.getPropertyValue('--t1').trim();
+        if (tokenT1) fillStyle = tokenT1;
+        if (color.startsWith('var(')) {
+          const varName = color.slice(4, -1).trim();
+          const computed = styles.getPropertyValue(varName).trim();
+          if (computed) fillStyle = computed;
+        } else if (color !== 'currentColor') {
+          fillStyle = color;
+        } else {
+          const computedColor = styles.color;
+          if (computedColor) fillStyle = computedColor;
+        }
+      } catch {
+        fillStyle = 'white';
       }
-    } catch {
-      fillStyle = 'white';
-    }
+    };
+    resolveFillStyle();
 
     const cosTilt = Math.cos(tiltX);
     const sinTilt = Math.sin(tiltX);
@@ -156,14 +162,21 @@ export const OrbitalIndicator: React.FC<OrbitalIndicatorProps> = ({
       }
     };
 
+    const themeObserver = new MutationObserver(() => {
+      resolveFillStyle();
+      if (prefersReducedMotion) render();
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     render();
 
     return () => {
+      themeObserver.disconnect();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (animId) cancelAnimationFrame(animId);
     };
-  }, [size, dotCount, color, speed]);
+  }, [size, dotCount, color, speed, forceReducedMotion]);
 
   const handleToggleDirection = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!interactive) return;

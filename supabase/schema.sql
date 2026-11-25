@@ -141,3 +141,5 @@ create policy "delete own entries" on public.work_entries
     auth.uid() = user_id
     or exists (select 1 from public.device_links dl where dl.member_uid = auth.uid() and dl.owner_uid = work_entries.user_id)
   );
+
+notify pgrst, 'reload schema';

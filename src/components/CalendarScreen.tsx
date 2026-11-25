@@ -5,7 +5,7 @@ import { AnimatedTrash } from './AnimatedTrash';
 import { AnimatedWand } from './AnimatedWand';
 import { CalendarDaysBadge } from './CalendarDaysBadge';
 import { AppSettings, DOW_NAMES, MONTH_NAMES, MONTH_NAMES_RUS, MONTH_NAMES_GR } from '../constants';
-import { formatMoney } from '../lib/utils';
+import { formatMoney, shiftMonth } from '../lib/utils';
 import { Entry } from '../lib/db';
 import { useAppStore } from '../store/useAppStore';
 import type { SmartFillPreview } from '../hooks/useQuickFill';
@@ -95,7 +95,7 @@ const DayCell = React.memo(({
   };
 
   return (
-    <motion.button 
+    <button 
       type="button"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -106,7 +106,7 @@ const DayCell = React.memo(({
       style={{ WebkitTouchCallout: 'none' }}
       aria-label={`${day}, ${hours > 0 ? `${hours} hours` : isToday ? 'today' : 'empty'}`}
       className={`
-        relative aspect-square rounded-panel border flex flex-col items-center justify-center gap-0.5 transition-all select-none touch-manipulation active:scale-90
+        relative aspect-square rounded-panel border flex flex-col items-center justify-center gap-0.5 transition-[transform,background-color,border-color,color] duration-150 select-none touch-manipulation active:scale-90
         ${hours > 0 
           ? 'bg-[var(--a-bg)] border-[var(--a-b)] text-[var(--t1)]' 
           : isToday 
@@ -126,7 +126,7 @@ const DayCell = React.memo(({
 
       {hours > 0 && (
         <div className="absolute bottom-[6px] flex flex-col items-center">
-          <div className={`w-3 h-[2px] rounded-full transition-all ${
+          <div className={`w-3 h-[2px] rounded-full transition-colors duration-150 ${
             hours === normalHours
               ? 'bg-[var(--t1)]' 
               : hours > normalHours 
@@ -135,7 +135,7 @@ const DayCell = React.memo(({
           }`} />
         </div>
       )}
-    </motion.button>
+    </button>
   );
 });
 
@@ -245,14 +245,14 @@ export const CalendarScreen = ({
 
           <div className="flex gap-1.5">
             <motion.button 
-              onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() - 1); setViewDate(d); }} 
+              onClick={() => setViewDate(shiftMonth(viewDate, -1))} 
               className="p-1.5 rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] active:scale-95 transition-all" 
               aria-label={t('Previous Month')}
             >
               <ChevronLeft size={18} strokeWidth={1.5} />
             </motion.button>
             <motion.button 
-              onClick={() => { const d = new Date(viewDate); d.setMonth(d.getMonth() + 1); setViewDate(d); }} 
+              onClick={() => setViewDate(shiftMonth(viewDate, 1))} 
               className="p-1.5 rounded-full border border-[var(--b)] bg-[var(--bg-1)] text-[var(--t2)] hover:text-[var(--t1)] hover:bg-[var(--b)] active:scale-95 transition-all" 
               aria-label={t('Next Month')}
             >
@@ -273,12 +273,12 @@ export const CalendarScreen = ({
           <div className="flex items-center gap-2 px-2 py-1">
             <div className="relative flex items-center justify-center w-4 h-4">
               <motion.div 
-                animate={{ scale: [1, 4.5], opacity: [0.8, 0], borderWidth: ["1px", "0px"] }}
+                animate={{ scale: [1, 4.5], opacity: [0.8, 0] }}
                 transition={{ duration: 4.5, repeat: Infinity, ease: "easeOut" }}
                 className="absolute w-1.5 h-1.5 rounded-full border border-[var(--t3)]"
               />
               <motion.div 
-                animate={{ scale: [1, 4.5], opacity: [0.8, 0], borderWidth: ["1px", "0px"] }}
+                animate={{ scale: [1, 4.5], opacity: [0.8, 0] }}
                 transition={{ duration: 4.5, repeat: Infinity, delay: 2.25, ease: "easeOut" }}
                 className="absolute w-1.5 h-1.5 rounded-full border border-[var(--t3)]"
               />
@@ -297,17 +297,13 @@ export const CalendarScreen = ({
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.05}
-          onDragEnd={(e, { offset, velocity }) => {
+          onDragEnd={(_e, { offset, velocity }) => {
             if (offset.x > 50 || velocity.x > 300) {
               haptic(10);
-              const d = new Date(viewDate);
-              d.setMonth(d.getMonth() - 1);
-              setViewDate(d);
+              setViewDate(shiftMonth(viewDate, -1));
             } else if (offset.x < -50 || velocity.x < -300) {
               haptic(10);
-              const d = new Date(viewDate);
-              d.setMonth(d.getMonth() + 1);
-              setViewDate(d);
+              setViewDate(shiftMonth(viewDate, 1));
             }
           }}
         >

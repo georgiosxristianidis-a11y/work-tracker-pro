@@ -107,6 +107,10 @@ export class WorkDB {
       };
       request.onsuccess = () => {
         this.db = request.result;
+        this.db.onversionchange = () => {
+          this.db?.close();
+          this.db = null;
+        };
         resolve();
       };
       request.onerror = () => reject(request.error);
